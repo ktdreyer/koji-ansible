@@ -62,7 +62,6 @@ TODO
 * Ansible-compatible docs
 * Unit tests
 * ``koji_target`` module to manage build targets
-* Content generator configuration (user management?)
 * Support ``KOJI_PROFILE`` env var instead of having to hardcode a ``koji``
   parameter on each play, similar to how the `OpenStack modules
   <https://docs.ansible.com/ansible/latest/modules/os_server_module.html>`_ can
