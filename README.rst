@@ -36,6 +36,23 @@ entry.
         user: rcm/debbuild
         state: present
 
+koji_btype
+----------
+
+The ``koji_btype`` module can add new build types. These are typically in
+support of `content generators
+<https://docs.pagure.org/koji/content_generators/>`_.
+
+(Koji only supports adding new build types, not deleting them.)
+
+.. code-block:: yaml
+
+    - name: Add debian build type to Koji
+      koji_btype:
+        koji: mykoji
+        name: debian
+        state: present
+
 
 Python paths
 ------------
