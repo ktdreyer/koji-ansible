@@ -1,0 +1,12 @@
+.*.swp
+*.egg
+*.egg-info
+*.pyc
+.test
+.testrepository
+.tox
+/.cache
+.coverage
+build/*
+dist/*
+doc/build/*
