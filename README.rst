@@ -17,6 +17,26 @@ also manage tag inheritance.
         name: ceph-3.2-rhel-7
         state: present
 
+koji_cg
+-------
+
+The ``koji_cg`` module can grant or revoke access to a `content generator
+<https://docs.pagure.org/koji/content_generators/>`_ for a user account.
+
+This user account must already exist in Koji's database. For example, you may
+run an authenticated ``koji hello`` command to create the account database
+entry.
+
+.. code-block:: yaml
+
+    - name: Grant access to the rcm/debbuild account
+      koji_tag:
+        koji: mykoji
+        name: debian
+        user: rcm/debbuild
+        state: present
+
+
 Python paths
 ------------
 
