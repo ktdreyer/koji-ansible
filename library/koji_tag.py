@@ -117,7 +117,7 @@ def run_module():
     )
 
     if not common_koji.HAS_KOJI:
-        module.fail_json(msg='openstacksdk is required for this module')
+        module.fail_json(msg='koji is required for this module')
 
     params = module.params
     profile = params['koji']
