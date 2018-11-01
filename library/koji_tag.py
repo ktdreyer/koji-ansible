@@ -1,12 +1,6 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-
-try:
-    import koji
-    from koji_cli.lib import activate_session
-    HAS_KOJI = True
-except ImportError:
-    HAS_KOJI = False
+import common_koji
 
 
 ANSIBLE_METADATA = {
@@ -22,32 +16,6 @@ module: koji_tag
 
 short_description: Create and manage Koji tags
 '''
-
-
-def get_session(profile):
-    """
-    Return an anonymous koji session for this profile name.
-    """
-    # Note: this raises koji.ConfigurationError if we could not find this
-    # profile name.
-    # (ie. "check /etc/koji.conf.d/*.conf")
-    conf = koji.read_config(profile)
-    hub = conf['server']
-    # TODO: support SSL auth?
-    opts = {'krbservice': conf.get('krbservice')}
-    session = koji.ClientSession(hub, opts)
-    # KojiOptions = namedtuple('Options', ['authtype', 'debug'])
-    # options = KojiOptions(authtype='')
-    activate_session(session, conf)
-    return session
-
-
-def ensure_logged_in(session):
-    """ Authenticate (if necessary) and return this Koji session. """
-    if not session.logged_in:
-        # XXX hardcoding krb here
-        session.krb_login()
-    return session
 
 
 def ensure_tag(session, name, inheritance, **kwargs):
@@ -123,7 +91,7 @@ def delete_tag(session, name):
         changed=False,
     )
     if taginfo:
-        ensure_logged_in(session)
+        common_koji.ensure_logged_in(session)
         session.deleteTag(name)
         result['stdout'] = 'deleted tag %d' % taginfo['id']
         result['changed'] = True
@@ -148,7 +116,7 @@ def run_module():
         supports_check_mode=True
     )
 
-    if not HAS_KOJI:
+    if not common_koji.HAS_KOJI:
         module.fail_json(msg='openstacksdk is required for this module')
 
     params = module.params
@@ -156,7 +124,7 @@ def run_module():
     name = params['name']
     state = params['state']
 
-    session = get_session(profile)
+    session = common_koji.get_session(profile)
 
     if state == 'present':
         result = ensure_tag(session, name,

@@ -17,6 +17,25 @@ also manage tag inheritance.
         name: ceph-3.2-rhel-7
         state: present
 
+Python paths
+------------
+
+These modules import from other files in the ``library`` directory. If you get
+``ImportError`` when using these modules,  set the ``PYTHONPATH`` environment
+variable to this ``library`` directory.
+
+For example, if you have a ``koji.yml`` playbook that you run with
+``ansible-playbook``, it should live alongside this ``library`` directory::
+
+    top
+    ├── koji.yml
+    └── library
+
+and you should run the playbook like so::
+
+   PYTHONPATH=library ansible-playbook koji.yml
+
+
 TODO
 ----
 
