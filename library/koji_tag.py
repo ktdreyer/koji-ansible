@@ -34,7 +34,7 @@ def ensure_tag(session, name, inheritance, **kwargs):
     # use 'stdout_lines' instead or something.
     result = {'changed': False}
     if not taginfo:
-        ensure_logged_in(session)
+        common_koji.ensure_logged_in(session)
         id_ = session.createTag(name, parent=None, **kwargs)
         result['stdout'] = 'created tag id %d' % id_
         result['changed'] = True
@@ -54,7 +54,7 @@ def ensure_tag(session, name, inheritance, **kwargs):
                         edits['remove_extra'] = []
                     edits['remove_extra'].append(key)
         if edits:
-            ensure_logged_in(session)
+            common_koji.ensure_logged_in(session)
             session.editTag2(name, **edits)
             result['stdout'] = str(edits)
             result['changed'] = True
@@ -76,7 +76,7 @@ def ensure_tag(session, name, inheritance, **kwargs):
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(name)
     if current_inheritance != rules:
-        ensure_logged_in(session)
+        common_koji.ensure_logged_in(session)
         session.setInheritanceData(name, rules, clear=True)
         result['stdout'] = 'inheritance is %s' % inheritance
         result['changed'] = True
