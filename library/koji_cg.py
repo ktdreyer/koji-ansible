@@ -46,6 +46,8 @@ def run_module():
     # There are no "get" methods for content generator information, so we must
     # send the changes to Koji every time.
 
+    common_koji.ensure_logged_in(session)
+
     if state == 'present':
         # The "grant" method will at least raise an error if the permission was
         # already granted, so we can set the "changed" result based on that.
