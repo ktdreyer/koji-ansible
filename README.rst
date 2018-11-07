@@ -7,7 +7,7 @@ koji_tag
 --------
 
 The ``koji_tag`` module can create, update, and delete tags within Koji. It can
-also manage tag inheritance.
+also manage tag inheritance and the packages list for a tag.
 
 .. code-block:: yaml
 
