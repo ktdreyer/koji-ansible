@@ -42,7 +42,7 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
         id_ = session.createTag(name, parent=None, **kwargs)
         result['stdout'] = 'created tag id %d' % id_
         result['changed'] = True
-        taginfo['id'] = id_  # populate for inheritance management below
+        taginfo = {'id': id_}  # populate for inheritance management below
     else:
         # The tag name already exists. Ensure all the parameters are set.
         edits = {}
