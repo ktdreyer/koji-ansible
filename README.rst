@@ -53,6 +53,30 @@ support of `content generators
         name: debian
         state: present
 
+koji_archivetype
+----------------
+
+The ``koji_archivetype`` module can add new archive types. This allows Koji to
+recognize new build archive files, for example ``.deb`` files.  These are
+typically in support of `content generators
+<https://docs.pagure.org/koji/content_generators/>`_.
+
+(Koji only supports adding new archive types, not deleting them.)
+
+This module uses the new `addArchiveType
+<https://pagure.io/koji/pull-request/1149>`_ RPC, which will be available in a
+future version of Koji.
+
+.. code-block:: yaml
+
+    - name: Add deb archive type
+      koji_archivetype:
+        koji: kojidev
+        name: deb
+        description: Debian packages
+        extensions: deb
+        state: present
+
 
 Python paths
 ------------
