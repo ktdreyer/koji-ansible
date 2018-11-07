@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
+from collections import defaultdict
 import common_koji
 
 
@@ -18,7 +19,7 @@ short_description: Create and manage Koji tags
 '''
 
 
-def ensure_tag(session, name, inheritance, **kwargs):
+def ensure_tag(session, name, inheritance, packages, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
@@ -26,6 +27,9 @@ def ensure_tag(session, name, inheritance, **kwargs):
     :param name: Koji tag name
     :param inheritance: Koji tag inheritance settings. These will be translated
                         for Koji's setInheritanceData RPC.
+    :param packages: dict of packages to add ("whitelist") for this tag.
+                     If this is an empty dict, we don't touch the package list
+                     for this tag.
     :param **kwargs: Pass remaining kwargs directly into Koji's createTag and
                      editTag2 RPCs.
     """
@@ -80,6 +84,31 @@ def ensure_tag(session, name, inheritance, **kwargs):
         session.setInheritanceData(name, rules, clear=True)
         result['stdout'] = 'inheritance is %s' % inheritance
         result['changed'] = True
+    # Ensure package list.
+    if packages:
+        # Note: this in particular could really benefit from koji's
+        # multicalls...
+        common_koji.ensure_logged_in(session)
+        current_pkgs = session.listPackages(tagID=taginfo['id'])
+        current_names = set([pkg['package_name'] for pkg in current_pkgs])
+        # Create a "current_owned" dict to compare with what's in Ansible.
+        current_owned = defaultdict(set)
+        for pkg in current_pkgs:
+            owner = pkg['owner_name']
+            pkg_name = pkg['package_name']
+            current_owned[owner].add(pkg_name)
+        for owner, owned in packages.items():
+            for package in owned:
+                if package not in current_names:
+                    # The package was missing from the tag entirely.
+                    session.packageListAdd(name, package, owner)
+                    result['changed'] = True
+                else:
+                    # The package is already in this tag.
+                    # Verify ownership.
+                    if package not in current_owned.get(owner, []):
+                        session.packageListSetOwner(name, package, owner)
+                        result['changed'] = True
     return result
 
 
@@ -104,6 +133,7 @@ def run_module():
         name=dict(type='str', required=True),
         state=dict(type='str', required=True),
         inheritance=dict(type='list', required=False, default=[]),
+        packages=dict(type='dict', required=False, default={}),
         arches=dict(type='str', required=False, default=None),
         perm=dict(type='list', required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
@@ -129,6 +159,7 @@ def run_module():
     if state == 'present':
         result = ensure_tag(session, name,
                             inheritance=params['inheritance'],
+                            packages=params['packages'],
                             arches=params['arches'],
                             perm=params['perm'],
                             locked=params['locked'],
