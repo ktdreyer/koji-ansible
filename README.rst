@@ -77,6 +77,24 @@ future version of Koji.
         extensions: deb
         state: present
 
+koji_host
+---------
+
+The ``koji_host`` module can add new hosts and manage existing hosts.
+
+Koji only supports adding new hosts, not deleting them. Once they're defined,
+you can enable or disable the hosts with ``status: enabled`` or ``status:
+disabled``.
+
+.. code-block:: yaml
+
+    - name: Add new builder1 host
+      koji_host:
+        koji: kojidev
+        name: builder1.example.com
+        arches: [x86_64]
+        state: enabled
+
 
 Python paths
 ------------
