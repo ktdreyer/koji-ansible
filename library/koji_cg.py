@@ -45,6 +45,8 @@ def run_module():
 
     # There are no "get" methods for content generator information, so we must
     # send the changes to Koji every time.
+    # in-progress "listCGs" pull request:
+    # https://pagure.io/koji/pull-request/1160
 
     common_koji.ensure_logged_in(session)
 
