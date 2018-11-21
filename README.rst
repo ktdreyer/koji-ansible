@@ -17,6 +17,21 @@ also manage tag inheritance and the packages list for a tag.
         name: ceph-3.2-rhel-7
         state: present
 
+koji_target
+-----------
+
+The ``koji_target`` module can create, update, and delete targets within Koji.
+
+.. code-block:: yaml
+
+    - name: Create a koji build target for Fedora 29
+      koji_target:
+        koji: kojidev
+        name: f29-candidate
+        build_tag: f29-build
+        dest_tag: f29-updates-candidate
+        state: present
+
 koji_cg
 -------
 
