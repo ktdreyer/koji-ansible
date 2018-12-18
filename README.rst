@@ -13,9 +13,15 @@ also manage tag inheritance and the packages list for a tag.
 
     - name: Create a koji tag for the ceph product
       koji_tag:
-        koji: mykoji
-        name: ceph-3.2-rhel-7
+        koji: kojidev
+        name: ceph-3.1-rhel-7
+        arches: x86_64
         state: present
+        packages:
+          kdreyer:
+            - ansible
+            - ceph
+            - ceph-ansible
 
 koji_target
 -----------
