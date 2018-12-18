@@ -135,7 +135,7 @@ def run_module():
         inheritance=dict(type='list', required=False, default=[]),
         packages=dict(type='dict', required=False, default={}),
         arches=dict(type='str', required=False, default=None),
-        perm=dict(type='list', required=False, default=None),
+        perm=dict(type='str', required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
         maven_support=dict(type='bool', required=False, default=False),
         maven_include_all=dict(type='bool', required=False, default=False),
