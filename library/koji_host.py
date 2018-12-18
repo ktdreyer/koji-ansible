@@ -65,7 +65,7 @@ def ensure_host(session, name, state, arches, krb_principal, **kwargs):
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False, default='koji'),
+        koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         arches=dict(type='list', required=True),
         krb_principal=dict(type='str', required=False, default=None),

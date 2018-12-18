@@ -20,7 +20,7 @@ short_description: Create and manage Koji build types
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False, default='koji'),
+        koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         state=dict(type='str', required=True),
     )

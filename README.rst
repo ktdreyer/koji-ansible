@@ -120,6 +120,15 @@ disabled``.
         arches: [x86_64]
         state: enabled
 
+Koji profiles
+-------------
+
+The examples above explicitly specify a custom Koji profile with ``koji:
+kojidev``. This means Ansible will search ``~/.koji/config.d/*.conf`` and
+``/etc/koji.conf.d/*.conf`` for the ``[kojidev]`` config section.
+
+To avoid specifying this ``koji:`` argument on every task, you can set the
+``KOJI_PROFILE`` environment variable when running ``ansible-playbook``.
 
 Python paths
 ------------
@@ -145,10 +154,6 @@ TODO
 
 * Ansible-compatible docs
 * Unit tests
-* Support ``KOJI_PROFILE`` env var instead of having to hardcode a ``koji``
-  parameter on each play, similar to how the `OpenStack modules
-  <https://docs.ansible.com/ansible/latest/modules/os_server_module.html>`_ can
-  use the ``OS_USERNAME`` env var.
 * A lower-level ``koji_call`` module to make arbitrary RPCs? Like
 
   .. code-block:: yaml

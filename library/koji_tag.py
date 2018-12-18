@@ -227,7 +227,7 @@ def delete_tag(session, name):
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False, default='koji'),
+        koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         state=dict(type='str', required=True),
         inheritance=dict(type='list', required=False, default=[]),

@@ -23,7 +23,7 @@ https://pagure.io/koji/pull-request/1149
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False, default='koji'),
+        koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         description=dict(type='str', required=True),
         extensions=dict(type='str', required=True),
