@@ -95,6 +95,17 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
+perm_cache = {}
+
+
+def get_perm_id(session, name):
+    global perm_cache
+    if not perm_cache:
+        perm_cache = dict([
+            (perm['name'], perm['id']) for perm in session.getAllPerms()
+        ])
+    return perm_cache[name]
+
 
 def ensure_tag(session, name, inheritance, packages, **kwargs):
     """
@@ -116,6 +127,8 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
     result = {'changed': False}
     if not taginfo:
         common_koji.ensure_logged_in(session)
+        if 'perm' in kwargs and kwargs['perm']:
+            kwargs['perm'] = get_perm_id(session, kwargs['perm'])
         id_ = session.createTag(name, parent=None, **kwargs)
         result['stdout'] = 'created tag id %d' % id_
         result['changed'] = True
