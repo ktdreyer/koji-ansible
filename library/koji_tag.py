@@ -16,7 +16,82 @@ DOCUMENTATION = '''
 module: koji_tag
 
 short_description: Create and manage Koji tags
+description:
+   - Create and manage Koji tags
+options:
+   inheritance:
+     description:
+       - The name of the Koji tag to create and manage.
+     required: true
+   inheritance:
+     description:
+       - How to set inheritance. what happens when it's unset.
+   packages:
+     description:
+       - dict of package owners and the a lists of packages each owner
+         maintains.
+   arches:
+     description:
+       - list of arches this Koji tag supports.
+   perm:
+     description:
+       - permission (string or int) for this Koji tag.
+   locked:
+     description:
+       - whether to lock this tag or not.
+     choices: [true, false]
+     default: false
+   locked:
+     description:
+       - whether to lock this tag or not.
+     choices: [true, false]
+     default: false
+   maven_support:
+     description:
+       - whether Maven repos should be generated for the tag.
+     choices: [true, false]
+     default: false
+   maven_include_all:
+     description:
+       - include every build in this tag (including multiple versions of the
+         same package) in the Maven repo.
+     choices: [true, false]
+     default: false
+   extra:
+     description:
+       - set any extra parameters on this tag.
+requirements:
+  - "python >= 2.7"
+  - "koji"
 '''
+
+EXAMPLES = '''
+- name: create a main koji tag and candidate tag
+  hosts: localhost
+  tasks:
+    - name: Create a main product koji tag
+      koji_tag:
+        koji: kojidev
+        name: ceph-3.1-rhel-7
+        arches: x86_64
+        state: present
+        packages:
+          kdreyer:
+            - ansible
+            - ceph
+            - ceph-ansible
+
+    - name: Create a candidate koji tag
+      koji_tag:
+        koji: kojidev
+        name: ceph-3.1-rhel-7-candidate
+        state: present
+        inheritance:
+        - parent: ceph-3.1-rhel-7
+          priority: 0
+'''
+
+RETURN = ''' # '''
 
 
 def ensure_tag(session, name, inheritance, packages, **kwargs):
