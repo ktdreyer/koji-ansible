@@ -1,5 +1,7 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.error import AnsibleError
 import common_koji
 
 
@@ -91,12 +93,15 @@ def run_module():
         module.fail_json(msg="State must be 'enabled' or 'disabled'.",
                          changed=False, rc=1)
 
-    result = ensure_host(session, name, state,
-                         arches=params['arches'],
-                         krb_principal=params['krb_principal'],
-                         capacity=params['capacity'],
-                         description=params['description'],
-                         comment=params['comment'])
+    try:
+        result = ensure_host(session, name, state,
+                             arches=params['arches'],
+                             krb_principal=params['krb_principal'],
+                             capacity=params['capacity'],
+                             description=params['description'],
+                             comment=params['comment'])
+    except Exception as e:
+        raise AnsibleError('koji_host ensure_host failed:\n%s' % to_native(e))
 
     module.exit_json(**result)
 

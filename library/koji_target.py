@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
+from ansible.module_utils._text import to_native
+from ansible.error import AnsibleError
 import common_koji
 
 
@@ -92,9 +93,17 @@ def run_module():
     session = common_koji.get_session(profile)
 
     if state == 'present':
-        result = ensure_target(session, name, build_tag, dest_tag)
+        try:
+            result = ensure_target(session, name, build_tag, dest_tag)
+        except Exception as e:
+            raise AnsibleError(
+                    'koji_target ensure_target failed:\n%s' % to_native(e))
     elif state == 'absent':
-        result = delete_target(session, name)
+        try:
+            result = delete_target(session, name)
+        except Exception as e:
+            raise AnsibleError(
+                    'koji_target delete_target failed:\n%s' % to_native(e))
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)
