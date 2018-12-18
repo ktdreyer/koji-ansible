@@ -5,6 +5,12 @@ from ansible.errors import AnsibleError
 from collections import defaultdict
 import common_koji
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
@@ -144,6 +150,8 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
     for rule in inheritance:
         parent_name = rule['parent']
         parent_taginfo = session.getTag(parent_name)
+        if not parent_taginfo:
+            raise ValueError("parent tag '%s' not found" % parent_name)
         parent_id = parent_taginfo['id']
         new_rule = {
             'child_id': taginfo['id'],
@@ -246,13 +254,15 @@ def run_module():
                                 extra=params['extra'])
         except Exception as e:
             raise AnsibleError(
-                    'koji_tag ensure_tag failed:\n%s' % to_native(e))
+                    "koji_tag ensure_tag '%s' failed:\n%s\nparameters:\n%s"
+                    % (name, to_native(e), params))
     elif state == 'absent':
         try:
             result = delete_tag(session, name)
         except Exception as e:
             raise AnsibleError(
-                    'koji_tag delete_tag failed:\n%s' % to_native(e))
+                    "koji_tag delete_tag '%s' failed:\n%s"
+                    % (name, to_native(e)))
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)

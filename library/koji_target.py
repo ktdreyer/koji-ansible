@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.error import AnsibleError
+from ansible.errors import AnsibleError
 import common_koji
 
 
