@@ -47,7 +47,7 @@ def ensure_target(session, name, build_tag, dest_tag):
         result['stdout'] = 'dest_tag_name: %s' % dest_tag
     if needs_edit:
         common_koji.ensure_logged_in(session)
-        session.editBuildTarget(targetinfo, name, build_tag, dest_tag)
+        session.editBuildTarget(name, name, build_tag, dest_tag)
         result['changed'] = True
     return result
 
