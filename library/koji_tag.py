@@ -40,7 +40,7 @@ options:
          maintains.
    arches:
      description:
-       - list of arches this Koji tag supports.
+       - space-separated string of arches this Koji tag supports.
    perm:
      description:
        - permission (string or int) for this Koji tag.
