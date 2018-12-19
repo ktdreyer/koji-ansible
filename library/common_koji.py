@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os
-from ansible.error import AnsibleError
+from ansible.errors import AnsibleError
 try:
     import koji
     from koji_cli.lib import activate_session
