@@ -13,7 +13,6 @@ also manage tag inheritance and the packages list for a tag.
 
     - name: Create a koji tag for the ceph product
       koji_tag:
-        koji: kojidev
         name: ceph-3.1-rhel-7
         arches: x86_64
         state: present
@@ -32,7 +31,6 @@ The ``koji_target`` module can create, update, and delete targets within Koji.
 
     - name: Create a koji build target for Fedora 29
       koji_target:
-        koji: kojidev
         name: f29-candidate
         build_tag: f29-build
         dest_tag: f29-updates-candidate
@@ -96,7 +94,6 @@ future version of Koji.
 
     - name: Add deb archive type
       koji_archivetype:
-        koji: kojidev
         name: deb
         description: Debian packages
         extensions: deb
@@ -115,7 +112,6 @@ disabled``.
 
     - name: Add new builder1 host
       koji_host:
-        koji: kojidev
         name: builder1.example.com
         arches: [x86_64]
         state: enabled
@@ -123,12 +119,28 @@ disabled``.
 Koji profiles
 -------------
 
-The examples above explicitly specify a custom Koji profile with ``koji:
-kojidev``. This means Ansible will search ``~/.koji/config.d/*.conf`` and
-``/etc/koji.conf.d/*.conf`` for the ``[kojidev]`` config section.
+You must tell koji-ansible which Koji client profile to use.
+
+Here is an example of setting a profile explicitly on the task:
+
+.. code-block:: yaml
+
+    - name: Create a koji tag for the ceph product
+      koji_tag:
+        koji: kojidev
+        name: ceph-3.1-rhel-7
+        arches: x86_64
+        state: present
+
+The ``koji: kojidev`` setting means Ansible will search
+``~/.koji/config.d/*.conf`` and ``/etc/koji.conf.d/*.conf`` for the
+``[kojidev]`` config section and perform the tag management on that Koji hub
+listed there.
 
 To avoid specifying this ``koji:`` argument on every task, you can set the
 ``KOJI_PROFILE`` environment variable when running ``ansible-playbook``.
+koji-ansible will fall back to using ``KOJI_PROFILE`` for the tasks that have
+no explicit ``koji:`` argument.
 
 Python paths
 ------------
@@ -159,7 +171,6 @@ TODO
   .. code-block:: yaml
 
       koji_call:
-        profile: brew
         name: createTag
         args:
           name: ceph-3.2-rhel-7
