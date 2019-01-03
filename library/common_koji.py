@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os
 from ansible.errors import AnsibleError
 try:
