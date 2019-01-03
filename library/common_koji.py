@@ -18,7 +18,7 @@ def get_profile_name(profile):
                         we will use return the "KOJI_PROFILE" environment
                         variable. If we could find no profile name, raise
                         AnsibleError.
-    :returns: anonymous koji.ClientSession
+    :returns: str, the profile name
     """
     if profile:
         return profile
