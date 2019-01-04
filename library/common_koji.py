@@ -36,18 +36,31 @@ def get_session(profile):
                         variable.
     :returns: anonymous koji.ClientSession
     """
-    # Note: this raises koji.ConfigurationError if we could not find this
-    # profile name.
-    # (ie. "check /etc/koji.conf.d/*.conf")
     profile = get_profile_name(profile)
-    conf = koji.read_config(profile)
-    hub = conf['server']
-    # TODO: support SSL auth?
-    opts = {'krbservice': conf.get('krbservice')}
-    session = koji.ClientSession(hub, opts)
-    # KojiOptions = namedtuple('Options', ['authtype', 'debug'])
-    # options = KojiOptions(authtype='')
-    activate_session(session, conf)
+    # Note, get_profile_module() raises koji.ConfigurationError if we
+    # could not find this profile's name in /etc/koji.conf.d/*.conf and
+    # ~/.koji/config.d/*.conf.
+    mykoji = koji.get_profile_module(profile)
+    # Note, Koji has a grab_session_options() method that can also create a
+    # stripped-down dict of our module's (OptParse) configuration, like:
+    #   opts = mykoji.grab_session_options(mykoji.config)
+    # The idea is that callers then pass that opts dict into ClientSession's
+    # constructor.
+    # There are two reasons we don't use that here:
+    # 1. The dict is only suitable for the ClientSession(..., opts), not for
+    #    activate_session(..., opts). activate_session() really wants the full
+    #    set of key/values in mykoji.config.
+    # 2. We may call activate_session() later outside of this method, so we
+    #    need to preserve all the configuration data from mykoji.config inside
+    #    the ClientSession object. We might as well just store it in the
+    #    ClientSession's .opts and then pass that into activate_session().
+    opts = vars(mykoji.config)
+    # Force an anonymous session (noauth):
+    opts['noauth'] = True
+    session = mykoji.ClientSession(mykoji.config.server, opts)
+    # activate_session with noauth will simply ensure that we can connect with
+    # a getAPIVersion RPC. Let's avoid it here because it just slows us down.
+    # activate_session(session, opts)
     return session
 
 
@@ -58,6 +71,9 @@ def ensure_logged_in(session):
     :returns: a koji.ClientSession
     """
     if not session.logged_in:
-        # XXX hardcoding krb here
-        session.krb_login()
+        session.opts['noauth'] = False
+        # Log in ("activate") this session:
+        # Note: this can raise SystemExit if there is a problem, eg with
+        # Kerberos:
+        activate_session(session, session.opts)
     return session
