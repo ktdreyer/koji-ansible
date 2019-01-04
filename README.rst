@@ -1,6 +1,9 @@
 koji-ansible
 ============
 
+.. image:: https://travis-ci.org/ktdreyer/koji-ansible.svg?branch=master
+             :target: https://travis-ci.org/ktdreyer/koji-ansible
+
 Ansible modules to manage Koji resources
 
 koji_tag
