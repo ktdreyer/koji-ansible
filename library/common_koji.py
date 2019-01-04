@@ -66,9 +66,10 @@ def get_session(profile):
 
 def ensure_logged_in(session):
     """
-    Authenticate (if necessary) and return this Koji session.
+    Authenticate this Koji session (if necessary).
+
     :param session: a koji.ClientSession
-    :returns: a koji.ClientSession
+    :returns: None
     """
     if not session.logged_in:
         session.opts['noauth'] = False
@@ -76,4 +77,3 @@ def ensure_logged_in(session):
         # Note: this can raise SystemExit if there is a problem, eg with
         # Kerberos:
         activate_session(session, session.opts)
-    return session
