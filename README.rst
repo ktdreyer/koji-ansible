@@ -143,7 +143,9 @@ listed there.
 To avoid specifying this ``koji:`` argument on every task, you can set the
 ``KOJI_PROFILE`` environment variable when running ``ansible-playbook``.
 koji-ansible will fall back to using ``KOJI_PROFILE`` for the tasks that have
-no explicit ``koji:`` argument.
+no explicit ``koji:`` argument::
+
+   KOJI_PROFILE=kojidev ansible-playbook -v my-koji-playbook.yaml
 
 Python paths
 ------------
