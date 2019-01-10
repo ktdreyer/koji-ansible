@@ -131,17 +131,17 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
     taginfo = session.getTag(name)
     # fixme: we're clobbering 'stdout' here every time we make a change. maybe
     # use 'stdout_lines' instead or something.
-    result = {'changed': False}
+    result = {'changed': False, 'stdout_lines': []}
     if not taginfo:
         if check_mode:
-            result['stdout'] = 'would create tag %s' % name
+            result['stdout_lines'].append('would create tag %s' % name)
             result['changed'] = True
             return result
         common_koji.ensure_logged_in(session)
         if 'perm' in kwargs and kwargs['perm']:
             kwargs['perm'] = get_perm_id(session, kwargs['perm'])
         id_ = session.createTag(name, parent=None, **kwargs)
-        result['stdout'] = 'created tag id %d' % id_
+        result['stdout_lines'].append('created tag id %d' % id_)
         result['changed'] = True
         taginfo = {'id': id_}  # populate for inheritance management below
     else:
@@ -159,7 +159,7 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
                         edits['remove_extra'] = []
                     edits['remove_extra'].append(key)
         if edits:
-            result['stdout'] = str(edits)
+            result['stdout_lines'].append(str(edits))
             result['changed'] = True
             if not check_mode:
                 common_koji.ensure_logged_in(session)
@@ -184,7 +184,7 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(name)
     if current_inheritance != rules:
-        result['stdout'] = 'inheritance is %s' % inheritance
+        result['stdout_lines'].append('inheritance is %s' % inheritance)
         result['changed'] = True
         if not check_mode:
             common_koji.ensure_logged_in(session)
