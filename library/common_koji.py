@@ -41,6 +41,12 @@ def get_session(profile):
     # could not find this profile's name in /etc/koji.conf.d/*.conf and
     # ~/.koji/config.d/*.conf.
     mykoji = koji.get_profile_module(profile)
+    # Workaround https://pagure.io/koji/issue/1022 . Koji 1.17 will not need
+    # this.
+    if '~' in str(mykoji.config.cert):
+        mykoji.config.cert = os.path.expanduser(mykoji.config.cert)
+    if '~' in str(mykoji.config.ca):
+        mykoji.config.ca = os.path.expanduser(mykoji.config.ca)
     # Note, Koji has a grab_session_options() method that can also create a
     # stripped-down dict of our module's (OptParse) configuration, like:
     #   opts = mykoji.grab_session_options(mykoji.config)
