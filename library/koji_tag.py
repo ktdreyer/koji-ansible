@@ -113,12 +113,13 @@ def get_perm_id(session, name):
     return perm_cache[name]
 
 
-def ensure_tag(session, name, inheritance, packages, **kwargs):
+def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
     :param session: Koji client session
     :param name: Koji tag name
+    :param check_mode: don't make any changes
     :param inheritance: Koji tag inheritance settings. These will be translated
                         for Koji's setInheritanceData RPC.
     :param packages: dict of packages to add ("whitelist") for this tag.
@@ -132,6 +133,10 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
     # use 'stdout_lines' instead or something.
     result = {'changed': False}
     if not taginfo:
+        if check_mode:
+            result['stdout'] = 'would create tag %s' % name
+            result['changed'] = True
+            return result
         common_koji.ensure_logged_in(session)
         if 'perm' in kwargs and kwargs['perm']:
             kwargs['perm'] = get_perm_id(session, kwargs['perm'])
@@ -154,10 +159,11 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
                         edits['remove_extra'] = []
                     edits['remove_extra'].append(key)
         if edits:
-            common_koji.ensure_logged_in(session)
-            session.editTag2(name, **edits)
             result['stdout'] = str(edits)
             result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.editTag2(name, **edits)
     # Ensure inheritance rules are all set.
     rules = []
     for rule in inheritance:
@@ -178,10 +184,11 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(name)
     if current_inheritance != rules:
-        common_koji.ensure_logged_in(session)
-        session.setInheritanceData(name, rules, clear=True)
         result['stdout'] = 'inheritance is %s' % inheritance
         result['changed'] = True
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.setInheritanceData(name, rules, clear=True)
     # Ensure package list.
     if packages:
         # Note: this in particular could really benefit from koji's
@@ -199,18 +206,20 @@ def ensure_tag(session, name, inheritance, packages, **kwargs):
             for package in owned:
                 if package not in current_names:
                     # The package was missing from the tag entirely.
-                    session.packageListAdd(name, package, owner)
+                    if not check_mode:
+                        session.packageListAdd(name, package, owner)
                     result['changed'] = True
                 else:
                     # The package is already in this tag.
                     # Verify ownership.
                     if package not in current_owned.get(owner, []):
-                        session.packageListSetOwner(name, package, owner)
+                        if not check_mode:
+                            session.packageListSetOwner(name, package, owner)
                         result['changed'] = True
     return result
 
 
-def delete_tag(session, name):
+def delete_tag(session, name, check_mode):
     """ Ensure that this tag is deleted from Koji. """
     taginfo = session.getTag(name)
     result = dict(
@@ -218,10 +227,11 @@ def delete_tag(session, name):
         changed=False,
     )
     if taginfo:
-        common_koji.ensure_logged_in(session)
-        session.deleteTag(name)
         result['stdout'] = 'deleted tag %d' % taginfo['id']
         result['changed'] = True
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.deleteTag(name)
     return result
 
 
@@ -247,6 +257,7 @@ def run_module():
     if not common_koji.HAS_KOJI:
         module.fail_json(msg='koji is required for this module')
 
+    check_mode = module.check_mode
     params = module.params
     profile = params['koji']
     name = params['name']
@@ -257,6 +268,7 @@ def run_module():
     if state == 'present':
         try:
             result = ensure_tag(session, name,
+                                check_mode,
                                 inheritance=params['inheritance'],
                                 packages=params['packages'],
                                 arches=params['arches'],
