@@ -250,7 +250,7 @@ def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=True),
+        state=dict(type='str', required=False, default='present'),
         inheritance=dict(type='list', required=False, default=[]),
         packages=dict(type='dict', required=False, default={}),
         arches=dict(type='str', required=False, default=None),

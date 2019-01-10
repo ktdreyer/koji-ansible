@@ -25,7 +25,7 @@ def run_module():
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         user=dict(type='str', required=True),
-        state=dict(type='str', required=True),
+        state=dict(type='str', required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
