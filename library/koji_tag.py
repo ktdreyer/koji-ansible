@@ -219,6 +219,14 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
                         result['stdout_lines'].append('set %s owner %s' %
                                                       (package, owner))
                         result['changed'] = True
+        # Delete any packages not in Ansible.
+        all_names = [name for names in packages.values() for name in names]
+        delete_names = set(current_names) - set(all_names)
+        for package in delete_names:
+            result['stdout_lines'].append('remove pkg %s' % package)
+            result['changed'] = True
+            if not check_mode:
+                session.packageListRemove(name, package, owner)
     return result
 
 
