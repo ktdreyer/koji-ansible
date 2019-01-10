@@ -208,6 +208,7 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
                     # The package was missing from the tag entirely.
                     if not check_mode:
                         session.packageListAdd(name, package, owner)
+                    result['stdout_lines'].append('added pkg %s' % package)
                     result['changed'] = True
                 else:
                     # The package is already in this tag.
@@ -215,6 +216,8 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
                     if package not in current_owned.get(owner, []):
                         if not check_mode:
                             session.packageListSetOwner(name, package, owner)
+                        result['stdout_lines'].append('set %s owner %s' %
+                                                      (package, owner))
                         result['changed'] = True
     return result
 
