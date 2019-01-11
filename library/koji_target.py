@@ -20,23 +20,27 @@ short_description: Create and manage Koji targets
 '''
 
 
-def ensure_target(session, name, build_tag, dest_tag):
+def ensure_target(session, name, check_mode, build_tag, dest_tag):
     """
     Ensure that this tag exists in Koji.
 
     :param session: Koji client session
     :param name: Koji target name
+    :param check_mode: don't make any changes
     :param build_tag: Koji build tag name, eg. "f29-build"
     :param dest_tag: Koji destination tag name, eg "f29-updates-candidate"
     """
     targetinfo = session.getBuildTarget(name)
     result = {'changed': False, 'stdout_lines': []}
     if not targetinfo:
+        result['changed'] = True
+        if check_mode:
+            result['stdout_lines'].append('would create target %s' % name)
+            return result
         common_koji.ensure_logged_in(session)
         session.createBuildTarget(name, build_tag, dest_tag)
         targetinfo = session.getBuildTarget(name)
         result['stdout_lines'].append('created target %s' % targetinfo['id'])
-        result['changed'] = True
     # Ensure the build and destination tags are set for this target.
     needs_edit = False
     if build_tag != targetinfo['build_tag_name']:
@@ -46,13 +50,15 @@ def ensure_target(session, name, build_tag, dest_tag):
         needs_edit = True
         result['stdout_lines'].append('dest_tag_name: %s' % dest_tag)
     if needs_edit:
+        result['changed'] = True
+        if check_mode:
+            return result
         common_koji.ensure_logged_in(session)
         session.editBuildTarget(name, name, build_tag, dest_tag)
-        result['changed'] = True
     return result
 
 
-def delete_target(session, name):
+def delete_target(session, name, check_mode):
     """ Ensure that this tag is deleted from Koji. """
     targetinfo = session.getBuildTarget(name)
     result = dict(
@@ -83,6 +89,7 @@ def run_module():
     if not common_koji.HAS_KOJI:
         module.fail_json(msg='koji is required for this module')
 
+    check_mode = module.check_mode
     params = module.params
     profile = params['koji']
     name = params['name']
@@ -94,13 +101,14 @@ def run_module():
 
     if state == 'present':
         try:
-            result = ensure_target(session, name, build_tag, dest_tag)
+            result = ensure_target(session, name, check_mode, build_tag,
+                                   dest_tag)
         except Exception as e:
             raise AnsibleError(
                     'koji_target ensure_target failed:\n%s' % to_native(e))
     elif state == 'absent':
         try:
-            result = delete_target(session, name)
+            result = delete_target(session, name, check_mode)
         except Exception as e:
             raise AnsibleError(
                     'koji_target delete_target failed:\n%s' % to_native(e))
