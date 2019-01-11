@@ -30,21 +30,21 @@ def ensure_target(session, name, build_tag, dest_tag):
     :param dest_tag: Koji destination tag name, eg "f29-updates-candidate"
     """
     targetinfo = session.getBuildTarget(name)
-    result = {'changed': False}
+    result = {'changed': False, 'stdout_lines': []}
     if not targetinfo:
         common_koji.ensure_logged_in(session)
         session.createBuildTarget(name, build_tag, dest_tag)
         targetinfo = session.getBuildTarget(name)
-        result['stdout'] = 'created target %s' % targetinfo['id']
+        result['stdout_lines'].append('created target %s' % targetinfo['id'])
         result['changed'] = True
     # Ensure the build and destination tags are set for this target.
     needs_edit = False
     if build_tag != targetinfo['build_tag_name']:
         needs_edit = True
-        result['stdout'] = 'build_tag_name: %s' % build_tag
+        result['stdout_lines'].append('build_tag_name: %s' % build_tag)
     if dest_tag != targetinfo['dest_tag_name']:
         needs_edit = True
-        result['stdout'] = 'dest_tag_name: %s' % dest_tag
+        result['stdout_lines'].append('dest_tag_name: %s' % dest_tag)
     if needs_edit:
         common_koji.ensure_logged_in(session)
         session.editBuildTarget(name, name, build_tag, dest_tag)
