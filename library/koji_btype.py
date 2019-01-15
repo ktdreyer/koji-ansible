@@ -58,6 +58,7 @@ def run_module():
     if not common_koji.HAS_KOJI:
         module.fail_json(msg='koji is required for this module')
 
+    check_mode = module.check_mode
     params = module.params
     profile = params['koji']
     name = params['name']
@@ -71,9 +72,10 @@ def run_module():
         btype_data = session.listBTypes()
         btypes = [data['name'] for data in btype_data]
         if name not in btypes:
-            common_koji.ensure_logged_in(session)
-            session.addBType(name)
             result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.addBType(name)
     elif state == 'absent':
         module.fail_json(msg="Cannot remove Koji build types.",
                          changed=False, rc=1)
