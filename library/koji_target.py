@@ -17,6 +17,40 @@ DOCUMENTATION = '''
 module: koji_target
 
 short_description: Create and manage Koji targets
+description:
+   - Create, update, and delete targets within Koji.
+options:
+   name:
+     description:
+       - The name of the Koji target to create and manage.
+     required: true
+   build_tag:
+     description:
+       - The name of the "build" or "buildroot" tag. The latest builds in
+         this tag will be available in the buildroot when you build an RPM or
+         container for this Koji target. Example: "f29-build"
+     required: true
+   dest_tag:
+     description:
+       - The name of the "destination" tag. When Koji completes a build for
+         this target, it will tag that build into this destination tag.
+         Example: "f29-updates-candidate"
+     required: true
+requirements:
+  - "python >= 2.7"
+  - "koji"
+'''
+
+EXAMPLES = '''
+- name: create a koji target
+  hosts: localhost
+  tasks:
+
+    - name: Configure CBS target
+      koji_target:
+        name: storage7-ceph-nautilus-el7
+        build_tag: storage7-ceph-nautilus-el7-build
+        dest_tag: storage7-ceph-nautilus-candidate
 '''
 
 
