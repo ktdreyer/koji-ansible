@@ -39,6 +39,25 @@ options:
      required: true
 '''
 
+EXAMPLES = '''
+- name: Add deb archive types into koji
+  hosts: localhost
+  tasks:
+    - name: Add deb archive type
+      koji_archivetype:
+        name: deb
+        description: Debian packages
+        extensions: deb
+        state: present
+
+    - name: Add dsc archive type
+      koji_archivetype:
+        name: dsc
+        description: Debian source control files
+        extensions: dsc
+        state: present
+'''
+
 RETURN = ''' # '''
 
 
