@@ -64,7 +64,8 @@ def run_module():
     )
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        # check mode needs https://pagure.io/koji/pull-request/1160
+        supports_check_mode=False
     )
 
     if not common_koji.HAS_KOJI:
