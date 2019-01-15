@@ -15,7 +15,30 @@ DOCUMENTATION = '''
 module: koji_btype
 
 short_description: Create and manage Koji build types
+description:
+   - Every build in Koji has a "type". This module allows you to define
+     entirely new build types in Koji. These are typically in support of
+     `content generators <https://docs.pagure.org/koji/content_generators/>`_.
+   - Koji only supports adding new build types, not deleting them.
+
+options:
+   name:
+     description:
+       - The name of the Koji build type to create. Example: "debian".
+     required: true
 '''
+
+EXAMPLES = '''
+- name: create a debian btype in koji
+  hosts: localhost
+  tasks:
+    - name: Create a koji debian btype
+      koji_btype:
+        name: debian
+        state: present
+'''
+
+RETURN = ''' # '''
 
 
 def run_module():
