@@ -58,6 +58,7 @@ def run_module():
     if not common_koji.HAS_KOJI:
         module.fail_json(msg='koji is required for this module')
 
+    check_mode = module.check_mode
     params = module.params
     profile = params['koji']
     name = params['name']
@@ -71,9 +72,10 @@ def run_module():
 
     if state == 'present':
         if not session.getArchiveType(type_name=name):
-            common_koji.ensure_logged_in(session)
-            session.addArchiveType(name, description, extensions)
             result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.addArchiveType(name, description, extensions)
     elif state == 'absent':
         module.fail_json(msg="Cannot remove Koji archive types.",
                          changed=False, rc=1)
