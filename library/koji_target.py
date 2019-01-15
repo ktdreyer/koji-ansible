@@ -22,7 +22,7 @@ short_description: Create and manage Koji targets
 
 def ensure_target(session, name, check_mode, build_tag, dest_tag):
     """
-    Ensure that this tag exists in Koji.
+    Ensure that this target exists in Koji.
 
     :param session: Koji client session
     :param name: Koji target name
