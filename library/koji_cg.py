@@ -17,7 +17,42 @@ DOCUMENTATION = '''
 module: koji_cg
 
 short_description: Create and manage Koji content generators
+description:
+   - This module can grant or revoke access to a `content generator
+     <https://docs.pagure.org/koji/content_generators/>`_ for a user account.
+   - Note, this method tries to call the "grantCGAccess" RPC on every run
+     because we have no ability to query the current state. See the `listCGs
+     <https://pagure.io/koji/pull-request/1160>`_ hub RPC in progress.
+
+options:
+   name:
+     description:
+       - The name of the Koji content generator. Example: "debian".
+     required: true
+   user:
+     description:
+       - The name of the Koji user account. Example: "cguser".
+       - This user account must already exist in Koji's database. For example,
+         you may run an authenticated "koji hello" command to create the
+         account database entry.
+     required: true
+requirements:
+  - "python >= 2.7"
+  - "koji"
 '''
+
+EXAMPLES = '''
+- name: Grant a user access to a content generator.
+  hosts: localhost
+  tasks:
+    - name: Grant access to the rcm/debbuild account
+      koji_cg:
+        name: debian
+        user: rcm/debbuild
+        state: present
+'''
+
+RETURN = ''' # '''
 
 
 def run_module():
