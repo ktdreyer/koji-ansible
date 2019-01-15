@@ -129,8 +129,6 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
                      editTag2 RPCs.
     """
     taginfo = session.getTag(name)
-    # fixme: we're clobbering 'stdout' here every time we make a change. maybe
-    # use 'stdout_lines' instead or something.
     result = {'changed': False, 'stdout_lines': []}
     if not taginfo:
         if check_mode:
