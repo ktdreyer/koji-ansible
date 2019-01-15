@@ -15,10 +15,31 @@ DOCUMENTATION = '''
 module: koji_archivetype
 
 short_description: Create and manage Koji archive types
+description:
+   - Create and manage Koji archive types
+   - Note: this relies on an API not yet in Koji upstream:
+     https://pagure.io/koji/pull-request/1149
 
-Note: this relies on an API not yet in Koji upstream:
-https://pagure.io/koji/pull-request/1149
+options:
+   name:
+     description:
+       - The name of the Koji archive type to create and manage. Example:
+         "deb".
+     required: true
+   description:
+     description:
+       - The human-readable description of this Koji archive type. Example:
+         "Debian packages". Koji uses this value in the UI tooling that display
+         a build's files.
+     required: true
+   extensions:
+     description:
+       - The file extensions for this Koji archive type. Example: "deb" means
+         Koji will apply this archive type to files that end in ".deb".
+     required: true
 '''
+
+RETURN = ''' # '''
 
 
 def run_module():
