@@ -34,6 +34,11 @@ options:
    inheritance:
      description:
        - How to set inheritance. what happens when it's unset.
+   external_repos:
+     description:
+       - list of Koji external repos to set for this tag. Each element of the
+         list should have a "name" (external repo name) and "priority"
+         (integer).
    packages:
      description:
        - dict of package owners and the a lists of packages each owner
@@ -97,6 +102,15 @@ EXAMPLES = '''
         inheritance:
         - parent: ceph-3.1-rhel-7
           priority: 0
+
+    - name: Create a tag that uses an external repo
+      koji_tag:
+        koji: kojidev
+        name: storage7-ceph-nautilus-el7-build
+        state: present
+        external_repos:
+        - repo: centos7-cr
+          priority: 5
 '''
 
 RETURN = ''' # '''
@@ -113,7 +127,55 @@ def get_perm_id(session, name):
     return perm_cache[name]
 
 
-def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
+def ensure_external_repos(session, tag_name, check_mode, repos):
+    """
+    Ensure that these external repos are configured on this Koji tag.
+
+    :param session: Koji client session
+    :param str tag_name: Koji tag name
+    :param bool check_mode: don't make any changes
+    :param list repos: ensure these external repos are set, and no others.
+    """
+    result = {'changed': False, 'stdout_lines': []}
+    current_repo_list = session.getTagExternalRepos(tag_name)
+    current = {repo['external_repo_name']: repo for repo in current_repo_list}
+    for repo in repos:
+        repo_name = repo['repo']
+        repo_priority = repo['priority']
+        if repo_name in current:
+            # The repo is present for this tag.
+            # Now ensure the priority is correct.
+            if repo_priority == current[repo_name]['priority']:
+                continue
+            result['changed'] = True
+            msg = 'set %s repo priority to %i' % (repo_name, repo_priority)
+            result['stdout_lines'].append(msg)
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.editTagExternalRepo(tag_name, repo_name, repo_priority)
+            continue
+        result['changed'] = True
+        msg = 'add %s external repo to %s' % (repo_name, tag_name)
+        result['stdout_lines'].append(msg)
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.addExternalRepoToTag(tag_name, repo_name, repo_priority)
+    # Find the repos to remove from this tag.
+    repo_names = [repo['repo'] for repo in repos]
+    current_names = current.keys()
+    repos_to_remove = set(current_names) - set(repo_names)
+    for repo_name in repos_to_remove:
+        result['changed'] = True
+        msg = 'removed %s repo from %s tag' % (repo_name, tag_name)
+        result['stdout_lines'].append(msg)
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.removeExternalRepoFromTag(tag_name, repo_name)
+    return result
+
+
+def ensure_tag(session, name, check_mode, inheritance, external_repos,
+               packages, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
@@ -122,6 +184,7 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
     :param check_mode: don't make any changes
     :param inheritance: Koji tag inheritance settings. These will be translated
                         for Koji's setInheritanceData RPC.
+    :param external_repos: Koji external repos to set for this tag.
     :param packages: dict of packages to add ("whitelist") for this tag.
                      If this is an empty dict, we don't touch the package list
                      for this tag.
@@ -187,6 +250,13 @@ def ensure_tag(session, name, check_mode, inheritance, packages, **kwargs):
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.setInheritanceData(name, rules, clear=True)
+    # Ensure external repos.
+    if external_repos is not None:
+        repos_result = ensure_external_repos(session, name, check_mode,
+                                             external_repos)
+        if repos_result['changed']:
+            result['changed'] = True
+        result['stdout_lines'].extend(repos_result['stdout_lines'])
     # Ensure package list.
     if packages:
         # Note: this in particular could really benefit from koji's
@@ -250,6 +320,7 @@ def run_module():
         name=dict(type='str', required=True),
         state=dict(type='str', required=False, default='present'),
         inheritance=dict(type='list', required=False, default=[]),
+        external_repos=dict(type='list', required=False, default=None),
         packages=dict(type='dict', required=False, default={}),
         arches=dict(type='str', required=False, default=None),
         perm=dict(type='str', required=False, default=None),
@@ -279,6 +350,7 @@ def run_module():
             result = ensure_tag(session, name,
                                 check_mode,
                                 inheritance=params['inheritance'],
+                                external_repos=params['external_repos'],
                                 packages=params['packages'],
                                 arches=params['arches'],
                                 perm=params['perm'] or None,

@@ -54,6 +54,10 @@ within Koji.
         url: http://mirror.centos.org/centos/7/cr/$arch/
         state: present
 
+You can then configure these repositories (and their priorities) on each of
+your Koji tags with the ``external_repos`` parameter to the ``koji_tag``
+module.
+
 koji_cg
 -------
 
