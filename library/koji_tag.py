@@ -27,7 +27,7 @@ short_description: Create and manage Koji tags
 description:
    - Create and manage Koji tags
 options:
-   inheritance:
+   name:
      description:
        - The name of the Koji tag to create and manage.
      required: true
