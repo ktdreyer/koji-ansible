@@ -127,7 +127,7 @@ koji_host
 The ``koji_host`` module can add new hosts and manage existing hosts.
 
 Koji only supports adding new hosts, not deleting them. Once they're defined,
-you can enable or disable the hosts with ``status: enabled`` or ``status:
+you can enable or disable the hosts with ``state: enabled`` or ``state:
 disabled``.
 
 .. code-block:: yaml
