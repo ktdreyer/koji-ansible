@@ -21,10 +21,12 @@ class TestEnsureHostUnchanged(object):
 
     def test_state_enabled(self):
         session = FakeKojiSession(_getHost={'enabled': True, 'arches': ''})
-        result = koji_host.ensure_host(session, 'builder', 'enabled', [], None)
+        result = koji_host.ensure_host(session, 'builder', False, 'enabled',
+                                       [], None)
         assert result['changed'] is False
 
     def test_state_disabled(self):
         session = FakeKojiSession(_getHost={'enabled': False, 'arches': ''})
-        result = koji_host.ensure_host(session, 'builder', 'disabled', [], None)
+        result = koji_host.ensure_host(session, 'builder', False, 'disabled',
+                                       [], None)
         assert result['changed'] is False
