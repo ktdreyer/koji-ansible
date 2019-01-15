@@ -53,12 +53,14 @@ EXAMPLES = '''
 '''
 
 
-def ensure_host(session, name, state, arches, krb_principal, **kwargs):
+def ensure_host(session, name, check_mode, state, arches, krb_principal,
+                **kwargs):
     """
     Ensure that this host is configured in Koji.
 
     :param session: Koji client session
     :param str name: Koji builder host name
+    :param bool check_mode: don't make any changes
     :param str state: "enabled" or "disabled"
     :param list arches: list of arches for this tag.
     :param str krb_principal: custom kerberos principal, or None
@@ -67,20 +69,24 @@ def ensure_host(session, name, state, arches, krb_principal, **kwargs):
     result = {'changed': False}
     host = session.getHost(name)
     if not host:
+        result['changed'] = True
+        if check_mode:
+            return result
         common_koji.ensure_logged_in(session)
         id_ = session.addHost(name, arches, krb_principal)
-        result['changed'] = True
         host = session.getHost(id_)
     if state == 'enabled':
         if not host['enabled']:
-            common_koji.ensure_logged_in(session)
-            session.enableHost(name)
             result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.enableHost(name)
     if state == 'disabled':
         if host['enabled']:
-            common_koji.ensure_logged_in(session)
-            session.disableHost(name)
             result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.disableHost(name)
     edits = {}
     if ' '.join(arches) != host['arches']:
         edits['arches'] = ' '.join(arches)
@@ -90,9 +96,10 @@ def ensure_host(session, name, state, arches, krb_principal, **kwargs):
         if key in host and kwargs[key] != host[key]:
             edits[key] = value
     if edits:
-        common_koji.ensure_logged_in(session)
-        session.editHost(name, **edits)
         result['changed'] = True
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.editHost(name, **edits)
     return result
 
 
@@ -115,6 +122,7 @@ def run_module():
     if not common_koji.HAS_KOJI:
         module.fail_json(msg='koji is required for this module')
 
+    check_mode = module.check_mode
     params = module.params
     profile = params['koji']
     name = params['name']
@@ -127,7 +135,7 @@ def run_module():
                          changed=False, rc=1)
 
     try:
-        result = ensure_host(session, name, state,
+        result = ensure_host(session, name, check_mode, state,
                              arches=params['arches'],
                              krb_principal=params['krb_principal'],
                              capacity=params['capacity'],
