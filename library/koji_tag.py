@@ -292,7 +292,7 @@ def run_module():
                     % (name, to_native(e), params))
     elif state == 'absent':
         try:
-            result = delete_tag(session, name)
+            result = delete_tag(session, name, check_mode)
         except Exception as e:
             raise AnsibleError(
                     "koji_tag delete_tag '%s' failed:\n%s"
