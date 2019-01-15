@@ -17,6 +17,39 @@ DOCUMENTATION = '''
 module: koji_host
 
 short_description: Create and manage Koji build hosts
+description:
+   - This module can add new hosts and manage existing hosts.
+   - Koji only supports adding new hosts, not deleting them. Once they are
+     defined, you can enable or disable the hosts with "state: enabled" or
+     "state: disabled".
+
+options:
+   name:
+     description:
+       - The name of the Koji builder. Example: "builder1.example.com".
+     required: true
+   arches:
+     description:
+       - The list of arches this host supports. Example: [x86_64]
+     required: true
+   state:
+     description:
+       - Whether to set this host as "enabled" or "disabled". If unset, this
+         defaults to "enabled".
+requirements:
+  - "python >= 2.7"
+  - "koji"
+'''
+
+EXAMPLES = '''
+- name: create a koji host
+  hosts: localhost
+  tasks:
+    - name: Add new builder1 host
+      koji_host:
+        name: builder1.example.com
+        arches: [x86_64]
+        state: enabled
 '''
 
 
