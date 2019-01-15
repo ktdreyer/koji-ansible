@@ -39,6 +39,21 @@ The ``koji_target`` module can create, update, and delete targets within Koji.
         dest_tag: f29-updates-candidate
         state: present
 
+koji_external_repo
+------------------
+
+The ``koji_external_repo`` module can create, update, and delete `external
+repositories <https://docs.pagure.org/koji/external_repo_server_bootstrap/>`_
+within Koji.
+
+.. code-block:: yaml
+
+    - name: Create an external repo for CentOS "CR"
+      koji_external_repo:
+        name: centos7-cr
+        url: http://mirror.centos.org/centos/7/cr/$arch/
+        state: present
+
 koji_cg
 -------
 
