@@ -26,6 +26,9 @@ options:
      description:
        - The name of the Koji build type to create. Example: "debian".
      required: true
+requirements:
+  - "python >= 2.7"
+  - "koji"
 '''
 
 EXAMPLES = '''
