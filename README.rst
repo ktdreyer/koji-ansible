@@ -71,7 +71,7 @@ entry.
 .. code-block:: yaml
 
     - name: Grant access to the rcm/debbuild account
-      koji_tag:
+      koji_cg:
         koji: mykoji
         name: debian
         user: rcm/debbuild
