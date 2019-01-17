@@ -36,6 +36,22 @@ options:
      description:
        - Whether to set this host as "enabled" or "disabled". If unset, this
          defaults to "enabled".
+   krb_principal:
+     description:
+       - Set a non-default krb principal for this host. If unset, Koji will
+         use the standard krb principal scheme for builder accounts.
+   capacity:
+     description:
+       - Total task weight for this host. This is a float value, example:
+         10.0. If unset, Koji will use the standard capacity for a host (2.0).
+   description:
+     description:
+       - Human-readable description for this host.
+   comment:
+     description:
+       - Human-readable comment explaining the current state of the host. You
+         may write a description here explaining how this host was set up, or
+         why this host is currently offline.
 requirements:
   - "python >= 2.7"
   - "koji"
