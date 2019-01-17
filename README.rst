@@ -138,6 +138,24 @@ disabled``.
         arches: [x86_64]
         state: enabled
 
+koji_user
+---------
+
+The ``koji_user`` module can add new users and manage existing users and
+permissions.
+
+Koji only supports adding new users, not deleting them. Once they're defined,
+you can enable or disable the users with ``state: enabled`` or ``state:
+disabled``.
+
+.. code-block:: yaml
+
+    - name: Add new kdreyer user
+      koji_user:
+        name: kdreyer
+        state: enabled
+        permissions: [admin]
+
 Koji profiles
 -------------
 
