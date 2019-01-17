@@ -1,5 +1,4 @@
-# from common_koji import get_profile_name, get_session, ensure_logged_in
-from common_koji import get_profile_name
+from ansible.module_utils.common_koji import get_profile_name
 import pytest
 
 
