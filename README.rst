@@ -206,7 +206,6 @@ and you should run the playbook like so::
 TODO
 ----
 
-* Ansible-compatible docs
 * Unit tests
 * A lower-level ``koji_call`` module to make arbitrary RPCs? Like
 
