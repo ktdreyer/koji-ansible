@@ -127,6 +127,44 @@ def get_perm_id(session, name):
     return perm_cache[name]
 
 
+def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
+    """
+    Ensure that these inheritance rules are configured on this Koji tag.
+
+    :param session: Koji client session
+    :param str tag_name: Koji tag name
+    :param int tag_id: Koji tag ID
+    :param bool check_mode: don't make any changes
+    :param list inheritance: ensure these rules are set, and no others
+    """
+    rules = []
+    result = {'changed': False, 'stdout_lines': []}
+    for rule in sorted(inheritance, key=lambda i: i['priority']):
+        parent_name = rule['parent']
+        parent_taginfo = session.getTag(parent_name)
+        if not parent_taginfo:
+            raise ValueError("parent tag '%s' not found" % parent_name)
+        parent_id = parent_taginfo['id']
+        new_rule = {
+            'child_id': tag_id,
+            'intransitive': False,
+            'maxdepth': None,
+            'name': parent_name,
+            'noconfig': False,
+            'parent_id': parent_id,
+            'pkg_filter': '',
+            'priority': rule['priority']}
+        rules.append(new_rule)
+    current_inheritance = session.getInheritanceData(tag_name)
+    if current_inheritance != rules:
+        result['stdout_lines'].append('inheritance is %s' % inheritance)
+        result['changed'] = True
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            session.setInheritanceData(tag_name, rules, clear=True)
+    return result
+
+
 def ensure_external_repos(session, tag_name, check_mode, repos):
     """
     Ensure that these external repos are configured on this Koji tag.
@@ -139,7 +177,10 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
     result = {'changed': False, 'stdout_lines': []}
     current_repo_list = session.getTagExternalRepos(tag_name)
     current = {repo['external_repo_name']: repo for repo in current_repo_list}
-    for repo in repos:
+    current_priorities = {
+        str(repo['priority']): repo for repo in current_repo_list
+    }
+    for repo in sorted(repos, key=lambda r: r['priority']):
         repo_name = repo['repo']
         repo_priority = repo['priority']
         if repo_name in current:
@@ -153,6 +194,22 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.editTagExternalRepo(tag_name, repo_name, repo_priority)
+            continue
+        elif str(repo_priority) in current_priorities:
+            # No need to check for name equivalence here; it would already
+            # have happened
+            result['changed'] = True
+            msg = 'set repo at priority %i to %s' % (repo_priority, repo_name)
+            result['stdout_lines'].append(msg)
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                same_priority_repo = current_priorities.get(
+                        str(repo_priority)).get('external_repo_name')
+                session.removeExternalRepoFromTag(tag_name, same_priority_repo)
+                session.addExternalRepoToTag(
+                        tag_name, repo_name, repo_priority)
+                # Prevent duplicate attempts
+                del current_priorities[str(repo_priority)]
             continue
         result['changed'] = True
         msg = 'add %s external repo to %s' % (repo_name, tag_name)
@@ -172,6 +229,66 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
             common_koji.ensure_logged_in(session)
             session.removeExternalRepoFromTag(tag_name, repo_name)
     return result
+
+
+def ensure_packages(session, tag_name, tag_id, check_mode, packages):
+    """
+    Ensure that these packages are configured on this Koji tag.
+
+    :param session: Koji client session
+    :param str tag_name: Koji tag name
+    :param int tag_id: Koji tag ID
+    :param bool check_mode: don't make any changes
+    :param dict packages: ensure these packages are set (?)
+    """
+    result = {'changed': False, 'stdout_lines': []}
+    # Note: this in particular could really benefit from koji's
+    # multicalls...
+    common_koji.ensure_logged_in(session)
+    current_pkgs = session.listPackages(tagID=tag_id)
+    current_names = set([pkg['package_name'] for pkg in current_pkgs])
+    # Create a "current_owned" dict to compare with what's in Ansible.
+    current_owned = defaultdict(set)
+    for pkg in current_pkgs:
+        owner = pkg['owner_name']
+        pkg_name = pkg['package_name']
+        current_owned[owner].add(pkg_name)
+    for owner, owned in packages.items():
+        for package in owned:
+            if package not in current_names:
+                # The package was missing from the tag entirely.
+                if not check_mode:
+                    session.packageListAdd(tag_name, package, owner)
+                result['stdout_lines'].append('added pkg %s' % package)
+                result['changed'] = True
+            else:
+                # The package is already in this tag.
+                # Verify ownership.
+                if package not in current_owned.get(owner, []):
+                    if not check_mode:
+                        session.packageListSetOwner(tag_name, package, owner)
+                    result['stdout_lines'].append('set %s owner %s' %
+                                                  (package, owner))
+                    result['changed'] = True
+    # Delete any packages not in Ansible.
+    all_names = [name for names in packages.values() for name in names]
+    delete_names = set(current_names) - set(all_names)
+    for package in delete_names:
+        result['stdout_lines'].append('remove pkg %s' % package)
+        result['changed'] = True
+        if not check_mode:
+            session.packageListRemove(tag_name, package, owner)
+    return result
+
+
+def compound_parameter_present(param_name, param, expected_type):
+    if param not in (None, ''):
+        if not isinstance(param, expected_type):
+            raise ValueError(param_name + ' must be a '
+                             + expected_type.__class__.__name__
+                             + ', not a ' + param.__class__.__name__)
+        return True
+    return False
 
 
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
@@ -208,9 +325,12 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
     else:
         # The tag name already exists. Ensure all the parameters are set.
         edits = {}
+        edit_log = []
         for key, value in kwargs.items():
             if taginfo[key] != value:
                 edits[key] = value
+                edit_log.append('%s: changed %s from "%s" to "%s"'
+                                % (name, key, taginfo[key], value))
         # Find out which "extra" items we must explicitly remove
         # ("remove_extra" argument to editTag2).
         if 'extra' in kwargs:
@@ -219,82 +339,40 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                     if 'remove_extra' not in edits:
                         edits['remove_extra'] = []
                     edits['remove_extra'].append(key)
+            if 'remove_extra' in edits:
+                edit_log.append('%s: remove extra fields "%s"'
+                                % (name, '", "'.join(edits['remove_extra'])))
         if edits:
-            result['stdout_lines'].append(str(edits))
+            result['stdout_lines'].extend(edit_log)
             result['changed'] = True
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.editTag2(name, **edits)
+
     # Ensure inheritance rules are all set.
-    rules = []
-    for rule in inheritance:
-        parent_name = rule['parent']
-        parent_taginfo = session.getTag(parent_name)
-        if not parent_taginfo:
-            raise ValueError("parent tag '%s' not found" % parent_name)
-        parent_id = parent_taginfo['id']
-        new_rule = {
-            'child_id': taginfo['id'],
-            'intransitive': False,
-            'maxdepth': None,
-            'name': parent_name,
-            'noconfig': False,
-            'parent_id': parent_id,
-            'pkg_filter': '',
-            'priority': rule['priority']}
-        rules.append(new_rule)
-    current_inheritance = session.getInheritanceData(name)
-    if current_inheritance != rules:
-        result['stdout_lines'].append('inheritance is %s' % inheritance)
-        result['changed'] = True
-        if not check_mode:
-            common_koji.ensure_logged_in(session)
-            session.setInheritanceData(name, rules, clear=True)
+    if compound_parameter_present('inheritance', inheritance, list):
+        inheritance_result = ensure_inheritance(session, name, taginfo['id'],
+                                                check_mode, inheritance)
+        if inheritance_result['changed']:
+            result['changed'] = True
+        result['stdout_lines'].extend(inheritance_result['stdout_lines'])
+
     # Ensure external repos.
-    if external_repos is not None:
+    if compound_parameter_present('external_repos', external_repos, list):
         repos_result = ensure_external_repos(session, name, check_mode,
                                              external_repos)
         if repos_result['changed']:
             result['changed'] = True
         result['stdout_lines'].extend(repos_result['stdout_lines'])
+
     # Ensure package list.
-    if packages:
-        # Note: this in particular could really benefit from koji's
-        # multicalls...
-        common_koji.ensure_logged_in(session)
-        current_pkgs = session.listPackages(tagID=taginfo['id'])
-        current_names = set([pkg['package_name'] for pkg in current_pkgs])
-        # Create a "current_owned" dict to compare with what's in Ansible.
-        current_owned = defaultdict(set)
-        for pkg in current_pkgs:
-            owner = pkg['owner_name']
-            pkg_name = pkg['package_name']
-            current_owned[owner].add(pkg_name)
-        for owner, owned in packages.items():
-            for package in owned:
-                if package not in current_names:
-                    # The package was missing from the tag entirely.
-                    if not check_mode:
-                        session.packageListAdd(name, package, owner)
-                    result['stdout_lines'].append('added pkg %s' % package)
-                    result['changed'] = True
-                else:
-                    # The package is already in this tag.
-                    # Verify ownership.
-                    if package not in current_owned.get(owner, []):
-                        if not check_mode:
-                            session.packageListSetOwner(name, package, owner)
-                        result['stdout_lines'].append('set %s owner %s' %
-                                                      (package, owner))
-                        result['changed'] = True
-        # Delete any packages not in Ansible.
-        all_names = [name for names in packages.values() for name in names]
-        delete_names = set(current_names) - set(all_names)
-        for package in delete_names:
-            result['stdout_lines'].append('remove pkg %s' % package)
+    if compound_parameter_present('packages', packages, dict):
+        packages_result = ensure_packages(session, name, taginfo['id'],
+                                          check_mode, packages)
+        if packages_result['changed']:
             result['changed'] = True
-            if not check_mode:
-                session.packageListRemove(name, package, owner)
+        result['stdout_lines'].extend(packages_result['stdout_lines'])
+
     return result
 
 
@@ -319,9 +397,9 @@ def run_module():
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         state=dict(type='str', required=False, default='present'),
-        inheritance=dict(type='list', required=False, default=[]),
-        external_repos=dict(type='list', required=False, default=None),
-        packages=dict(type='dict', required=False, default={}),
+        inheritance=dict(type='raw', required=False, default=None),
+        external_repos=dict(type='raw', required=False, default=None),
+        packages=dict(type='raw', required=False, default=None),
         arches=dict(type='str', required=False, default=None),
         perm=dict(type='str', required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
