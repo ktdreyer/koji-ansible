@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
-import common_koji
+from ansible.module_utils import common_koji
 
 try:
     from __main__ import display

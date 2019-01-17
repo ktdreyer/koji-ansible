@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-import common_koji
+from ansible.module_utils import common_koji
 
 
 ANSIBLE_METADATA = {
