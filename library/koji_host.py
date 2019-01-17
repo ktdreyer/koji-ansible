@@ -62,7 +62,7 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
     :param str name: Koji builder host name
     :param bool check_mode: don't make any changes
     :param str state: "enabled" or "disabled"
-    :param list arches: list of arches for this tag.
+    :param list arches: list of arches for this builder.
     :param str krb_principal: custom kerberos principal, or None
     :param **kwargs: Pass remaining kwargs directly into Koji's editHost RPC.
     """
