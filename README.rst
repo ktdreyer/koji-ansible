@@ -207,19 +207,6 @@ TODO
 ----
 
 * Unit tests
-* A lower-level ``koji_call`` module to make arbitrary RPCs? Like
-
-  .. code-block:: yaml
-
-      koji_call:
-        name: createTag
-        args:
-          name: ceph-3.2-rhel-7
-          parent: ...
-        failable: true
-
-  This is going to fail a lot of the time (eg createTag for a tag name that
-  already exists).
 
 * The long-term goal of this project is to merge into `ansible
   <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ itself
