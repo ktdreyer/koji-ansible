@@ -1,7 +1,5 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.errors import AnsibleError
 import common_koji
 
 
@@ -96,7 +94,7 @@ def run_module():
             result['changed'] = True
         except common_koji.koji.GenericError as e:
             if 'User already has access to content generator' not in str(e):
-                raise AnsibleError(to_native(e))
+                raise
     elif state == 'absent':
         # There's no indication whether this changed anything, so we're going
         # to be pessimistic and say we're always changing it.

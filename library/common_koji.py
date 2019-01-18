@@ -1,5 +1,4 @@
 import os
-from ansible.errors import AnsibleError
 try:
     import koji
     from koji_cli.lib import activate_session
@@ -15,7 +14,7 @@ def get_profile_name(profile):
     :param str profile: profile name, like "koji" or "cbs", or None. If None,
                         we will use return the "KOJI_PROFILE" environment
                         variable. If we could find no profile name, raise
-                        AnsibleError.
+                        ValueError.
     :returns: str, the profile name
     """
     if profile:
@@ -23,8 +22,8 @@ def get_profile_name(profile):
     profile = os.getenv('KOJI_PROFILE')
     if profile:
         return profile
-    raise AnsibleError('set a profile "koji" argument for this task, or set '
-                       'the KOJI_PROFILE environment variable')
+    raise ValueError('set a profile "koji" argument for this task, or set '
+                     'the KOJI_PROFILE environment variable')
 
 
 def get_session(profile):

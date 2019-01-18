@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.errors import AnsibleError
 import common_koji
 
 
@@ -142,12 +141,9 @@ def run_module():
         module.fail_json(msg="State must be 'enabled' or 'disabled'.",
                          changed=False, rc=1)
 
-    try:
-        result = ensure_user(session, name, check_mode, state,
-                             permissions=params['permissions'],
-                             krb_principal=params['krb_principal'])
-    except Exception as e:
-        raise AnsibleError('koji_user ensure_user failed:\n%s' % to_native(e))
+    result = ensure_user(session, name, check_mode, state,
+                         permissions=params['permissions'],
+                         krb_principal=params['krb_principal'])
 
     module.exit_json(**result)
 

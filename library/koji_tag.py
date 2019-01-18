@@ -1,7 +1,5 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.errors import AnsibleError
 from collections import defaultdict
 import common_koji
 
@@ -424,29 +422,19 @@ def run_module():
     session = common_koji.get_session(profile)
 
     if state == 'present':
-        try:
-            result = ensure_tag(session, name,
-                                check_mode,
-                                inheritance=params['inheritance'],
-                                external_repos=params['external_repos'],
-                                packages=params['packages'],
-                                arches=params['arches'],
-                                perm=params['perm'] or None,
-                                locked=params['locked'],
-                                maven_support=params['maven_support'],
-                                maven_include_all=params['maven_include_all'],
-                                extra=params['extra'])
-        except Exception as e:
-            raise AnsibleError(
-                    "koji_tag ensure_tag '%s' failed:\n%s\nparameters:\n%s"
-                    % (name, to_native(e), params))
+        result = ensure_tag(session, name,
+                            check_mode,
+                            inheritance=params['inheritance'],
+                            external_repos=params['external_repos'],
+                            packages=params['packages'],
+                            arches=params['arches'],
+                            perm=params['perm'] or None,
+                            locked=params['locked'],
+                            maven_support=params['maven_support'],
+                            maven_include_all=params['maven_include_all'],
+                            extra=params['extra'])
     elif state == 'absent':
-        try:
-            result = delete_tag(session, name, check_mode)
-        except Exception as e:
-            raise AnsibleError(
-                    "koji_tag delete_tag '%s' failed:\n%s"
-                    % (name, to_native(e)))
+        result = delete_tag(session, name, check_mode)
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)

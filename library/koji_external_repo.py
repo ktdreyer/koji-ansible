@@ -1,7 +1,5 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.errors import AnsibleError
 from collections import defaultdict
 import common_koji
 
@@ -141,19 +139,9 @@ def run_module():
     if state == 'present':
         if not url:
             module.fail_json(msg='you must set a url for this external_repo')
-        try:
-            result = ensure_external_repo(session, name, check_mode, url)
-        except Exception as e:
-            raise AnsibleError(
-                    "koji_external_repo '%s' failed:\n%s\nparameters:\n%s"
-                    % (name, to_native(e), params))
+        result = ensure_external_repo(session, name, check_mode, url)
     elif state == 'absent':
-        try:
-            result = delete_external_repo(session, name, check_mode)
-        except Exception as e:
-            raise AnsibleError(
-                    "koji_external_repo '%s' failed:\n%s"
-                    % (name, to_native(e)))
+        result = delete_external_repo(session, name, check_mode)
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)

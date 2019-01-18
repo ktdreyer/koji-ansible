@@ -1,6 +1,5 @@
 # from common_koji import get_profile_name, get_session, ensure_logged_in
 from common_koji import get_profile_name
-from ansible.errors import AnsibleError
 import pytest
 
 
@@ -14,7 +13,7 @@ def test_get_profile_name_from_env(monkeypatch):
 
 
 def test_get_profile_name_error():
-    with pytest.raises(AnsibleError) as e:
+    with pytest.raises(ValueError) as e:
         get_profile_name(None)
     assert 'KOJI_PROFILE environment variable' in str(e)
 
