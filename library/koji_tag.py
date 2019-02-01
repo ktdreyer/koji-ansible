@@ -41,6 +41,9 @@ options:
      description:
        - dict of package owners and the a lists of packages each owner
          maintains.
+   groups:
+     description:
+       - dict of group names and the lists of packages each group contains.
    arches:
      description:
        - space-separated string of arches this Koji tag supports.
@@ -91,6 +94,10 @@ EXAMPLES = '''
             - ansible
             - ceph
             - ceph-ansible
+        groups:
+          srpm-build:
+            - rpm-build
+            - fedpkg
 
     - name: Create a candidate koji tag
       koji_tag:
@@ -279,6 +286,51 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     return result
 
 
+def ensure_groups(session, tag_id, check_mode, desired_groups):
+    """
+    Ensure that these groups are configured on this Koji tag.
+
+    :param session: Koji client session
+    :param int tag_id: Koji tag ID
+    :param bool check_mode: don't make any changes
+    :param dict desired_groups: ensure these groups are set (?)
+    """
+    result = {'changed': False, 'stdout_lines': []}
+    common_koji.ensure_logged_in(session)
+    current_groups = session.getTagGroups(tag_id, inherit=False)
+    for group in current_groups:
+        if group['name'] not in desired_groups:
+            if not check_mode:
+                session.groupListRemove(tag_id, group['name'])
+            result['stdout_lines'].append('removed group %s' % group['name'])
+            result['changed'] = True
+    for group_name, desired_pkgs in desired_groups.items():
+        for group in current_groups:
+            if group['name'] == group_name:
+                current_pkgs = [entry['package']
+                                for entry in group['packagelist']]
+                break
+        else:
+            current_pkgs = []
+            if not check_mode:
+                session.groupListAdd(tag_id, group_name)
+            result['stdout_lines'].append('added group %s' % group_name)
+            result['changed'] = True
+        for package in current_pkgs:
+            if package not in desired_pkgs:
+                if not check_mode:
+                    session.groupPackageListRemove(tag_id, group_name, package)
+                result['stdout_lines'].append('removed pkg %s from group %s' % (package, group_name))
+                result['changed'] = True
+        for package in desired_pkgs:
+            if package not in current_pkgs:
+                if not check_mode:
+                    session.groupPackageListAdd(tag_id, group_name, package)
+                result['stdout_lines'].append('added pkg %s to group %s' % (package, group_name))
+                result['changed'] = True
+    return result
+
+
 def compound_parameter_present(param_name, param, expected_type):
     if param not in (None, ''):
         if not isinstance(param, expected_type):
@@ -290,7 +342,7 @@ def compound_parameter_present(param_name, param, expected_type):
 
 
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
-               packages, **kwargs):
+               packages, groups, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
@@ -371,6 +423,14 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
             result['changed'] = True
         result['stdout_lines'].extend(packages_result['stdout_lines'])
 
+    # Ensure group list.
+    if compound_parameter_present('groups', groups, dict):
+        groups_result = ensure_groups(session, taginfo['id'],
+                                      check_mode, groups)
+        if groups_result['changed']:
+            result['changed'] = True
+        result['stdout_lines'].extend(groups_result['stdout_lines'])
+
     return result
 
 
@@ -398,6 +458,7 @@ def run_module():
         inheritance=dict(type='raw', required=False, default=None),
         external_repos=dict(type='raw', required=False, default=None),
         packages=dict(type='raw', required=False, default=None),
+        groups=dict(type='raw', required=False, default=None),
         arches=dict(type='str', required=False, default=None),
         perm=dict(type='str', required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
@@ -427,6 +488,7 @@ def run_module():
                             inheritance=params['inheritance'],
                             external_repos=params['external_repos'],
                             packages=params['packages'],
+                            groups=params['groups'],
                             arches=params['arches'],
                             perm=params['perm'] or None,
                             locked=params['locked'],
