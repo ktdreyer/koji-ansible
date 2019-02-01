@@ -43,7 +43,18 @@ options:
          maintains.
    groups:
      description:
-       - dict of group names and the lists of packages each group contains.
+       - A tag's "groups" tell Koji what packages will be present in the
+         tag's buildroot. For example, the "build" group defines the packages
+         that Koji will put into a "build" task's buildroot. You may set other
+         package groups on a tag as well, like "srpm-build" or
+         "applicance-build".
+       - This should be a dict of groups and packages to set for this tag.
+         Each dict key will be the name of the group. Each dict value should
+         be a list of package names to include in the comps for this group.
+       - This does not support advanced comps group operations, like
+         configuring extra options on groups, or blocking packages in groups.
+         If you need that level of control over comps groups, you will need
+         to import a full comps XML file, outside of this Ansible module.
    arches:
      description:
        - space-separated string of arches this Koji tag supports.
