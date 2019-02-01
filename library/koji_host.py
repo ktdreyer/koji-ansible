@@ -30,6 +30,11 @@ options:
      description:
        - The list of arches this host supports. Example: [x86_64]
      required: true
+   channels:
+     description:
+       - The list of channels this host should belong to.
+         Example: [default, createrepo]
+     required: false
    state:
      description:
        - Whether to set this host as "enabled" or "disabled". If unset, this
@@ -64,11 +69,43 @@ EXAMPLES = '''
         name: builder1.example.com
         arches: [x86_64]
         state: enabled
+        channels:
+          - createrepo
+          - default
 '''
 
 
+def ensure_channels(session, host_id, host_name, check_mode, desired_channels):
+    """
+    Ensure that given host belongs to given channels (and only them).
+
+    :param session: Koji client session
+    :param int host_id: Koji host ID
+    :param int host_name: Koji host name
+    :param bool check_mode: don't make any changes
+    :param list desired_channels: channels that the host should belong to
+    """
+    result = {'changed': False, 'stdout_lines': []}
+    common_koji.ensure_logged_in(session)
+    current_channels = session.listChannels(host_id)
+    current_channels = [channel['name'] for channel in current_channels]
+    for channel in current_channels:
+        if channel not in desired_channels:
+            if not check_mode:
+                session.removeHostFromChannel(host_name, channel)
+            result['stdout_lines'].append('removed host from channel %s' % channel)
+            result['changed'] = True
+    for channel in desired_channels:
+        if channel not in current_channels:
+            if not check_mode:
+                session.addHostToChannel(host_name, channel, create=True)
+            result['stdout_lines'].append('added host to channel %s' % channel)
+            result['changed'] = True
+    return result
+
+
 def ensure_host(session, name, check_mode, state, arches, krb_principal,
-                **kwargs):
+                channels, **kwargs):
     """
     Ensure that this host is configured in Koji.
 
@@ -78,12 +115,14 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
     :param str state: "enabled" or "disabled"
     :param list arches: list of arches for this builder.
     :param str krb_principal: custom kerberos principal, or None
+    :param list chanels: list of channels this host should belong to.
     :param **kwargs: Pass remaining kwargs directly into Koji's editHost RPC.
     """
-    result = {'changed': False}
+    result = {'changed': False, 'stdout_lines': []}
     host = session.getHost(name)
     if not host:
         result['changed'] = True
+        result['stdout_lines'].append('created host')
         if check_mode:
             return result
         common_koji.ensure_logged_in(session)
@@ -92,12 +131,14 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
     if state == 'enabled':
         if not host['enabled']:
             result['changed'] = True
+            result['stdout_lines'].append('enabled host')
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.enableHost(name)
     if state == 'disabled':
         if host['enabled']:
             result['changed'] = True
+            result['stdout_lines'].append('disabled host')
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.disableHost(name)
@@ -111,9 +152,20 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
             edits[key] = value
     if edits:
         result['changed'] = True
+        for edit in edits.keys():
+            result['stdout_lines'].append('edited host %s' % edit)
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.editHost(name, **edits)
+
+    # Ensure host is member of desired channels.
+    if channels not in (None, ''):
+        channels_result = ensure_channels(session, host['id'],
+                                          name, check_mode, channels)
+        if channels_result['changed']:
+            result['changed'] = True
+        result['stdout_lines'].extend(channels_result['stdout_lines'])
+
     return result
 
 
@@ -122,6 +174,7 @@ def run_module():
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         arches=dict(type='list', required=True),
+        channels=dict(type='list', required=False, default=None),
         krb_principal=dict(type='str', required=False, default=None),
         capacity=dict(type='float', required=False, default=None),
         description=dict(type='str', required=False, default=None),
@@ -150,6 +203,7 @@ def run_module():
 
     result = ensure_host(session, name, check_mode, state,
                          arches=params['arches'],
+                         channels=params['channels'],
                          krb_principal=params['krb_principal'],
                          capacity=params['capacity'],
                          description=params['description'],

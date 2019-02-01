@@ -141,6 +141,9 @@ disabled``.
         name: builder1.example.com
         arches: [x86_64]
         state: enabled
+        channels:
+          - default
+          - createrepo
 
 koji_user
 ---------
