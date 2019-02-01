@@ -297,7 +297,7 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     """
     result = {'changed': False, 'stdout_lines': []}
     common_koji.ensure_logged_in(session)
-    current_groups = session.getTagGroups(tag_id)
+    current_groups = session.getTagGroups(tag_id, inherit=False)
     for group in current_groups:
         if group['name'] not in desired_groups:
             if not check_mode:
