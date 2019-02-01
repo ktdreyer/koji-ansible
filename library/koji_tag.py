@@ -105,10 +105,6 @@ EXAMPLES = '''
             - ansible
             - ceph
             - ceph-ansible
-        groups:
-          srpm-build:
-            - rpm-build
-            - fedpkg
 
     - name: Create a candidate koji tag
       koji_tag:
@@ -127,6 +123,14 @@ EXAMPLES = '''
         external_repos:
         - repo: centos7-cr
           priority: 5
+
+    - name: Create a tag that uses comps groups
+      koji_tag:
+        name: foo-el7-build
+        groups:
+          srpm-build:
+            - rpm-build
+            - fedpkg
 '''
 
 RETURN = ''' # '''
