@@ -10,7 +10,7 @@ koji_tag
 --------
 
 The ``koji_tag`` module can create, update, and delete tags within Koji. It can
-also manage tag inheritance and the packages list for a tag.
+also manage tag inheritance, packages list and group list for a tag.
 
 .. code-block:: yaml
 
@@ -24,6 +24,10 @@ also manage tag inheritance and the packages list for a tag.
             - ansible
             - ceph
             - ceph-ansible
+	groups:
+	  srpm-build:
+	    - rpm-build
+	    - fedpkg
 
 koji_target
 -----------
