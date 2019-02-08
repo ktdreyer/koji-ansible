@@ -57,7 +57,7 @@ options:
          to import a full comps XML file, outside of this Ansible module.
    arches:
      description:
-       - space-separated string of arches this Koji tag supports.
+       - The list of arches this host supports. Example: [x86_64]
    perm:
      description:
        - permission (string or int) for this Koji tag.
@@ -357,7 +357,7 @@ def compound_parameter_present(param_name, param, expected_type):
 
 
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
-               packages, groups, **kwargs):
+               packages, groups, arches, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
@@ -371,6 +371,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                      If this is an empty dict, we don't touch the package list
                      for this tag.
     :param groups: dict of comps groups to set for this tag.
+    :param arches: list of arches to set for this tag.
     :param **kwargs: Pass remaining kwargs directly into Koji's createTag and
                      editTag2 RPCs.
     """
@@ -382,9 +383,11 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
             result['changed'] = True
             return result
         common_koji.ensure_logged_in(session)
+        if arches:
+            arches_str = ' '.join(arches)
         if 'perm' in kwargs and kwargs['perm']:
             kwargs['perm'] = get_perm_id(session, kwargs['perm'])
-        id_ = session.createTag(name, parent=None, **kwargs)
+        id_ = session.createTag(name, parent=None, arches=arches_str, **kwargs)
         result['stdout_lines'].append('created tag id %d' % id_)
         result['changed'] = True
         taginfo = {'id': id_}  # populate for inheritance management below
@@ -397,6 +400,17 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                 edits[key] = value
                 edit_log.append('%s: changed %s from "%s" to "%s"'
                                 % (name, key, taginfo[key], value))
+        # Arches must be handled specially (Ansible uses a list, API uses
+        # a flat string).
+        if arches:
+            current_arches = []
+            if taginfo['arches']:
+                current_arches = taginfo['arches'].split()
+            if set(arches) != set(current_arches):
+                arches_str = ' '.join(arches)
+                edits['arches'] = arches_str
+                edit_log.append('%s: set arches from "%s" to "%s"' % (name,
+                taginfo['arches'], arches_str))
         # Find out which "extra" items we must explicitly remove
         # ("remove_extra" argument to editTag2).
         if 'extra' in kwargs:
@@ -475,7 +489,7 @@ def run_module():
         external_repos=dict(type='raw', required=False, default=None),
         packages=dict(type='raw', required=False, default=None),
         groups=dict(type='raw', required=False, default=None),
-        arches=dict(type='str', required=False, default=None),
+        arches=dict(type='list', required=False, default=None),
         perm=dict(type='str', required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
         maven_support=dict(type='bool', required=False, default=False),
@@ -495,6 +509,12 @@ def run_module():
     profile = params['koji']
     name = params['name']
     state = params['state']
+    arches = params['arches']
+
+    # Semi-backwards-compatibility:
+    # Raise early if the user accidentally passed in a space-separted string.
+    if arches and [arch for arch in arches if ' ' in arch]:
+        raise ValueError('arches must be a list, not a space-separated string')
 
     session = common_koji.get_session(profile)
 
@@ -505,7 +525,7 @@ def run_module():
                             external_repos=params['external_repos'],
                             packages=params['packages'],
                             groups=params['groups'],
-                            arches=params['arches'],
+                            arches=arches,
                             perm=params['perm'] or None,
                             locked=params['locked'],
                             maven_support=params['maven_support'],

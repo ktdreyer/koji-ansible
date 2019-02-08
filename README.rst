@@ -17,7 +17,7 @@ also manage tag inheritance, packages list and group list for a tag.
     - name: Create a koji tag for the ceph product
       koji_tag:
         name: ceph-3.1-rhel-7
-        arches: x86_64
+        arches: [x86_64]
         state: present
         packages:
           kdreyer:
@@ -176,7 +176,7 @@ Here is an example of setting a profile explicitly on the task:
       koji_tag:
         koji: kojidev
         name: ceph-3.1-rhel-7
-        arches: x86_64
+        arches: [x86_64]
         state: present
 
 The ``koji: kojidev`` setting means Ansible will search
