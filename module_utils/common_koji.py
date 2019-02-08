@@ -151,3 +151,10 @@ def get_perms(session):
 def get_perm_id(session, name):
     perms = get_perms(session)
     return perms[name]
+
+
+def get_perm_name(session, id_):
+    perms = get_perms(session)
+    for perm_name, perm_id in perms.items():
+        if perm_id == id_:
+            return perm_name

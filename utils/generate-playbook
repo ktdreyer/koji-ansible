@@ -1,0 +1,171 @@
+#!/usr/bin/python3
+import argparse
+from argparse import RawTextHelpFormatter
+import re
+import sys
+from os.path import abspath, dirname, join
+from ruamel import yaml
+from operator import itemgetter
+from collections import defaultdict
+
+# Import common_koji from the local "module_utils" directory.
+working_directory = dirname(abspath((__file__)))
+module_utils_path = join(dirname(working_directory), 'module_utils')
+if module_utils_path not in sys.path:
+    sys.path.insert(0, module_utils_path)
+import common_koji  # NOQA: E402
+
+
+DESCRIPTION = """
+This tool queries Koji for all the tags and their settings.
+It then writes an Ansible playbook to STDOUT.
+
+Use this tool to quickly get started with koji-ansible, or to transfer
+a configuration from one Koji instance to another.
+"""
+
+
+def interrogate(session, tags):
+    """
+    Interrogate Koji for all information about these tags.
+
+    Quickly get all the information we need from Koji with as few XML-RPC
+    calls as possible.
+    """
+    # Note: This client multiCall method bombs out after about 35 minutes for
+    # large Koji task lists (tested with 11,170 tags). If our tags list is
+    # very large, we need to chunk it up here before we send a
+    # multicall-of-death. This will take some tuning as we add more features
+    # (additional calls) to this code as well.
+    session.multicall = True
+    for tag in tags.copy():
+        tag_name = tag['name']
+        session.getInheritanceData(tag_name)
+        session.listPackages(tag_name)
+        session.getTagExternalRepos(tag_name)
+    multicall_results = session.multiCall(strict=True)
+    session.multicall = False
+
+    # flatten multicall results:
+    multicall_results = [result[0] for result in multicall_results]
+    # Parse into individual "inheritances" and "packages" lists:
+    tags_data = []
+    multicall_results_iter = iter(multicall_results)
+    for multicall_result in multicall_results_iter:
+        result = {'inheritance': multicall_result}
+        result['packages'] = next(multicall_results_iter)
+        result['external_repos'] = next(multicall_results_iter)
+        tags_data.append(result)
+
+    results = []
+    for tag, tag_data in zip(tags, tags_data):
+        tag['inheritance'] = tag_data['inheritance']
+        tag['packages'] = tag_data['packages']
+        tag['external_repos'] = tag_data['external_repos']
+        # TODO:
+        # tag['groups'] = tag_data['groups']
+        if tag['perm_id']:
+            perm_name = common_koji.get_perm_name(session, tag['perm_id'])
+            tag['perm'] = perm_name
+            del tag['perm_id']
+        results.append(tag)
+    return results
+
+
+def koji_tag_inheritance(rules):
+    """ Transform "getInheritanceData" result into Ansible-formatted data. """
+    inheritance = []
+    rules = sorted(rules, key=itemgetter('priority'))
+    for rule in rules:
+        representation = {'parent': rule['name'],
+                          'priority': rule['priority']}
+        inheritance.append(representation)
+    return inheritance
+
+
+def koji_tag_packages(packages):
+    """ Transform "listPackages" result into Ansible-formatted data. """
+    packages = sorted(packages, key=itemgetter('package_name'))
+    results = defaultdict(list)
+    for package in packages:
+        owner_name = package['owner_name']
+        results[owner_name].append(package['package_name'])
+    return dict(results)
+
+
+def koji_tag_external_repos(repos):
+    """ Transform "getTagExternalRepos" result into Ansible-formatted data. """
+    results = []
+    repos = sorted(repos, key=itemgetter('priority'))
+    for repo in repos:
+        representation = {'repo': repo['external_repo_name'],
+                          'priority': repo['priority']}
+        results.append(representation)
+    return results
+
+
+def koji_tag_tasks(tags):
+    """ Generate the YAML data for all koji tags. """
+    tasks = []
+    for taginfo in tags:
+        # name = 'configure koji tag %s' % taginfo['name']
+        # Do not configure tag ID numbers:
+        del taginfo['id']
+        # Do not configure things if they're "false" or "None":
+        for key in taginfo.copy():
+            if not taginfo[key]:
+                del taginfo[key]
+        if 'external_repos' in taginfo:
+            parsed_repos = koji_tag_external_repos(taginfo['external_repos'])
+            taginfo['external_repos'] = parsed_repos
+        if 'inheritance' in taginfo:
+            parsed_inheritance = koji_tag_inheritance(taginfo['inheritance'])
+            taginfo['inheritance'] = parsed_inheritance
+        if 'packages' in taginfo:
+            parsed_packages = koji_tag_packages(taginfo['packages'])
+            taginfo['packages'] = parsed_packages
+        task = {
+            # 'name': name,
+            'koji_tag': taginfo,
+        }
+        tasks.append(task)
+    return tasks
+
+
+def generate_playbook(tasks):
+    """ Generate a playbook YAML from a set of tasks. """
+    playbook = {'tasks': tasks}
+    text = yaml.dump(playbook, default_flow_style=False)
+    print(text)
+
+
+def parse_args():
+    """ Parse CLI options """
+    parser = argparse.ArgumentParser(description=DESCRIPTION,
+                                     formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--profile', default='koji',
+                        help='koji client profile (defaults to "cbs")')
+    parser.add_argument('--tag-regex',
+                        help='match a subset of tags (by name)')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    session = common_koji.get_session(args.profile)
+
+    tags = session.listTags()
+
+    # Optionally filter our tag list by a regular expression.
+    if args.tag_regex:
+        regex = re.compile(args.tag_regex)
+        tags = [tag for tag in tags if regex.search(tag['name'])]
+
+    print('querying %i tags' % len(tags))
+    tags = interrogate(session, tags)
+    tasks = koji_tag_tasks(tags)
+    generate_playbook(tasks)
+
+
+if __name__ == '__main__':
+    main()
