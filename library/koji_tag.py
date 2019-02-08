@@ -370,6 +370,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
     :param packages: dict of packages to add ("whitelist") for this tag.
                      If this is an empty dict, we don't touch the package list
                      for this tag.
+    :param groups: dict of comps groups to set for this tag.
     :param **kwargs: Pass remaining kwargs directly into Koji's createTag and
                      editTag2 RPCs.
     """
