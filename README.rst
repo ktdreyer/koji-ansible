@@ -163,6 +163,33 @@ disabled``.
         state: enabled
         permissions: [admin]
 
+koji_tag_inheritance
+--------------------
+
+The ``koji_tag`` module (above) is all-or-nothing when it comes to managing
+tag inheritance. When you set inheritance with ``koji_tag``, the module will
+delete any inheritance relationships that are not defined there.
+
+In some cases you may want to declare *some* inheritance relationships within
+Ansible without clobbering other existing inheritance relationships. For
+example, `MBS <https://fedoraproject.org/wiki/Changes/ModuleBuildService>`_
+will dynamically manage some inheritance relationships of tags, and you do not
+want Ansible to fight MBS.
+
+To declare inheritance relationships with finer granularity, you may use the
+``koji_tag_inheritance`` module.
+
+.. code-block:: yaml
+
+    - name: set devtoolset-7 as a parent of ceph nautilus
+      koji_tag_inheritance:
+        parent_tag: sclo7-devtoolset-7-rh-release
+        child_tag: storage7-ceph-nautilus-el7-build
+        priority: 25
+
+This will only mange that single parent-child relationship between the two
+tags, and it will not delete any other inheritance relationships.
+
 Koji profiles
 -------------
 
