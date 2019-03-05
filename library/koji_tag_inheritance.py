@@ -135,14 +135,20 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
     data = get_ids_and_inheritance(session, child_tag, parent_tag)
     child_id, parent_id, current_inheritance = data
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority)
+    new_rules = [new_rule]
     for rule in current_inheritance:
         if rule == new_rule:
             return result
+        if rule['priority'] == priority:
+            delete_rule = rule.copy()
+            # Mark this rule for deletion
+            delete_rule['delete link'] = True
+            new_rules.insert(0, delete_rule)
     result['stdout'] = 'set parent %s (%d)' % (parent_tag, priority)
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
-        session.setInheritanceData(child_tag, [new_rule])
+        session.setInheritanceData(child_tag, new_rules)
     return result
 
 
