@@ -161,12 +161,10 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
             delete_rule['delete link'] = True
             new_rules.insert(0, delete_rule)
             result['stdout_lines'].append(
-                    '%sremove parent %s (%d)'
-                    % ('would ' if check_mode else '',
-                       delete_rule['name'], delete_rule['priority']))
+                    'remove parent %s (%d)'
+                    % (delete_rule['name'], delete_rule['priority']))
     result['stdout_lines'].append(
-            '%sset parent %s (%d)'
-            % ('would ' if check_mode else '', parent_tag, priority))
+            'set parent %s (%d)' % (parent_tag, priority))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
@@ -195,9 +193,8 @@ def remove_tag_inheritance(session, child_tag, parent_tag, priority,
             # Mark this rule for deletion
             found_rule['delete link'] = True
             result['stdout_lines'].append(
-                    '%sremove parent %s (%d)'
-                    % ('would ' if check_mode else '',
-                       found_rule['name'], found_rule['priority']))
+                    'remove parent %s (%d)'
+                    % (found_rule['name'], found_rule['priority']))
     if not found_rule:
         return result
     result['changed'] = True

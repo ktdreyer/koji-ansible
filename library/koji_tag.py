@@ -147,6 +147,14 @@ def get_perm_id(session, name):
     return perm_cache[name]
 
 
+def describe_inheritance_rule(rule):
+    return "%(priority)4d   .... %(name)s" % rule
+
+
+def describe_inheritance(rules):
+    return tuple(map(describe_inheritance_rule, rules))
+
+
 def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     """
     Ensure that these inheritance rules are configured on this Koji tag.
@@ -183,12 +191,9 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     if current_inheritance != rules:
         result['stdout_lines'].extend(
                 ('current inheritance:',)
-                + tuple(map(lambda i: "%(priority)4d   .... %(name)s" % i,
-                            current_inheritance))
-                + ('would set inheritance:' if check_mode
-                    else 'new inheritance:',)
-                + tuple(map(lambda i: "%(priority)4d   .... %(name)s" % i,
-                            rules)))
+                + describe_inheritance(current_inheritance)
+                + ('new inheritance:',)
+                + describe_inheritance(rules))
         result['changed'] = True
         if not check_mode:
             common_koji.ensure_logged_in(session)
