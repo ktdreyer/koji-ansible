@@ -87,7 +87,7 @@ def get_ids_and_inheritance(session, child_tag, parent_tag):
     if child_id:
         current_inheritance = session.getInheritanceData(child_id)
     else:
-        current_inheritance = None
+        current_inheritance = []
     # TODO use multicall to get all of this at once:
     # (Need to update the test suite fakes to handle multicalls)
     # session.multicall = True
