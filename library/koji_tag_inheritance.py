@@ -131,7 +131,7 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
-    result = {'changed': False}
+    result = {'changed': False, 'stdout_lines': []}
     data = get_ids_and_inheritance(session, child_tag, parent_tag)
     child_id, parent_id, current_inheritance = data
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority)
@@ -144,7 +144,13 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
             # Mark this rule for deletion
             delete_rule['delete link'] = True
             new_rules.insert(0, delete_rule)
-    result['stdout'] = 'set parent %s (%d)' % (parent_tag, priority)
+            result['stdout_lines'].append(
+                    '%sremove parent %s (%d)'
+                    % ('would ' if check_mode else '',
+                       delete_rule['name'], delete_rule['priority']))
+    result['stdout_lines'].append(
+            '%sset parent %s (%d)'
+            % ('would ' if check_mode else '', parent_tag, priority))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
@@ -164,7 +170,7 @@ def remove_tag_inheritance(session, child_tag, parent_tag, priority,
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
-    result = {'changed': False}
+    result = {'changed': False, 'stdout_lines': []}
     current_inheritance = session.getInheritanceData(child_tag)
     found_rule = {}
     for rule in current_inheritance:
@@ -172,10 +178,13 @@ def remove_tag_inheritance(session, child_tag, parent_tag, priority,
             found_rule = rule.copy()
             # Mark this rule for deletion
             found_rule['delete link'] = True
+            result['stdout_lines'].append(
+                    '%sremove parent %s (%d)'
+                    % ('would ' if check_mode else '',
+                       found_rule['name'], found_rule['priority']))
     if not found_rule:
         return result
     result['changed'] = True
-    result['stdout'] = 'remove parent %s (%d)' % (parent_tag, priority)
     if not check_mode:
         common_koji.ensure_logged_in(session)
         session.setInheritanceData(child_tag, [found_rule])

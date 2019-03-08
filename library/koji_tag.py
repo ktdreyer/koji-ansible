@@ -163,7 +163,11 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
         parent_name = rule['parent']
         parent_taginfo = session.getTag(parent_name)
         if not parent_taginfo:
-            raise ValueError("parent tag '%s' not found" % parent_name)
+            msg = "parent tag '%s' not found" % parent_name
+            if check_mode:
+                result['stdout_lines'].append(msg)
+            else:
+                raise ValueError(msg)
         parent_id = parent_taginfo['id']
         new_rule = {
             'child_id': tag_id,
@@ -177,7 +181,14 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(tag_name)
     if current_inheritance != rules:
-        result['stdout_lines'].append('inheritance is %s' % inheritance)
+        result['stdout_lines'].extend(
+                ('current inheritance:',)
+                + tuple(map(lambda i: "%(priority)4d   .... %(name)s" % i,
+                            current_inheritance))
+                + ('would set inheritance:' if check_mode
+                    else 'new inheritance:',)
+                + tuple(map(lambda i: "%(priority)4d   .... %(name)s" % i,
+                            rules)))
         result['changed'] = True
         if not check_mode:
             common_koji.ensure_logged_in(session)
