@@ -80,11 +80,14 @@ def get_ids_and_inheritance(session, child_tag, parent_tag):
     :return: 3-element tuple of child_id (int), parent_id (int),
              and current_inheritance (list)
     """
-    child_taginfo = session.getTag(child_tag, strict=True)
-    parent_taginfo = session.getTag(parent_tag, strict=True)
-    child_id = child_taginfo['id']
-    parent_id = parent_taginfo['id']
-    current_inheritance = session.getInheritanceData(child_id)
+    child_taginfo = session.getTag(child_tag)
+    parent_taginfo = session.getTag(parent_tag)
+    child_id = child_taginfo['id'] if child_taginfo else None
+    parent_id = parent_taginfo['id'] if parent_taginfo else None
+    if child_id:
+        current_inheritance = session.getInheritanceData(child_id)
+    else:
+        current_inheritance = None
     # TODO use multicall to get all of this at once:
     # (Need to update the test suite fakes to handle multicalls)
     # session.multicall = True
@@ -134,6 +137,19 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
     result = {'changed': False, 'stdout_lines': []}
     data = get_ids_and_inheritance(session, child_tag, parent_tag)
     child_id, parent_id, current_inheritance = data
+    if not child_id:
+        msg = 'child tag %s not found' % child_tag
+        if check_mode:
+            result['stdout_lines'].append(msg)
+        else:
+            raise ValueError(msg)
+    if not parent_id:
+        msg = 'parent tag %s not found' % parent_tag
+        if check_mode:
+            result['stdout_lines'].append(msg)
+        else:
+            raise ValueError(msg)
+
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority)
     new_rules = [new_rule]
     for rule in current_inheritance:
