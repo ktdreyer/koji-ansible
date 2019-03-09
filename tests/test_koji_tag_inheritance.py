@@ -71,7 +71,7 @@ class TestEnsureInheritance(object):
                                      10,
                                      False)
         assert result['changed'] is True
-        assert result['stdout'] == 'set parent parent-tag-a (10)'
+        assert result['stdout_lines'] == ['set parent parent-tag-a (10)']
 
     def test_change_priority(self):
         session = FakeKojiSession(_inheritance=FAKE_INHERITANCE_DATA)
@@ -81,7 +81,7 @@ class TestEnsureInheritance(object):
                                      50,
                                      False)
         assert result['changed'] is True
-        assert result['stdout'] == 'set parent parent-tag-a (50)'
+        assert result['stdout_lines'] == ['set parent parent-tag-a (50)']
 
     def test_remove(self):
         session = FakeKojiSession(_inheritance=FAKE_INHERITANCE_DATA)
@@ -91,7 +91,7 @@ class TestEnsureInheritance(object):
                                         10,
                                         False)
         assert result['changed'] is True
-        assert result['stdout'] == 'remove parent parent-tag-a (10)'
+        assert result['stdout_lines'] == ['remove parent parent-tag-a (10)']
 
 
 class TestEnsureInheritanceUnchanged(object):

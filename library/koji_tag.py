@@ -147,6 +147,14 @@ def get_perm_id(session, name):
     return perm_cache[name]
 
 
+def describe_inheritance_rule(rule):
+    return "%(priority)4d   .... %(name)s" % rule
+
+
+def describe_inheritance(rules):
+    return tuple(map(describe_inheritance_rule, rules))
+
+
 def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     """
     Ensure that these inheritance rules are configured on this Koji tag.
@@ -163,7 +171,11 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
         parent_name = rule['parent']
         parent_taginfo = session.getTag(parent_name)
         if not parent_taginfo:
-            raise ValueError("parent tag '%s' not found" % parent_name)
+            msg = "parent tag '%s' not found" % parent_name
+            if check_mode:
+                result['stdout_lines'].append(msg)
+            else:
+                raise ValueError(msg)
         parent_id = parent_taginfo['id']
         new_rule = {
             'child_id': tag_id,
@@ -177,7 +189,11 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(tag_name)
     if current_inheritance != rules:
-        result['stdout_lines'].append('inheritance is %s' % inheritance)
+        result['stdout_lines'].extend(
+                ('current inheritance:',)
+                + describe_inheritance(current_inheritance)
+                + ('new inheritance:',)
+                + describe_inheritance(rules))
         result['changed'] = True
         if not check_mode:
             common_koji.ensure_logged_in(session)
