@@ -4,7 +4,10 @@ koji-ansible
 .. image:: https://travis-ci.org/ktdreyer/koji-ansible.svg?branch=master
              :target: https://travis-ci.org/ktdreyer/koji-ansible
 
-Ansible modules to manage Koji resources
+Ansible modules to manage Koji resources.
+
+This is not about installing Koji. Instead, it is a way to declaratively
+define things within Koji, where you might normally use the koji CLI.
 
 koji_tag
 --------
