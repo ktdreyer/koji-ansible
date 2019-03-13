@@ -174,6 +174,8 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
             msg = "parent tag '%s' not found" % parent_name
             if check_mode:
                 result['stdout_lines'].append(msg)
+                # spoof to allow continuation
+                parent_taginfo = {'id': 0}
             else:
                 raise ValueError(msg)
         parent_id = parent_taginfo['id']
