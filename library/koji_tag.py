@@ -411,7 +411,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         edits = {}
         edit_log = []
         for key, value in kwargs.items():
-            if taginfo[key] != value:
+            if taginfo[key] != value and value is not None:
                 edits[key] = value
                 edit_log.append('%s: changed %s from "%s" to "%s"'
                                 % (name, key, taginfo[key], value))
