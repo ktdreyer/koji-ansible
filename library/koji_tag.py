@@ -417,7 +417,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                                 % (name, key, taginfo[key], value))
         # Find out which "extra" items we must explicitly remove
         # ("remove_extra" argument to editTag2).
-        if 'extra' in kwargs:
+        if 'extra' in kwargs and kwargs['extra'] is not None:
             for key in taginfo['extra']:
                 if key not in kwargs['extra']:
                     if 'remove_extra' not in edits:
@@ -498,7 +498,7 @@ def run_module():
         locked=dict(type='bool', required=False, default=False),
         maven_support=dict(type='bool', required=False, default=False),
         maven_include_all=dict(type='bool', required=False, default=False),
-        extra=dict(type='dict', required=False, default={}),
+        extra=dict(type='dict', required=False, default=None),
     )
     module = AnsibleModule(
         argument_spec=module_args,
