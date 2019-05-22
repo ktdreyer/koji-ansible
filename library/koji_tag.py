@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
 from ansible.module_utils import common_koji
 
 try:
@@ -280,42 +279,71 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     :param dict packages: ensure these packages are set (?)
     """
     result = {'changed': False, 'stdout_lines': []}
+
+    # Obtain list of present packages from Koji.
     # Note: this in particular could really benefit from koji's
     # multicalls...
     common_koji.ensure_logged_in(session)
-    current_pkgs = session.listPackages(tagID=tag_id)
-    current_names = set([pkg['package_name'] for pkg in current_pkgs])
-    # Create a "current_owned" dict to compare with what's in Ansible.
-    current_owned = defaultdict(set)
-    for pkg in current_pkgs:
-        owner = pkg['owner_name']
-        pkg_name = pkg['package_name']
-        current_owned[owner].add(pkg_name)
+    present_pkgs = session.listPackages(tagID=tag_id)
+    present_pkgs = {pkg['package_name']: pkg for pkg in present_pkgs}
+
+    # Nolmalize list of expected packages.
+    expected_pkgs = {}
     for owner, owned in packages.items():
         for package in owned:
-            if package not in current_names:
-                # The package was missing from the tag entirely.
-                if not check_mode:
-                    session.packageListAdd(tag_name, package, owner)
-                result['stdout_lines'].append('added pkg %s' % package)
-                result['changed'] = True
+            if isinstance(package, dict):
+                package_name = package.keys()[0]
+                blocked = package.values()[0].get('blocked', False)
             else:
-                # The package is already in this tag.
-                # Verify ownership.
-                if package not in current_owned.get(owner, []):
-                    if not check_mode:
-                        session.packageListSetOwner(tag_name, package, owner)
-                    result['stdout_lines'].append('set %s owner %s' %
-                                                  (package, owner))
-                    result['changed'] = True
-    # Delete any packages not in Ansible.
-    all_names = [name for names in packages.values() for name in names]
-    delete_names = set(current_names) - set(all_names)
-    for package in delete_names:
-        result['stdout_lines'].append('remove pkg %s' % package)
+                package_name = package
+                blocked = False
+            expected_pkgs[package_name] = {
+                'owner_name': owner,
+                'blocked': blocked,
+            }
+
+    present_names = set(present_pkgs.keys())
+    expected_names = set(expected_pkgs.keys())
+
+    # Remove everything that is present but not expected.
+    for package_name in sorted(present_names - expected_names):
         result['changed'] = True
+        result['stdout_lines'].append('remove pkg %s' % package_name)
         if not check_mode:
-            session.packageListRemove(tag_name, package)
+            session.packageListRemove(tag_name, package_name)
+
+    # Add everything that is expected but not present.
+    for package_name in sorted(expected_names - present_names):
+        expected = expected_pkgs[package_name]
+        result['changed'] = True
+        result['stdout_lines'].append('added pkg %s' % package_name)
+        if not check_mode:
+            session.packageListAdd(tag_name, package_name, expected['owner_name'])
+        if expected['blocked']:
+            result['stdout_lines'].append('blocked package %s' % package_name)
+            if not check_mode:
+                session.packageListBlock(tag_name, package_name)
+
+    # Ensure expected owner names and blocked statuses for packages that are present.
+    for package_name in sorted(expected_names & present_names):
+        present = present_pkgs[package_name]
+        expected = expected_pkgs[package_name]
+        if expected['owner_name'] != present['owner_name']:
+            result['changed'] = True
+            result['stdout_lines'].append('set %s owner %s' % (package_name, expected['owner_name']))
+            if not check_mode:
+                session.packageListSetOwner(tag_name, package_name, expected['owner_name'])
+        if expected['blocked'] and not present['blocked']:
+            result['changed'] = True
+            result['stdout_lines'].append('blocked package %s' % package_name)
+            if not check_mode:
+                session.packageListBlock(tag_name, package_name)
+        if not expected['blocked'] and present['blocked']:
+            result['changed'] = True
+            result['stdout_lines'].append('unblocked package %s' % package_name)
+            if not check_mode:
+                session.packageListUnblock(tag_name, package_name)
+
     return result
 
 
