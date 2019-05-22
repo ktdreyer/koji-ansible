@@ -315,7 +315,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
         result['stdout_lines'].append('remove pkg %s' % package)
         result['changed'] = True
         if not check_mode:
-            session.packageListRemove(tag_name, package, owner)
+            session.packageListRemove(tag_name, package)
     return result
 
 
