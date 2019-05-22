@@ -17,6 +17,7 @@ class TestPackageListing(unittest.TestCase):
         self.expected_output = []
         self.expect_changed = False
         self.session = Mock()
+        self.session.multiCall = Mock()
         self.session.packageListAdd = self.rpc_mocks['add']
         self.session.packageListRemove = self.rpc_mocks['remove']
         self.session.packageListBlock = self.rpc_mocks['block']
@@ -72,6 +73,9 @@ class TestPackageListing(unittest.TestCase):
         self.assertEqual(len(self.expected_output), len(self.result['stdout_lines']))
 
         self.assertEquals(self.expect_changed, self.result['changed'])
+
+        self.assertEquals(True, self.session.multicall)
+        self.session.multiCall.assert_called_once_with(strict=True)
 
 
     def test_empty_no_change(self):

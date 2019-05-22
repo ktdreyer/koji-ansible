@@ -280,14 +280,10 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     """
     result = {'changed': False, 'stdout_lines': []}
 
-    # Obtain list of present packages from Koji.
-    # Note: this in particular could really benefit from koji's
-    # multicalls...
     common_koji.ensure_logged_in(session)
     present_pkgs = session.listPackages(tagID=tag_id)
     present_pkgs = {pkg['package_name']: pkg for pkg in present_pkgs}
 
-    # Nolmalize list of expected packages.
     expected_pkgs = {}
     for owner, owned in packages.items():
         for package in owned:
@@ -329,6 +325,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
             else:
                 session.packageListUnblock(tag_name, package_name)
 
+    session.multicall = True
     present_names = set(present_pkgs.keys())
     expected_names = set(expected_pkgs.keys())
 
@@ -349,6 +346,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
         if expected['blocked'] != present['blocked']:
             set_package_blocked(package_name, expected['blocked'])
 
+    session.multiCall(strict=True)
     return result
 
 
