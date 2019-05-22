@@ -11,7 +11,7 @@ class TestPackageListing(unittest.TestCase):
         self.tag_name = 'mytag'
         self.tag_id = 42
         self.next_id = 100
-        self.change_types = ['add', 'remove', 'block', 'unblock']
+        self.change_types = ['add', 'remove', 'block', 'unblock', 'set-owner']
         self.rpc_mocks = {name: Mock() for name in self.change_types}
         self.expected_calls = {name: [] for name in self.change_types}
         self.expected_output = []
@@ -22,7 +22,7 @@ class TestPackageListing(unittest.TestCase):
         self.session.packageListRemove = self.rpc_mocks['remove']
         self.session.packageListBlock = self.rpc_mocks['block']
         self.session.packageListUnblock = self.rpc_mocks['unblock']
-        self.session.packageListSetOwner = Mock()
+        self.session.packageListSetOwner = self.rpc_mocks['set-owner']
 
     def prepare_package(self, package_name, blocked=False, extra_arches=None, owner_name='someuser', owner_id=55):
         package_id = self.next_id
@@ -57,6 +57,10 @@ class TestPackageListing(unittest.TestCase):
     def expect_unblock(self, package_name):
         self.expected_calls['unblock'].append(call(self.tag_name, package_name))
         self.expected_output.append('package %s was unblocked' % package_name)
+
+    def expect_owner_change(self, package_name, owner_name):
+        self.expected_calls['set-owner'].append(call(self.tag_name, package_name, owner_name))
+        self.expected_output.append('package %s was assigned to owner %s' % (package_name, owner_name))
 
     def perform_test(self, packages, check_mode=False):
         self.session.listPackages = Mock(return_value=self.pkgs)
@@ -97,10 +101,8 @@ class TestPackageListing(unittest.TestCase):
 
     def test_change_owner(self):
         self.prepare_package('foo')
-        self.expect_changed = True
-        self.expected_output = ['package foo was assigned to owner otheruser']
+        self.expect_owner_change('foo', 'otheruser')
         self.perform_test({'otheruser': ['foo']})
-        self.session.packageListSetOwner.assert_called_once_with(self.tag_name, 'foo', 'otheruser')
 
     def test_remove(self):
         self.prepare_package('foo')
