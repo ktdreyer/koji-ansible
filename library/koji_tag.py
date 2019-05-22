@@ -288,8 +288,8 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     for owner, owned in packages.items():
         for package in owned:
             if isinstance(package, dict):
-                package_name = package.keys()[0]
-                blocked = package.values()[0].get('blocked', False)
+                package_name = next(iter(package.keys()))
+                blocked = next(iter(package.values())).get('blocked', False)
             else:
                 package_name = package
                 blocked = False

@@ -76,9 +76,9 @@ class TestPackageListing(unittest.TestCase):
             self.assertIn(line, self.result['stdout_lines'])
         self.assertEqual(len(self.expected_output), len(self.result['stdout_lines']))
 
-        self.assertEquals(self.expect_changed, self.result['changed'])
+        self.assertEqual(self.expect_changed, self.result['changed'])
 
-        self.assertEquals(True, self.session.multicall)
+        self.assertEqual(True, self.session.multicall)
         self.session.multiCall.assert_called_once_with(strict=True)
 
 
