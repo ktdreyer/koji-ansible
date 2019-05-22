@@ -49,6 +49,14 @@ class TestPackageListing(unittest.TestCase):
         self.expected_calls['remove'].append(call(self.tag_name, package_name))
         self.expected_output.append('remove pkg ' + package_name)
 
+    def expect_block(self, package_name):
+        self.expected_calls['block'].append(call(self.tag_name, package_name))
+        self.expected_output.append('blocked package ' + package_name)
+
+    def expect_unblock(self, package_name):
+        self.expected_calls['unblock'].append(call(self.tag_name, package_name))
+        self.expected_output.append('unblocked package ' + package_name)
+
     def perform_test(self, packages, check_mode=False):
         self.session.listPackages = Mock(return_value=self.pkgs)
 
@@ -95,3 +103,31 @@ class TestPackageListing(unittest.TestCase):
         self.prepare_package('bar')
         self.expect_remove('bar')
         self.perform_test({'someuser': ['foo']})
+
+    def test_block(self):
+        self.prepare_package('foo')
+        self.expect_block('foo')
+        self.perform_test({'someuser': [{'foo': {'blocked': True}}]})
+
+    def test_blocked_no_change(self):
+        self.prepare_package('foo', blocked=True)
+        self.perform_test({'someuser': [{'foo': {'blocked': True}}]})
+
+    def test_block_missing(self):
+        self.expect_add('foo')
+        self.expect_block('foo')
+        self.perform_test({'someuser': [{'foo': {'blocked': True}}]})
+
+    def test_add_explicitly_not_blocked(self):
+        self.expect_add('foo')
+        self.perform_test({'someuser': [{'foo': {'blocked': False}}]})
+
+    def test_unblock(self):
+        self.prepare_package('foo', blocked=True)
+        self.expect_unblock('foo')
+        self.perform_test({'someuser': ['foo']})
+
+    def test_unblock_explicit(self):
+        self.prepare_package('foo', blocked=True)
+        self.expect_unblock('foo')
+        self.perform_test({'someuser': [{'foo': {'blocked': False}}]})
