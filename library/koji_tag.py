@@ -302,47 +302,52 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
                 'blocked': blocked,
             }
 
-    present_names = set(present_pkgs.keys())
-    expected_names = set(expected_pkgs.keys())
-
-    # Remove everything that is present but not expected.
-    for package_name in sorted(present_names - expected_names):
+    def log_change(action, package_name):
         result['changed'] = True
-        result['stdout_lines'].append('remove pkg %s' % package_name)
+        result['stdout_lines'].append('package %s was %s' % (package_name, action))
+
+    def add_package(package_name, owner_name):
+        log_change('added', package_name)
+        if not check_mode:
+            session.packageListAdd(tag_name, package_name, owner_name)
+
+    def remove_package(package_name):
+        log_change('removed', package_name)
         if not check_mode:
             session.packageListRemove(tag_name, package_name)
 
-    # Add everything that is expected but not present.
+    def set_package_owner(package_name, owner_name):
+        log_change('assigned to owner %s' % owner_name, package_name)
+        if not check_mode:
+            session.packageListSetOwner(tag_name, package_name, owner_name)
+
+    def set_package_blocked(package_name, blocked):
+        log_change('blocked' if blocked else 'unblocked', package_name)
+        if not check_mode:
+            if blocked:
+                session.packageListBlock(tag_name, package_name)
+            else:
+                session.packageListUnblock(tag_name, package_name)
+
+    present_names = set(present_pkgs.keys())
+    expected_names = set(expected_pkgs.keys())
+
+    for package_name in sorted(present_names - expected_names):
+        remove_package(package_name)
+
     for package_name in sorted(expected_names - present_names):
         expected = expected_pkgs[package_name]
-        result['changed'] = True
-        result['stdout_lines'].append('added pkg %s' % package_name)
-        if not check_mode:
-            session.packageListAdd(tag_name, package_name, expected['owner_name'])
+        add_package(package_name, expected['owner_name'])
         if expected['blocked']:
-            result['stdout_lines'].append('blocked package %s' % package_name)
-            if not check_mode:
-                session.packageListBlock(tag_name, package_name)
+            set_package_blocked(package_name, True)
 
-    # Ensure expected owner names and blocked statuses for packages that are present.
     for package_name in sorted(expected_names & present_names):
         present = present_pkgs[package_name]
         expected = expected_pkgs[package_name]
         if expected['owner_name'] != present['owner_name']:
-            result['changed'] = True
-            result['stdout_lines'].append('set %s owner %s' % (package_name, expected['owner_name']))
-            if not check_mode:
-                session.packageListSetOwner(tag_name, package_name, expected['owner_name'])
-        if expected['blocked'] and not present['blocked']:
-            result['changed'] = True
-            result['stdout_lines'].append('blocked package %s' % package_name)
-            if not check_mode:
-                session.packageListBlock(tag_name, package_name)
-        if not expected['blocked'] and present['blocked']:
-            result['changed'] = True
-            result['stdout_lines'].append('unblocked package %s' % package_name)
-            if not check_mode:
-                session.packageListUnblock(tag_name, package_name)
+            set_package_owner(package_name, expected['owner_name'])
+        if expected['blocked'] != present['blocked']:
+            set_package_blocked(package_name, expected['blocked'])
 
     return result
 

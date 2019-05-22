@@ -43,19 +43,19 @@ class TestPackageListing(unittest.TestCase):
 
     def expect_add(self, package_name, owner_name='someuser'):
         self.expected_calls['add'].append(call(self.tag_name, package_name, owner_name))
-        self.expected_output.append('added pkg ' + package_name)
+        self.expected_output.append('package %s was added' % package_name)
 
     def expect_remove(self, package_name):
         self.expected_calls['remove'].append(call(self.tag_name, package_name))
-        self.expected_output.append('remove pkg ' + package_name)
+        self.expected_output.append('package %s was removed' % package_name)
 
     def expect_block(self, package_name):
         self.expected_calls['block'].append(call(self.tag_name, package_name))
-        self.expected_output.append('blocked package ' + package_name)
+        self.expected_output.append('package %s was blocked' % package_name)
 
     def expect_unblock(self, package_name):
         self.expected_calls['unblock'].append(call(self.tag_name, package_name))
-        self.expected_output.append('unblocked package ' + package_name)
+        self.expected_output.append('package %s was unblocked' % package_name)
 
     def perform_test(self, packages, check_mode=False):
         self.session.listPackages = Mock(return_value=self.pkgs)
@@ -94,7 +94,7 @@ class TestPackageListing(unittest.TestCase):
     def test_change_owner(self):
         self.prepare_package('foo')
         self.expect_changed = True
-        self.expected_output = ['set foo owner otheruser']
+        self.expected_output = ['package foo was assigned to owner otheruser']
         self.perform_test({'otheruser': ['foo']})
         self.session.packageListSetOwner.assert_called_once_with(self.tag_name, 'foo', 'otheruser')
 
