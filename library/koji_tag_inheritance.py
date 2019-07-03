@@ -45,6 +45,12 @@ options:
        - The priority of this parent for this child. Parents with smaller
          numbers will override parents with bigger numbers.
      required: true
+   maxdepth:
+     description:
+       - Maximum depth of the inheritance. For example "0" means that only
+         the parent tag itself will be available in the inheritance - parent
+         tags of the parent tag won't be available.
+     required: false
    state:
      description:
        - Whether to add or remove this inheritance link.
@@ -103,7 +109,7 @@ def get_ids_and_inheritance(session, child_tag, parent_tag):
     return (child_id, parent_id, current_inheritance)
 
 
-def generate_new_rule(child_id, parent_tag, parent_id, priority):
+def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth):
     """
     Return a full inheritance rule to add for this child tag.
 
@@ -111,11 +117,12 @@ def generate_new_rule(child_id, parent_tag, parent_id, priority):
     :param str parent_tag: Koji tag name
     :param int parent_id: Koji tag id
     :param int priority: Priority of this parent for this child
+    :param int maxdepth: Max depth of the inheritance
     """
     return {
         'child_id': child_id,
         'intransitive': False,
-        'maxdepth': None,
+        'maxdepth': maxdepth,
         'name': parent_tag,
         'noconfig': False,
         'parent_id': parent_id,
@@ -123,7 +130,8 @@ def generate_new_rule(child_id, parent_tag, parent_id, priority):
         'priority': priority}
 
 
-def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
+def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
+                        check_mode):
     """
     Ensure that a tag inheritance rule exists.
 
@@ -131,6 +139,7 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
     :param str child_tag: Koji tag name
     :param str parent_tag: Koji tag name
     :param int priority: Priority of this parent for this child
+    :param int maxdepth: Max depth of the inheritance
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
@@ -150,7 +159,8 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, check_mode):
         else:
             raise ValueError(msg)
 
-    new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority)
+    new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority,
+                                 maxdepth)
     new_rules = [new_rule]
     for rule in current_inheritance:
         if rule == new_rule:
@@ -210,6 +220,7 @@ def run_module():
         child_tag=dict(type='str', required=True),
         parent_tag=dict(type='str', required=True),
         priority=dict(type='int', required=True),
+        maxdepth=dict(type='int', required=False, default=None),
         state=dict(type='str', required=False, default='present'),
     )
     module = AnsibleModule(
@@ -232,6 +243,7 @@ def run_module():
                                      child_tag=params['child_tag'],
                                      parent_tag=params['parent_tag'],
                                      priority=params['priority'],
+                                     maxdepth=params['maxdepth'],
                                      check_mode=check_mode)
     elif state == 'absent':
         result = remove_tag_inheritance(session,

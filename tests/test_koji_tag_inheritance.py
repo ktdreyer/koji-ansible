@@ -69,6 +69,7 @@ class TestEnsureInheritance(object):
                                      'my-child-tag',
                                      'parent-tag-a',
                                      10,
+                                     None,
                                      False)
         assert result['changed'] is True
         assert result['stdout_lines'] == ['set parent parent-tag-a (10)']
@@ -79,6 +80,7 @@ class TestEnsureInheritance(object):
                                      'my-child-tag',
                                      'parent-tag-a',
                                      50,
+                                     None,
                                      False)
         assert result['changed'] is True
         assert result['stdout_lines'] == ['set parent parent-tag-a (50)']
@@ -102,6 +104,7 @@ class TestEnsureInheritanceUnchanged(object):
                                      'my-child-tag',
                                      'parent-tag-a',
                                      10,
+                                     None,
                                      False)
         assert result['changed'] is False
 
