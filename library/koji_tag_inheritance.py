@@ -47,10 +47,25 @@ options:
      required: true
    maxdepth:
      description:
-       - Maximum depth of the inheritance. For example "0" means that only
-         the parent tag itself will be available in the inheritance - parent
-         tags of the parent tag won't be available.
+       - By default, a tag's inheritance chain is unlimited. This means that
+         Koji will look back through an unlimited chain of parent and
+         grandparent tags to determine the contents of the tag.
+       - You may use this maxdepth parameter to limit the maximum depth of the
+         inheritance. For example "0" means that only the parent tag itself
+         will be available in the inheritance - parent tags of the parent tag
+         won't be available.
+       - To restore the default umlimited depth behavior on a tag, you can set
+         ``maxdepth: null`` or ``maxdepth: `` (empty value).
+       - If you do not set any ``maxdepth`` parameter at all, koji-ansible
+         will overwrite an existing tag's current maxdepth setting to "null"
+         (in other words, unlimited depth). This was the historical behavior
+         of the module and the easiest way to implement this in the code.
+         Arguably this behavior is unexpected, because Ansible should only do
+         what you tell it to do. We might change this in the future so that
+         Ansible only modifies ``maxdepth`` *if* you explicitly configure it.
+         Please open GitHub issues to discuss your use-case.
      required: false
+     default: null (unlimited depth)
    state:
      description:
        - Whether to add or remove this inheritance link.
