@@ -220,7 +220,9 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     for rule in current_inheritance:
         if rule == new_rule:
             return result
-        if rule['priority'] == priority:
+        # if either name or priority has changed without the other, we need to
+        # delete then reinsert
+        if (rule['name'] == parent_tag) != (rule['priority'] == priority):
             # prefix taginfo-style inheritance strings with diff-like +/-
             result['stdout_lines'].append('dissimilar rules:')
             result['stdout_lines'].extend(
@@ -262,7 +264,7 @@ def remove_tag_inheritance(session, child_tag, parent_tag, check_mode):
     current_inheritance = session.getInheritanceData(child_tag)
     found_rule = {}
     for rule in current_inheritance:
-        if rule['name'] == parent_tag:
+        if rule['name'] == parent_tag and rule['priority'] == priority:
             found_rule = rule.copy()
             # Mark this rule for deletion
             found_rule['delete link'] = True
