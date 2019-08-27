@@ -124,7 +124,7 @@ def get_ids_and_inheritance(session, child_tag, parent_tag):
     return (child_id, parent_id, current_inheritance)
 
 
-def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth):
+def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth, pkg_filter):
     """
     Return a full inheritance rule to add for this child tag.
 
@@ -141,12 +141,12 @@ def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth):
         'name': parent_tag,
         'noconfig': False,
         'parent_id': parent_id,
-        'pkg_filter': '',
+        'pkg_filter': pkg_filter,
         'priority': priority}
 
 
 def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
-                        check_mode):
+                        pkg_filter, check_mode):
     """
     Ensure that a tag inheritance rule exists.
 
@@ -175,7 +175,7 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
             raise ValueError(msg)
 
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority,
-                                 maxdepth)
+                                 maxdepth, pkg_filter)
     new_rules = [new_rule]
     for rule in current_inheritance:
         if rule == new_rule:
@@ -190,6 +190,8 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
                     % (delete_rule['name'], delete_rule['priority']))
     result['stdout_lines'].append(
             'set parent %s (%d)' % (parent_tag, priority))
+    if pkg_filter:
+        result['stdout_lines'][-1] += ' ~ %s' % pkg_filter
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
@@ -236,6 +238,7 @@ def run_module():
         parent_tag=dict(type='str', required=True),
         priority=dict(type='int', required=True),
         maxdepth=dict(type='int', required=False, default=None),
+        pkg_filter=dict(type='str', required=False, default=''),
         state=dict(type='str', required=False, default='present'),
     )
     module = AnsibleModule(
@@ -259,6 +262,7 @@ def run_module():
                                      parent_tag=params['parent_tag'],
                                      priority=params['priority'],
                                      maxdepth=params['maxdepth'],
+                                     pkg_filter=params['pkg_filter'],
                                      check_mode=check_mode)
     elif state == 'absent':
         result = remove_tag_inheritance(session,

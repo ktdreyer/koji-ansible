@@ -148,11 +148,17 @@ def get_perm_id(session, name):
 
 
 def describe_inheritance_rule(rule):
-    return "%(priority)4d   .... %(name)s" % rule
+    if rule.get('pkg_filter', ''):
+        return (
+            "%(priority)4d   .F.. %(name)s" % rule,
+            "    package filter: %(pkg_filter)s" % rule,
+        )
+    else:
+        return ("%(priority)4d   .... %(name)s" % rule,)
 
 
 def describe_inheritance(rules):
-    return tuple(map(describe_inheritance_rule, rules))
+    return sum(map(describe_inheritance_rule, rules), ())
 
 
 def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
@@ -186,7 +192,7 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
             'name': parent_name,
             'noconfig': False,
             'parent_id': parent_id,
-            'pkg_filter': '',
+            'pkg_filter': rule.get('pkg_filter', ''),
             'priority': rule['priority']}
         rules.append(new_rule)
     current_inheritance = session.getInheritanceData(tag_name)
