@@ -1,0 +1,41 @@
+# Create a koji child tag that inherits groups from the parent tag
+---
+
+- koji_tag:
+    name: groups-1-parent
+    state: present
+    groups:
+      build:
+      - bash
+      - coreutils
+
+- koji_tag:
+    name: groups-1-child
+    state: present
+    inheritance:
+    - parent: groups-1-parent
+      priority: 0
+
+# Assert that we see the "build" group inherited on the child tag.
+
+- koji_call:
+    name: getTagGroups
+    args: [groups-1-child]
+  register: inherited_groups
+
+- assert:
+    that:
+      - inherited_groups.data[0].name == 'build'
+
+# Assert that we see no groups when disregarding inheritance.
+
+- koji_call:
+    name: getTagGroups
+    args:
+      tag: groups-1-child
+      inherit: false
+  register: direct_groups
+
+- assert:
+    that:
+      - direct_groups.data == []

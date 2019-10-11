@@ -1,0 +1,45 @@
+# Configure a new koji builder host.
+---
+
+- name: Add new builder1 host
+  koji_host:
+    name: builder1.example.com
+    arches: [x86_64]
+    state: enabled
+    channels:
+      - createrepo
+      - default
+
+# Assert that this host looks correct.
+
+- koji_call:
+    name: getHost
+    args: ['builder1.example.com']
+  register: host
+
+- assert:
+    that:
+      - host.data.arches == 'x86_64'
+      - host.data.capacity == 2.0
+      - host.data.enabled
+      - host.data.name == 'builder1.example.com'
+      - not host.data.ready
+
+# Assert that this host is in the correct channels.
+
+- koji_call:
+    name: listChannels
+    args: ["{{ host.data.id }}"]
+  register: channels
+
+- set_fact:
+    channel_names: "{{ channels.data
+                       | map(attribute='name')
+                       | list
+                    }}"
+
+- assert:
+    that:
+      - "channel_names | length == 2"
+      - '"default" in channel_names'
+      - '"createrepo" in channel_names'

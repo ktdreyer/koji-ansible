@@ -1,0 +1,25 @@
+# Create a koji child tag with no maxdepth settings
+---
+
+- koji_tag:
+    name: maxdepth-1-parent
+    state: present
+
+- koji_tag:
+    name: maxdepth-1-child
+    state: present
+    inheritance:
+    - parent: maxdepth-1-parent
+      priority: 0
+
+# Assert that the inheritance relationship has no maxdepth.
+
+- koji_call:
+    name: getInheritanceData
+    args: [maxdepth-1-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data[0].name == 'maxdepth-1-parent'
+      - inheritance.data[0].maxdepth is none

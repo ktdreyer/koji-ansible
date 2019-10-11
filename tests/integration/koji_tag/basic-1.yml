@@ -1,0 +1,49 @@
+# Create a basic koji tag exercising all our features.
+---
+
+- koji_tag:
+    name: basic-1-parent
+    state: present
+
+- name: Create an external repo for CentOS "CR"
+  koji_external_repo:
+    name: basic-1
+    url: http://mirror.centos.org/centos/7/cr/$arch/
+    state: present
+
+- koji_tag:
+    name: basic-1
+    state: present
+    inheritance:
+    - parent: basic-1-parent
+      priority: 0
+    external_repos:
+    - repo: basic-1
+      priority: 5
+    packages:
+      travisci:
+      - ceph
+    groups:
+      build:
+        - bash
+        - coreutils
+    arches: x86_64 ppc64le
+    perm: admin
+    locked: false
+    extra:
+      mock.package_manager: dnf
+
+# Assert that this tag looks correct.
+
+- koji_call:
+    name: getTag
+    args: [basic-1]
+  register: taginfo
+
+- assert:
+    that:
+      - taginfo.data.name == 'basic-1'
+      - taginfo.data.arches == 'x86_64 ppc64le'
+      - not taginfo.data.locked
+      - taginfo.data.perm == 'admin'
+      - taginfo.data.extra['mock.package_manager'] == 'dnf'

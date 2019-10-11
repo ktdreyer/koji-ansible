@@ -1,0 +1,44 @@
+# Swap inheritance priorities for two parents.
+---
+
+- koji_tag:
+    name: inheritance-1-parent-a
+    state: present
+
+- koji_tag:
+    name: inheritance-1-parent-b
+    state: present
+
+- koji_tag:
+    name: inheritance-1-child
+    state: present
+    inheritance:
+    - parent: inheritance-1-parent-a
+      priority: 0
+    - parent: inheritance-1-parent-b
+      priority: 10
+
+- koji_tag:
+    name: inheritance-1-child
+    inheritance:
+    - parent: inheritance-1-parent-a
+      priority: 10
+    - parent: inheritance-1-parent-b
+      priority: 0
+
+# Assert that we have the new parent.
+
+- koji_call:
+    name: getInheritanceData
+    args: [inheritance-1-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 2
+      # TODO: We probably cannot rely on the "0" vs "1" ordering here.
+      # Probably need more Jinja tricks here to handle any order.
+      # - inheritance.data[0].name == 'inheritance-1-parent-a'
+      # - inheritance.data[0].priority == 10
+      # - inheritance.data[1].name == 'inheritance-1-parent-b'
+      # - inheritance.data[1].priority == 0

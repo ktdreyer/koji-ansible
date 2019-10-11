@@ -1,0 +1,38 @@
+# Do not try to create an identical group on a child tag.
+---
+
+- koji_tag:
+    name: groups-2-parent
+    state: present
+    groups:
+      build:
+      - bash
+      - coreutils
+
+# Try to re-define the same "build" group in the child here:
+
+- koji_tag:
+    name: groups-2-child
+    state: present
+    inheritance:
+    - parent: groups-2-parent
+      priority: 0
+    groups:
+      build:
+      - nmap
+
+# Again, attempt to re-define the same "build" group in our child tag.
+# This should not result in "changed":
+
+- koji_tag:
+    name: groups-2-child
+    groups:
+      build:
+      - nmap
+  register: groups_2
+
+# Assert that there was no change:
+
+- assert:
+    that:
+      - not groups_2.changed
