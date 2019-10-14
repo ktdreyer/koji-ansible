@@ -14,7 +14,7 @@ def test_get_profile_name_from_env(monkeypatch):
 def test_get_profile_name_error():
     with pytest.raises(ValueError) as e:
         get_profile_name(None)
-    assert 'KOJI_PROFILE environment variable' in str(e)
+    assert 'KOJI_PROFILE environment variable' in str(e.value)
 
 
 """
