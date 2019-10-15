@@ -51,6 +51,13 @@ options:
        - This should be a dict of groups and packages to set for this tag.
          Each dict key will be the name of the group. Each dict value should
          be a list of package names to include in the comps for this group.
+       - If a group or package defined in this field is already applicable for
+         a tag due to inheritance, Koji will not allow it to be added to the
+         tag, but will instead silently ignore it. Conversely, groups and
+         packages that are inherited in this field are not removed if they are
+         left unspecified. Therefore, this field will only have an effect if it
+         includes groups and packages that are unique to this tag (i.e., not
+         inherited).
        - This does not support advanced comps group operations, like
          configuring extra options on groups, or blocking packages in groups.
          If you need that level of control over comps groups, you will need
@@ -330,9 +337,9 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     """
     result = {'changed': False, 'stdout_lines': []}
     common_koji.ensure_logged_in(session)
-    current_groups = session.getTagGroups(tag_id, inherit=False)
+    current_groups = session.getTagGroups(tag_id)
     for group in current_groups:
-        if group['name'] not in desired_groups:
+        if group['tag_id'] == tag_id and group['name'] not in desired_groups:
             if not check_mode:
                 session.groupListRemove(tag_id, group['name'])
             result['stdout_lines'].append('removed group %s' % group['name'])
@@ -340,17 +347,18 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     for group_name, desired_pkgs in desired_groups.items():
         for group in current_groups:
             if group['name'] == group_name:
-                current_pkgs = [entry['package']
-                                for entry in group['packagelist']]
+                current_pkgs = {entry['package']: entry['tag_id']
+                                for entry in group['packagelist']}
                 break
         else:
-            current_pkgs = []
+            current_pkgs = {}
             if not check_mode:
                 session.groupListAdd(tag_id, group_name)
             result['stdout_lines'].append('added group %s' % group_name)
             result['changed'] = True
-        for package in current_pkgs:
-            if package not in desired_pkgs:
+
+        for package, pkg_tag_id in current_pkgs.items():
+            if pkg_tag_id == tag_id and package not in desired_pkgs:
                 if not check_mode:
                     session.groupPackageListRemove(tag_id, group_name, package)
                 result['stdout_lines'].append('removed pkg %s from group %s' % (package, group_name))
