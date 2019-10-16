@@ -252,3 +252,10 @@ TODO
   <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ itself
   so that the modules are built in. To that end, this koji-ansible project is
   licensed under the GPLv3 to match Ansible's license.
+
+  Given some recent changes in Ansible upstream, it's possible that
+  `Collections
+  <https://galaxy.ansible.com/docs/contributing/creating_collections.html>`_
+  would be a good option for distributing this instead. This is evolving as
+  the Ansible community tries to decide the best way to distribute and share
+  ownership over modules.
