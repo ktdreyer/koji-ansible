@@ -196,7 +196,8 @@ tags, and it will not delete any other inheritance relationships.
 Koji profiles
 -------------
 
-You must tell koji-ansible which Koji client profile to use.
+You must tell koji-ansible which `Koji client profile
+<https://docs.pagure.org/koji/profiles/>`_ to use.
 
 Here is an example of setting a profile explicitly on the task:
 
