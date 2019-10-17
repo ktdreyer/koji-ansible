@@ -73,11 +73,6 @@ options:
        - whether to lock this tag or not.
      choices: [true, false]
      default: false
-   locked:
-     description:
-       - whether to lock this tag or not.
-     choices: [true, false]
-     default: false
    maven_support:
      description:
        - whether Maven repos should be generated for the tag.
