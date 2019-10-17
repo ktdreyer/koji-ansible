@@ -243,6 +243,22 @@ and you should run the playbook like so::
    ansible-playbook koji.yml
 
 
+Investigating changes that happened outside Ansible
+---------------------------------------------------
+
+Koji tracks a history of everything in its database. You can view this history
+with the ``koji list-history`` and ``koji list-tag-history`` sub-commands.
+
+For example, let's say that you wake up one morning to find that your Ansible
+playbook for your tags no longer matches up with what is configured live in
+Koji. Did someone else on your team make a change with the CLI without editing
+the playbook or notifying you? Who did it, and when? Use ``koji list-history
+--tag=my-tag`` to see the entire list of changes for your tag in the database.
+After a friendly chat with the person who made the change, you can work
+together to record the change within your Ansible playbook so your sources of
+truth remain consistent.
+
+
 TODO
 ----
 
