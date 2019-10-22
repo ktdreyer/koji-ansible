@@ -90,7 +90,6 @@ class TestEnsureInheritance(object):
         result = remove_tag_inheritance(session,
                                         'my-child-tag',
                                         'parent-tag-a',
-                                        10,
                                         False)
         assert result['changed'] is True
         assert result['stdout_lines'] == ['remove parent parent-tag-a (10)']
@@ -113,6 +112,5 @@ class TestEnsureInheritanceUnchanged(object):
         result = remove_tag_inheritance(session,
                                         'my-child-tag',
                                         'parent-tag-c',
-                                        10,
                                         False)
         assert result['changed'] is False

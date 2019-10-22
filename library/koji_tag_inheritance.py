@@ -44,6 +44,10 @@ options:
      description:
        - The priority of this parent for this child. Parents with smaller
          numbers will override parents with bigger numbers.
+       - When defining an inheritance relationship with "state: present", you
+         must specify a priority. When deleting an inheritance relationship
+         with "state: absent", you should not specify a priority. Ansible will
+         simply remove the parent_tag link, regardless of its priority.
      required: true
    maxdepth:
      description:
@@ -86,6 +90,12 @@ EXAMPLES = '''
         parent_tag: sclo7-devtoolset-7-rh-release
         child_tag: storage7-ceph-nautilus-el7-build
         priority: 25
+
+    - name: remove devtoolset-7 as a parent of my other build tag
+      koji_tag_inheritance:
+        parent_tag: sclo7-devtoolset-7-rh-release
+        child_tag: other-storage-el7-build
+        state: absent
 '''
 
 RETURN = ''' # '''
@@ -197,15 +207,13 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     return result
 
 
-def remove_tag_inheritance(session, child_tag, parent_tag, priority,
-                           check_mode):
+def remove_tag_inheritance(session, child_tag, parent_tag, check_mode):
     """
     Ensure that a tag inheritance rule does not exist.
 
     :param session: Koji client session
     :param str child_tag: Koji tag name
     :param str parent_tag: Koji tag name
-    :param int priority: Priority of this parent for this child
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
@@ -213,7 +221,7 @@ def remove_tag_inheritance(session, child_tag, parent_tag, priority,
     current_inheritance = session.getInheritanceData(child_tag)
     found_rule = {}
     for rule in current_inheritance:
-        if rule['name'] == parent_tag and rule['priority'] == priority:
+        if rule['name'] == parent_tag:
             found_rule = rule.copy()
             # Mark this rule for deletion
             found_rule['delete link'] = True
@@ -234,7 +242,7 @@ def run_module():
         koji=dict(type='str', required=False),
         child_tag=dict(type='str', required=True),
         parent_tag=dict(type='str', required=True),
-        priority=dict(type='int', required=True),
+        priority=dict(type='int', required=False),
         maxdepth=dict(type='int', required=False, default=None),
         state=dict(type='str', required=False, default='present'),
     )
@@ -254,6 +262,8 @@ def run_module():
     session = common_koji.get_session(profile)
 
     if state == 'present':
+        if 'priority' not in params:
+            module.fail_json(msg='specify a "priority" integer')
         result = add_tag_inheritance(session,
                                      child_tag=params['child_tag'],
                                      parent_tag=params['parent_tag'],
@@ -264,7 +274,6 @@ def run_module():
         result = remove_tag_inheritance(session,
                                         child_tag=params['child_tag'],
                                         parent_tag=params['parent_tag'],
-                                        priority=params['priority'],
                                         check_mode=check_mode)
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",
