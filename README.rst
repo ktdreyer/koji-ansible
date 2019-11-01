@@ -148,6 +148,12 @@ disabled``.
           - default
           - createrepo
 
+If you specify channels that do not yet exist, Ansible will create them. For
+example, if you are setting up a new builder host for `OSBS
+<https://osbs.readthedocs.io>`_, you can specify ``container`` in the list of
+channels, and Ansible will automatically create that new "container" channel
+when it configures the host.
+
 koji_user
 ---------
 
