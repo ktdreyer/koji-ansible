@@ -34,6 +34,11 @@ options:
      description:
        - The list of channels this host should belong to.
          Example: [default, createrepo]
+       - If you specify a completely new channel here, Ansible will create the
+         channel on the hub. For example, when you set up OSBS with Koji, you
+         must add a builder host to a new "container" channel. You can simply
+         specify "container" in the list here, and Ansible will create the new
+         "container" channel when it adds your host to that channel.
      required: false
    state:
      description:
@@ -72,6 +77,16 @@ EXAMPLES = '''
         channels:
           - createrepo
           - default
+
+    - name: Add new builder host for OSBS
+      koji_host:
+        name: containerbuild1.example.com
+        arches: [x86_64]
+        state: enabled
+        channels:
+          # This will automatically create the "container" channel
+          # if it does not already exist:
+          - container
 '''
 
 
