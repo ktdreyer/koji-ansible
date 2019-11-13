@@ -1,0 +1,23 @@
+# Create a new archive type.
+---
+
+- name: Add deb archive type
+  koji_archivetype:
+    name: deb
+    description: Debian packages
+    extensions: deb
+    state: present
+
+# Assert that this archivetype looks correct.
+
+- koji_call:
+    name: getArchiveType
+    args:
+      type_name: deb
+  register: archivetype
+
+- assert:
+    that:
+      - archivetype.data.name == 'deb'
+      - archivetype.data.description == 'Debian packages'
+      - archivetype.data.extensions == 'deb'
