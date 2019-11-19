@@ -16,24 +16,10 @@ export KOJI_PROFILE=travisci
 
 . tests/integration/functions.sh
 
-ansible-playbook -vvv tests/integration/koji_btype/main.yml
+playbooks=($(ls tests/integration/*/main.yml))
+final_playbook=$(echo ${playbooks[-1]})
 
-reset_instance
-
-ansible-playbook -vvv tests/integration/koji_cg/main.yml
-
-reset_instance
-
-ansible-playbook -vvv tests/integration/koji_host/main.yml
-
-reset_instance
-
-ansible-playbook -vvv tests/integration/koji_tag/main.yml
-
-reset_instance
-
-ansible-playbook -vvv tests/integration/koji_tag_inheritance/main.yml
-
-reset_instance
-
-ansible-playbook -vvv tests/integration/koji_target/main.yml
+for playbook in "${playbooks[@]}"; do
+  ansible-playbook -vvv $playbook
+  [[ $playbook == $final_playbook ]] || reset_instance
+done
