@@ -1,0 +1,6 @@
+- name: test koji
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - include: basic-1.yml
+  - include: basic-2.yml

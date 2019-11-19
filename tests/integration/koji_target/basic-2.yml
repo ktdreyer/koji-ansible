@@ -1,0 +1,37 @@
+# Alter the tags on a koji build target.
+---
+
+- koji_tag:
+    name: basic-2-build
+    state: present
+
+- koji_tag:
+    name: basic-2-destination-a
+    state: present
+
+- koji_tag:
+    name: basic-2-destination-b
+    state: present
+
+- name: Start with "destination-a"
+  koji_target:
+    name: basic-2
+    build_tag: basic-2-build
+    dest_tag: basic-2-destination-a
+
+- name: Reconfigure to use "destination-b"
+  koji_target:
+    name: basic-2
+    build_tag: basic-2-build
+    dest_tag: basic-2-destination-b
+
+# Assert that this target uses ""destination-b".
+
+- koji_call:
+    name: getBuildTarget
+    args: [basic-2]
+  register: target
+
+- assert:
+    that:
+      - target.data.dest_tag_name == 'basic-2-destination-b'

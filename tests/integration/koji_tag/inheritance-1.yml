@@ -1,0 +1,39 @@
+# Switch inheritance from one parent to another.
+---
+
+- koji_tag:
+    name: inheritance-1-parent-a
+    state: present
+
+- koji_tag:
+    name: inheritance-1-parent-b
+    state: present
+
+- name: set up inheritance with "parent-a"
+  koji_tag:
+    name: inheritance-1-child
+    state: present
+    inheritance:
+    - parent: inheritance-1-parent-a
+      priority: 0
+
+- name: switch inheritance from "parent-a" to "b"
+  koji_tag:
+    name: inheritance-1-child
+    state: present
+    inheritance:
+    - parent: inheritance-1-parent-b
+      priority: 0
+
+# Assert that we have the new parent.
+
+- koji_call:
+    name: getInheritanceData
+    args: [inheritance-1-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 1
+      - inheritance.data[0].name == 'inheritance-1-parent-b'
+      - inheritance.data[0].priority == 0

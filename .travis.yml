@@ -1,7 +1,38 @@
-sudo: false
-language: python
-python:
-- 2.7
-- 3.6
-install: pip install tox-travis
-script: tox
+matrix:
+  include:
+
+    - name: "py27 unit tests"
+      language: python
+      python: 2.7
+      install: pip install tox-travis
+      script: tox
+
+    - name: "py36 unit tests"
+      language: python
+      python: 3.6
+      install: pip install tox-travis
+      script: tox
+
+    - name: "integration tests"
+      language: minimal
+      dist: bionic
+      before_script:
+       - ./tests/integration/setup.sh
+      script:
+       - ./tests/integration/run.sh
+      # This appears to be broken on bionic:
+      #services:
+      # - postgresql
+      addons:
+       apt:
+         packages:
+         - apache2
+         - libapache2-mod-wsgi-py3
+         - postgresql
+         - python3-cryptography
+         - python3-dateutil
+         - python3-pip
+         - python3-psycopg2
+         - python3-rpm
+         - python3-setuptools
+         - python3-six

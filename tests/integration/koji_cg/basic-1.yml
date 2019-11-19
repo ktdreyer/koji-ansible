@@ -1,0 +1,18 @@
+# Create a new content generator.
+---
+
+- name: Create a debian content generator
+  koji_cg:
+    name: debian
+    user: travisci
+    state: present
+
+# Assert that this content generator looks correct.
+
+- koji_call:
+    name: listCGs
+  register: cgs
+
+- assert:
+    that:
+      - cgs.data.debian.users == ['travisci']

@@ -1,0 +1,24 @@
+# Create a new archive type.
+---
+
+- name: Create a koji debian btype
+  koji_btype:
+    name: debian
+    state: present
+
+# Assert that this btype looks correct.
+
+- koji_call:
+    name: listBTypes
+  register: btypes
+
+- set_fact:
+    btype: "{{ btypes.data
+               | selectattr('name', 'equalto', 'debian')
+               | list
+               | first
+            }}"
+
+- assert:
+    that:
+      - btype.name == 'debian'

@@ -1,0 +1,10 @@
+- name: test koji
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - include: basic-1.yml
+  - include: groups-1.yml
+  - include: groups-2.yml
+  - include: inheritance-1.yml
+  - include: inheritance-2.yml
+  - include: maxdepth-1.yml
