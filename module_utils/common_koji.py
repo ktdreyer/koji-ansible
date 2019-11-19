@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 try:
     import koji
@@ -82,3 +83,51 @@ def ensure_logged_in(session):
         # Note: this can raise SystemExit if there is a problem, eg with
         # Kerberos:
         activate_session(session, session.opts)
+
+
+# inheritance display utils
+
+
+def describe_inheritance_rule(rule):
+    """
+    Given a dictionary representing a koji inheritance rule (i.e., one of the
+    elements of getInheritanceData()'s result), return a tuple of strings to be
+    appended to a module's stdout_lines array conforming to the output of
+    koji's taginfo CLI command, e.g.:
+       0   .... a-parent-tag
+      10   M... another-parent-tag
+        maxdepth: 1
+     100   .F.. yet-another-parent-tag
+        package filter: ^prefix-
+    """
+    # koji_cli/commands.py near the end of anon_handle_taginfo()
+    flags = '%s%s%s%s' % (
+        'M' if rule['maxdepth'] not in ('', None) else '.',
+        'F' if rule['pkg_filter'] not in ('', None) else '.',
+        'I' if rule['intransitive'] else '.',
+        'N' if rule['noconfig'] else '.',
+    )
+
+    result = ["%4d   %s %s" % (rule['priority'], flags, rule['name'])]
+
+    if rule['maxdepth'] not in ('', None):
+        result.append("    maxdepth: %d" % rule['maxdepth'])
+    if rule['pkg_filter'] not in ('', None):
+        result.append("    package filter: %s" % rule['pkg_filter'])
+
+    return tuple(result)
+
+
+def describe_inheritance(rules):
+    """
+    Given a sequence of dictionaries representing koji inheritance rules (i.e.,
+    getInheritanceData()'s result), return a tuple of strings to be appended to
+    a module's stdout_lines array conforming to the output of koji's taginfo
+    CLI command. See describe_inheritance_rule for sample output.
+    """
+
+    # each invocation of describe_inheritance_rule yields a tuple of strings
+    # to be appended to a module's stdout_lines result, so concatenate them:
+    # sum(…, tuple()) will flatten tuples of tuples into just the child tuples
+    # > sum( ((1, 2), (3, 4)), tuple() ) ⇒ (1, 2) + (3, 4) + (,) ⇒ (1, 2, 3, 4)
+    return sum(tuple(map(describe_inheritance_rule, rules)), tuple())
