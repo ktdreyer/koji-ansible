@@ -199,6 +199,46 @@ To declare inheritance relationships with finer granularity, you may use the
 This will only mange that single parent-child relationship between the two
 tags, and it will not delete any other inheritance relationships.
 
+koji_call
+---------
+
+The ``koji_call`` module allows you to send raw RPCs to the Koji hub. This
+exposes the entire Koji API to you directly.
+
+Why would you use this module instead of the higher level modules like
+``koji_tag``, ``koji_target``, etc? This ``koji_call`` module has two main
+uses-cases:
+
+1. You may want to do something that the higher level modules do not yet
+   support. It can be easier to use this module to quickly prototype out your
+   ideas for what actions you need, and then write the Python code to do it in
+   a better way later. If you find that you need to use koji_call to achieve
+   functionality that is not yet present in the other koji-ansible modules,
+   please file a Feature Request issue in `GitHub
+   <https://github.com/ktdreyer/koji-ansible/issues>`_ with your use case.
+2. You want to write some tests that verify Koji's data at a very low level.
+   For example, you may want to write an integration test to verify that
+   you've set up your Koji configuration in the way you expect.
+
+Note that this module will always report "changed: true" every time, because
+it simply sends the RPC to the Koji Hub on every ansible run.  This module
+cannot understand if your chosen RPC actually "changes" anything.
+
+.. code-block:: yaml
+
+    - name: make a raw API call:
+      koji_call:
+        name: getTag
+        args: [f29-build]
+      register: call_result
+
+    - debug:
+        var: call_result.data
+
+This will print the tag information for the `Fedora 29 -build tag
+<https://koji.fedoraproject.org/koji/taginfo?tagID=3428>`_. It is similar
+to running ``koji taginfo f29-build`` on the command-line.
+
 Koji profiles
 -------------
 
