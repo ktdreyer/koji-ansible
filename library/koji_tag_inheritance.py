@@ -70,6 +70,29 @@ options:
          Please open GitHub issues to discuss your use-case.
      required: false
      default: null (unlimited depth)
+   pkg_filter:
+     description:
+       - Regular expression selecting the packages for which builds can be
+         inherited through this inheritance link.
+       - Don't forget to use ``^`` and ``$`` when limiting to exact package
+         names; they are not implicit.
+       - The default empty string allows all packages to be inherited through
+         this link.
+     required: false
+     default: ''
+   intransitive:
+     description:
+       - Prevents inheritance link from being used by the child tag's children.
+         In other words, the link is only used to determine parent tags for the
+         child tag directly, but not to determine "grandparent" tags for the
+         child tag's children.
+     required: false
+     default: false
+   noconfig:
+     description:
+       - Prevents tag options ("extra") from being inherited.
+     required: false
+     default: false
    state:
      description:
        - Whether to add or remove this inheritance link.
@@ -134,7 +157,8 @@ def get_ids_and_inheritance(session, child_tag, parent_tag):
     return (child_id, parent_id, current_inheritance)
 
 
-def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth):
+def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth,
+                      pkg_filter, intransitive, noconfig):
     """
     Return a full inheritance rule to add for this child tag.
 
@@ -143,20 +167,23 @@ def generate_new_rule(child_id, parent_tag, parent_id, priority, maxdepth):
     :param int parent_id: Koji tag id
     :param int priority: Priority of this parent for this child
     :param int maxdepth: Max depth of the inheritance
+    :param str pkg_filter: Regular expression string of package names to include
+    :param bool intransitive: Don't allow this inheritance link to be inherited
+    :param bool noconfig: Prevent tag options ("extra") from being inherited
     """
     return {
         'child_id': child_id,
-        'intransitive': False,
+        'intransitive': intransitive,
         'maxdepth': maxdepth,
         'name': parent_tag,
-        'noconfig': False,
+        'noconfig': noconfig,
         'parent_id': parent_id,
-        'pkg_filter': '',
+        'pkg_filter': pkg_filter,
         'priority': priority}
 
 
 def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
-                        check_mode):
+                        pkg_filter, intransitive, noconfig, check_mode):
     """
     Ensure that a tag inheritance rule exists.
 
@@ -165,6 +192,9 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     :param str parent_tag: Koji tag name
     :param int priority: Priority of this parent for this child
     :param int maxdepth: Max depth of the inheritance
+    :param str pkg_filter: Regular expression string of package names to include
+    :param bool intransitive: Don't allow this inheritance link to be inherited
+    :param bool noconfig: Prevent tag options ("extra") from being inherited
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
@@ -185,21 +215,32 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
             raise ValueError(msg)
 
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority,
-                                 maxdepth)
+                                 maxdepth, pkg_filter, intransitive, noconfig)
     new_rules = [new_rule]
     for rule in current_inheritance:
         if rule == new_rule:
             return result
         if rule['priority'] == priority:
+            # prefix taginfo-style inheritance strings with diff-like +/-
+            result['stdout_lines'].append('dissimilar rules:')
+            result['stdout_lines'].extend(
+                    map(lambda r: ' -' + r,
+                        common_koji.describe_inheritance_rule(rule)))
+            result['stdout_lines'].extend(
+                    map(lambda r: ' +' + r,
+                        common_koji.describe_inheritance_rule(new_rule)))
             delete_rule = rule.copy()
             # Mark this rule for deletion
             delete_rule['delete link'] = True
             new_rules.insert(0, delete_rule)
-            result['stdout_lines'].append(
-                    'remove parent %s (%d)'
-                    % (delete_rule['name'], delete_rule['priority']))
-    result['stdout_lines'].append(
-            'set parent %s (%d)' % (parent_tag, priority))
+
+    if len(new_rules) > 1:
+        result['stdout_lines'].append('remove inheritance link:')
+        result['stdout_lines'].extend(
+                common_koji.describe_inheritance(new_rules[:-1]))
+    result['stdout_lines'].append('add inheritance link:')
+    result['stdout_lines'].extend(
+            common_koji.describe_inheritance_rule(new_rule))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
@@ -225,11 +266,11 @@ def remove_tag_inheritance(session, child_tag, parent_tag, check_mode):
             found_rule = rule.copy()
             # Mark this rule for deletion
             found_rule['delete link'] = True
-            result['stdout_lines'].append(
-                    'remove parent %s (%d)'
-                    % (found_rule['name'], found_rule['priority']))
     if not found_rule:
         return result
+    result['stdout_lines'].append('remove inheritance link:')
+    result['stdout_lines'].extend(
+            common_koji.describe_inheritance_rule(found_rule))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
@@ -244,6 +285,9 @@ def run_module():
         parent_tag=dict(type='str', required=True),
         priority=dict(type='int', required=False),
         maxdepth=dict(type='int', required=False, default=None),
+        pkg_filter=dict(type='str', required=False, default=''),
+        intransitive=dict(type='bool', required=False, default=False),
+        noconfig=dict(type='bool', required=False, default=False),
         state=dict(type='str', required=False, default='present'),
     )
     module = AnsibleModule(
@@ -269,6 +313,9 @@ def run_module():
                                      parent_tag=params['parent_tag'],
                                      priority=params['priority'],
                                      maxdepth=params['maxdepth'],
+                                     pkg_filter=params['pkg_filter'],
+                                     intransitive=params['intransitive'],
+                                     noconfig=params['noconfig'],
                                      check_mode=check_mode)
     elif state == 'absent':
         result = remove_tag_inheritance(session,
