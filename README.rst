@@ -115,9 +115,8 @@ typically in support of `content generators
 
 (Koji only supports adding new archive types, not deleting them.)
 
-This module uses the new `addArchiveType
-<https://pagure.io/koji/pull-request/1149>`_ RPC, which will be available in a
-future version of Koji.
+Your Koji Hub must be version 1.20 or newer in order to use the new
+`addArchiveType <https://pagure.io/koji/pull-request/1149>`_ RPC.
 
 .. code-block:: yaml
 
