@@ -8,3 +8,7 @@
   - include: inheritance-1.yml
   - include: inheritance-2.yml
   - include: maxdepth-1.yml
+  - include: maxdepth-2.yml
+  - include: maxdepth-3.yml
+  - include: maxdepth-4.yml
+  - include: maxdepth-5.yml
