@@ -4,4 +4,7 @@
   tasks:
   - include: create-1.yml
   - include: delete-1.yml
+  - include: delete-2.yml
+  - include: delete-3.yml
+  - include: delete-4.yml
   - include: update-1.yml

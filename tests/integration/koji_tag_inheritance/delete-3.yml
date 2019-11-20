@@ -1,0 +1,31 @@
+# Delete an inheritance relationship by parent_tag name *and* priority.
+---
+
+- koji_tag:
+    name: delete-3-parent
+    state: present
+
+- koji_tag:
+    name: delete-3-child
+    state: present
+    inheritance:
+    - parent: delete-3-parent
+      priority: 0
+
+- name: delete an inheritance relationship by parent_tag name and priority
+  koji_tag_inheritance:
+    parent_tag: delete-3-parent
+    child_tag: delete-3-child
+    priority: 0
+    state: absent
+
+# Assert that we have no parents.
+
+- koji_call:
+    name: getInheritanceData
+    args: [delete-3-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 0
