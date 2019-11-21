@@ -77,3 +77,60 @@ class TestEnsureUnknownCG(object):
                                            'absent')
         assert result['changed'] is True
         assert session.cgs == {}
+
+
+class TestEnsureCG(object):
+
+    def test_state_present(self):
+        current_cgs = {}
+        session = FakeKojiSession()
+        result = koji_cg.ensure_cg(session,
+                                   'rcm/debbuild',
+                                   'debian',
+                                   'present',
+                                   current_cgs,
+                                   False)
+        assert result['changed'] is True
+        # Verify the new CG that we added.
+        assert session.cgs == {'debian': {'users': ['rcm/debbuild']}}
+
+    def test_state_present_unchanged(self):
+        current_cgs = {'debian': {'users': ['rcm/debbuild']}}
+        session = FakeKojiSession()
+        session.cgs = current_cgs.copy()
+        result = koji_cg.ensure_cg(session,
+                                   'rcm/debbuild',
+                                   'debian',
+                                   'present',
+                                   current_cgs,
+                                   False)
+        assert result['changed'] is False
+        # Verify the new CGs match the old ones.
+        assert session.cgs == current_cgs
+
+    def test_state_absent(self):
+        current_cgs = {'debian': {'users': ['rcm/debbuild']}}
+        session = FakeKojiSession()
+        session.cgs = current_cgs.copy()
+        result = koji_cg.ensure_cg(session,
+                                   'rcm/debbuild',
+                                   'debian',
+                                   'absent',
+                                   current_cgs,
+                                   False)
+        assert result['changed'] is True
+        # Verify that the CG we deleted is gone.
+        assert session.cgs == {}
+
+    def test_state_absent_unchanged(self):
+        current_cgs = {}
+        session = FakeKojiSession()
+        result = koji_cg.ensure_cg(session,
+                                   'rcm/debbuild',
+                                   'debian',
+                                   'absent',
+                                   current_cgs,
+                                   False)
+        assert result['changed'] is False
+        # Verify the new CGs match the old ones.
+        assert session.cgs == current_cgs
