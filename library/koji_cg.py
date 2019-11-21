@@ -54,6 +54,40 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 
+def ensure_unknown_cg(session, user, name, state):
+    """
+    Ensure that a content generator and user is present or absent.
+
+    This method is for older versions of Koji where we do not have the listCGs
+    RPC. This method does not support check_mode.
+
+    :param session: koji ClientSession
+    :param str user: koji user name
+    :param str name: content generator name
+    :param str state: "present" or "absent"
+    :returns: result
+    """
+    result = {'changed': False}
+    koji_profile = sys.modules[session.__module__]
+    common_koji.ensure_logged_in(session)
+    if state == 'present':
+        # The "grant" method will at least raise an error if the permission
+        # was already granted, so we can set the "changed" result based on
+        # that.
+        try:
+            session.grantCGAccess(user, name, create=True)
+            result['changed'] = True
+        except koji_profile.GenericError as e:
+            if 'User already has access to content generator' not in str(e):
+                raise
+    if state == 'absent':
+        # There's no indication whether this changed anything, so we're going
+        # to be pessimistic and say we're always changing it.
+        session.revokeCGAccess(user, name)
+        result['changed'] = True
+    return result
+
+
 def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
@@ -82,30 +116,12 @@ def run_module():
 
     session = common_koji.get_session(profile)
 
-    result = {'changed': False}
-
     # There are no "get" methods for content generator information, so we must
     # send the changes to Koji every time.
     # in-progress "listCGs" pull request:
     # https://pagure.io/koji/pull-request/1160
 
-    common_koji.ensure_logged_in(session)
-
-    if state == 'present':
-        # The "grant" method will at least raise an error if the permission was
-        # already granted, so we can set the "changed" result based on that.
-        koji_profile = sys.modules[session.__module__]
-        try:
-            session.grantCGAccess(user, name, create=True)
-            result['changed'] = True
-        except koji_profile.GenericError as e:
-            if 'User already has access to content generator' not in str(e):
-                raise
-    elif state == 'absent':
-        # There's no indication whether this changed anything, so we're going
-        # to be pessimistic and say we're always changing it.
-        session.revokeCGAccess(user, name)
-        result['changed'] = True
+    result = ensure_unknown_cg(session, user, name, state)
 
     module.exit_json(**result)
 
