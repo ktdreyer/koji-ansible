@@ -1,0 +1,24 @@
+# Revoke access to a content generator.
+---
+
+- name: Grant our user access to a debian content generator
+  koji_cg:
+    name: debian
+    user: travisci
+    state: present
+
+- name: Revoke access to the debian content generator
+  koji_cg:
+    name: debian
+    user: travisci
+    state: absent
+
+# Assert that this content generator has no users.
+
+- koji_call:
+    name: listCGs
+  register: cgs
+
+- assert:
+    that:
+      - cgs.data == {}

@@ -3,3 +3,4 @@
   gather_facts: false
   tasks:
   - include: basic-1.yml
+  - include: revoke-1.yml
