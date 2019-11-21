@@ -1,0 +1,73 @@
+# Starting with no maxdepth parameter:
+#  no maxdepth parameter should result in no update.
+#  setting maxdepth parameter to null should result in no update
+#  setting maxdepth parameter to 0 should update from no maxdepth to 0
+---
+
+- koji_tag:
+    name: maxdepth-4-parent
+    state: present
+
+- koji_tag:
+    name: maxdepth-4-child
+    state: present
+    inheritance:
+    - parent: maxdepth-4-parent
+      priority: 0
+
+# Re-running this task without a maxdepth parameter should result in no update.
+
+- koji_tag:
+    name: maxdepth-4-child
+    state: present
+    inheritance:
+    - parent: maxdepth-4-parent
+      priority: 0
+  register: maxdepth_4
+
+- assert:
+    that:
+      - not maxdepth_4.changed
+
+# Re-running this task with maxdepth: null parameter should result in no
+# change.
+
+- koji_tag:
+    name: maxdepth-4-child
+    state: present
+    inheritance:
+    - parent: maxdepth-4-parent
+      priority: 0
+      maxdepth: null
+  register: maxdepth_4
+
+- assert:
+    that:
+      - not maxdepth_4.changed
+
+# Re-running this task with maxdepth: 0 parameter should result in a change.
+
+- koji_tag:
+    name: maxdepth-4-child
+    state: present
+    inheritance:
+    - parent: maxdepth-4-parent
+      priority: 0
+      maxdepth: 0
+  register: maxdepth_4
+
+- assert:
+    that:
+      - maxdepth_4.changed
+
+# Assert that the inheritance relationship has a 0 maxdepth.
+
+- koji_call:
+    name: getInheritanceData
+    args: [maxdepth-4-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data[0].name == 'maxdepth-4-parent'
+      - inheritance.data[0].maxdepth == 0
