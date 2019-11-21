@@ -17,8 +17,8 @@ module: koji_archivetype
 short_description: Create and manage Koji archive types
 description:
    - Create and manage Koji archive types
-   - Note: this relies on an API not yet in Koji upstream:
-     https://pagure.io/koji/pull-request/1149
+   - Your Koji Hub must be version 1.20 or newer in order to use the new
+     ``addArchiveType`` RPC.
 
 options:
    name:
