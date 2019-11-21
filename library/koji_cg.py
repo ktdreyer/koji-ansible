@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import common_koji
 
@@ -89,10 +90,11 @@ def run_module():
     if state == 'present':
         # The "grant" method will at least raise an error if the permission was
         # already granted, so we can set the "changed" result based on that.
+        koji_profile = sys.modules[session.__module__]
         try:
             session.grantCGAccess(user, name, create=True)
             result['changed'] = True
-        except common_koji.koji.GenericError as e:
+        except koji_profile.GenericError as e:
             if 'User already has access to content generator' not in str(e):
                 raise
     elif state == 'absent':
