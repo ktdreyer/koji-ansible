@@ -39,16 +39,22 @@ options:
    parent_tag:
      description:
        - The name of the Koji tag that will be the parent of the child.
-     required: true
+       - When defining an inheritance relationship with `state: present`, you
+         must specify a parent tag.
+       - When deleting an inheritance relationship with `state: absent`, you
+         may specify a parent tag name, priority, or both to decide the link to
+         remove. If both are specified, both must match.
+     required: true (add/modify), false (remove)
    priority:
      description:
        - The priority of this parent for this child. Parents with smaller
          numbers will override parents with bigger numbers.
-       - When defining an inheritance relationship with "state: present", you
-         must specify a priority. When deleting an inheritance relationship
-         with "state: absent", you should not specify a priority. Ansible will
-         simply remove the parent_tag link, regardless of its priority.
-     required: true
+       - When defining an inheritance relationship with `state: present`, you
+         must specify a priority.
+       - When deleting an inheritance relationship with `state: absent`, you
+         may specify a parent tag name, priority, or both to decide the link to
+         remove. If both are specified, both must match.
+     required: true (add/modify), false (remove)
    maxdepth:
      description:
        - By default, a tag's inheritance chain is unlimited. This means that
@@ -198,6 +204,9 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
+    if parent_tag is None:
+        raise ValueError('parent tag name required to set tag inheritance for '
+                         'tag %s' % child_tag)
     result = {'changed': False, 'stdout_lines': []}
     data = get_ids_and_inheritance(session, child_tag, parent_tag)
     child_id, parent_id, current_inheritance = data
@@ -220,17 +229,9 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     for rule in current_inheritance:
         if rule == new_rule:
             return result
-        # if either name or priority has changed without the other, we need to
-        # delete then reinsert
+        # If either name or priority matches, but the other value is different,
+        # we need to delete the partial match to add ours
         if (rule['name'] == parent_tag) != (rule['priority'] == priority):
-            # prefix taginfo-style inheritance strings with diff-like +/-
-            result['stdout_lines'].append('dissimilar rules:')
-            result['stdout_lines'].extend(
-                    map(lambda r: ' -' + r,
-                        common_koji.describe_inheritance_rule(rule)))
-            result['stdout_lines'].extend(
-                    map(lambda r: ' +' + r,
-                        common_koji.describe_inheritance_rule(new_rule)))
             delete_rule = rule.copy()
             # Mark this rule for deletion
             delete_rule['delete link'] = True
@@ -250,21 +251,29 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
     return result
 
 
-def remove_tag_inheritance(session, child_tag, parent_tag, check_mode):
+def remove_tag_inheritance(session, child_tag, parent_tag, priority,
+                           check_mode):
     """
     Ensure that a tag inheritance rule does not exist.
 
     :param session: Koji client session
     :param str child_tag: Koji tag name
     :param str parent_tag: Koji tag name
+    :param int priority: Koji inheritance link priority
     :param bool check_mode: don't make any changes
     :return: result (dict)
     """
+    if parent_tag is None and priority is None:
+        raise ValueError('parent name or priority required to remove tag %s '
+                         'inheritance' % child_tag)
     result = {'changed': False, 'stdout_lines': []}
     current_inheritance = session.getInheritanceData(child_tag)
     found_rule = {}
     for rule in current_inheritance:
-        if rule['name'] == parent_tag and rule['priority'] == priority:
+        # Only one of parent_tag or priority can be None, so mark the rule for
+        # deletion unless the field is specified *and* doesn't match
+        if (parent_tag is None or rule['name'] == parent_tag) \
+                and (priority is None or rule['priority'] == priority):
             found_rule = rule.copy()
             # Mark this rule for deletion
             found_rule['delete link'] = True
@@ -284,7 +293,7 @@ def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
         child_tag=dict(type='str', required=True),
-        parent_tag=dict(type='str', required=True),
+        parent_tag=dict(type='str', required=False),
         priority=dict(type='int', required=False),
         maxdepth=dict(type='int', required=False, default=None),
         pkg_filter=dict(type='str', required=False, default=''),
@@ -323,6 +332,7 @@ def run_module():
         result = remove_tag_inheritance(session,
                                         child_tag=params['child_tag'],
                                         parent_tag=params['parent_tag'],
+                                        priority=params['priority'],
                                         check_mode=check_mode)
     else:
         module.fail_json(msg="State must be 'present' or 'absent'.",

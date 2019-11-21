@@ -1,0 +1,48 @@
+# Do *not* delete an inheritance relationship if the user specifies both
+# parent_tag and priority and one of those does not match an existing
+# relationship.
+---
+
+- koji_tag:
+    name: delete-4-parent
+    state: present
+
+- koji_tag:
+    name: delete-4-notparent
+    state: present
+
+- koji_tag:
+    name: delete-4-child
+    state: present
+    inheritance:
+    - parent: delete-4-parent
+      priority: 0
+
+- name: try to delete with the right parent_tag and wrong priority
+  koji_tag_inheritance:
+    parent_tag: delete-4-parent-b
+    child_tag: delete-4-child
+    priority: 100  # bzzt
+    state: absent
+  ignore_errors: yes
+
+- name: try to delete with the right priority and wrong parent_tag
+  koji_tag_inheritance:
+    parent_tag: delete-4-notparent  # bzzt
+    child_tag: delete-4-child
+    priority: 0
+    state: absent
+  ignore_errors: yes
+
+# Assert that we still have our parent.
+
+- koji_call:
+    name: getInheritanceData
+    args: [delete-4-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 1
+      - inheritance.data[0].name == 'delete-1-parent'
+      - inheritance.data[0].priority == 0
