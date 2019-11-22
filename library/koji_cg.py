@@ -76,6 +76,10 @@ def run_module():
     user = params['user']
     state = params['state']
 
+    if state not in ('present', 'absent'):
+        module.fail_json(msg="State must be 'present' or 'absent'.",
+                         changed=False, rc=1)
+
     session = common_koji.get_session(profile)
 
     result = {'changed': False}
@@ -102,9 +106,6 @@ def run_module():
         # to be pessimistic and say we're always changing it.
         session.revokeCGAccess(user, name)
         result['changed'] = True
-    else:
-        module.fail_json(msg="State must be 'present' or 'absent'.",
-                         changed=False, rc=1)
 
     module.exit_json(**result)
 
