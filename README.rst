@@ -84,9 +84,8 @@ entry.
         user: rcm/debbuild
         state: present
 
-Note, this method tries to call the "grantCGAccess" RPC on every run because
-we have no ability to query the current state. See the `listCGs
-<https://pagure.io/koji/pull-request/1160>`_ hub RPC in progress.
+Your Koji Hub must be version 1.19 or newer in order to use the new
+`listCGs <https://pagure.io/koji/pull-request/1160>`_ RPC.
 
 koji_btype
 ----------
