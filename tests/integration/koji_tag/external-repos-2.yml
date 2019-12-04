@@ -1,0 +1,61 @@
+# Change the priority of an external repository for a tag.
+---
+
+- name: Create an external repo for CentOS
+  koji_external_repo:
+    name: external-repos-2-os
+    url: http://mirror.centos.org/centos/7/os/$arch/
+    state: present
+
+- name: Create an external repo for EPEL
+  koji_external_repo:
+    name: external-repos-2-epel
+    url: http://download.fedoraproject.org/pub/epel/7/$arch
+    state: present
+
+- name: Assign the external repos to our tag
+  koji_tag:
+    name: external-repos-2
+    state: present
+    external_repos:
+    - repo: external-repos-2-os
+      priority: 10
+    - repo: external-repos-2-epel
+      priority: 20
+
+- name: Remove the external repo from our tag
+  koji_tag:
+    name: external-repos-2
+    external_repos:
+    - repo: external-repos-2-os
+      priority: 10
+    - repo: external-repos-2-epel
+      priority: 40
+
+# Assert that this tag looks correct.
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-2]
+  register: repos
+
+- set_fact:
+    os_repo: "{{ repos.data
+                 | selectattr('external_repo_name', 'equalto', 'external-repos-2-os')
+                 | list
+                 | first
+              }}"
+
+- set_fact:
+    epel_repo: "{{ repos.data
+                   | selectattr('external_repo_name', 'equalto', 'external-repos-2-epel')
+                   | list
+                   | first
+                }}"
+
+- name: the two repos are priority "10" and "40"
+  assert:
+    that:
+      - repos.data|length == 2
+      - os_repo.priority == 10
+      - epel_repo.priority == 40
