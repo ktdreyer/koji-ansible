@@ -35,7 +35,7 @@ options:
    external_repos:
      description:
        - list of Koji external repos to set for this tag. Each element of the
-         list should have a "name" (external repo name) and "priority"
+         list should have a "repo" (the external repo name) and "priority"
          (integer).
    packages:
      description:
