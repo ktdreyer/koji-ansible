@@ -1,0 +1,39 @@
+#!/bin/bash
+set -eux
+
+# Construct our Ansible Collection in a temporary "_build" directory.
+
+TOPDIR=$(dirname "$(readlink -f "$0")")
+
+cd $TOPDIR
+
+rm -rf _build
+mkdir _build
+cd _build
+
+mkdir plugins
+cp $TOPDIR/COPYING .
+cp -r $TOPDIR/library/ plugins/modules
+cp -r $TOPDIR/module_utils/ plugins/module_utils/
+
+# Convert README from reStructuredText to Markdown.
+# Ansible Galaxy's Markdown engine plays best with markdown_strict.
+pandoc $TOPDIR/README.rst -f rst -t markdown_strict -o README.md
+
+# Determine our semver-compatible version number from Git.
+LAST_TAG=$(git describe --abbrev=0 || echo 0.0.0)
+if [[ "$LAST_TAG" == 0.0.0 ]]; then
+    LAST_TAG_COMMIT=$(git rev-list --max-parents=0 HEAD)
+else
+    LAST_TAG_COMMIT=$(git rev-list -n 1 $LAST_TAG)
+fi
+COMMIT_COUNT=$(($(git rev-list --count $LAST_TAG_COMMIT..HEAD) - 1))
+COMMIT_ABBREV=$(git rev-parse --short=8 HEAD)
+
+# See https://github.com/ansible/galaxy/issues/2137 for discussion about Git
+# snapshot versions.
+VERSION="${LAST_TAG}-git.${COMMIT_COUNT}+${COMMIT_ABBREV}"
+
+sed $TOPDIR/galaxy.yml -e "s/{{ version }}/$VERSION/" > galaxy.yml
+
+ansible-galaxy collection build

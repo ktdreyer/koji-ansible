@@ -1,0 +1,18 @@
+namespace: ktdreyer
+name: koji_ansible
+version: "{{ version }}"
+description: Ansible modules to manage Koji resources
+readme: README.md
+authors:
+- Ken Dreyer <kdreyer@redhat.com>
+- Andrew Hills <ahills@redhat.com>
+- Mikolaj Izdebski <mizdebsk@redhat.com>
+license:
+- GPL-3.0-or-later
+tags:
+- koji
+- buildsystem
+- packaging
+repository: https://github.com/ktdreyer/koji-ansible
+homepage: https://github.com/ktdreyer/koji-ansible
+issues: https://github.com/ktdreyer/koji-ansible/issues
