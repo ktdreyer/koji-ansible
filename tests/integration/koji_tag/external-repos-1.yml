@@ -1,0 +1,45 @@
+# Add and remove one external repository from a tag.
+---
+
+- name: Create an external repo for CentOS
+  koji_external_repo:
+    name: external-repos-1-os
+    url: http://mirror.centos.org/centos/7/os/$arch/
+    state: present
+
+- name: Assign the external repo to our tag
+  koji_tag:
+    name: external-repos-1
+    state: present
+    external_repos:
+    - repo: external-repos-1-os
+      priority: 10
+
+# Assert that we've associated the repo to this tag.
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-1]
+  register: repos
+
+- name: this tag has one external repo
+  assert:
+    that:
+      - repos.data|length == 1
+      - repos.data[0].external_repo_name == 'external-repos-1-os'
+      - repos.data[0].priority == 10
+
+- name: Remove the external repo from our tag
+  koji_tag:
+    name: external-repos-1
+    external_repos: []
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-1]
+  register: repos
+
+- name: this tag has no external repos
+  assert:
+    that:
+      - repos.data|length == 0
