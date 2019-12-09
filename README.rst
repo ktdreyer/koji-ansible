@@ -4,6 +4,10 @@ koji-ansible
 .. image:: https://travis-ci.org/ktdreyer/koji-ansible.svg?branch=master
              :target: https://travis-ci.org/ktdreyer/koji-ansible
 
+.. image:: https://coveralls.io/repos/github/ktdreyer/koji-ansible/badge.svg?branch=coverage
+             :target: https://coveralls.io/github/ktdreyer/koji-ansible?branch=coverage
+
+
 Ansible modules to manage `Koji <https://pagure.io/koji>`_ resources.
 
 This is not about installing Koji. Instead, it is a way to declaratively
