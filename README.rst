@@ -4,8 +4,8 @@ koji-ansible
 .. image:: https://travis-ci.org/ktdreyer/koji-ansible.svg?branch=master
              :target: https://travis-ci.org/ktdreyer/koji-ansible
 
-.. image:: https://coveralls.io/repos/github/ktdreyer/koji-ansible/badge.svg?branch=coverage
-             :target: https://coveralls.io/github/ktdreyer/koji-ansible?branch=coverage
+.. image:: https://coveralls.io/repos/github/ktdreyer/koji-ansible/badge.svg
+             :target: https://coveralls.io/github/ktdreyer/koji-ansible
 
 
 Ansible modules to manage `Koji <https://pagure.io/koji>`_ resources.
