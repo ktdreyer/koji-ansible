@@ -1,0 +1,26 @@
+# Setting maxdepth to "" should be the same as setting it to null.
+---
+
+- koji_tag:
+    name: maxdepth-6-parent
+    state: present
+
+- koji_tag:
+    name: maxdepth-6-child
+    state: present
+    inheritance:
+    - parent: maxdepth-6-parent
+      priority: 0
+      maxdepth: ""
+
+# Assert that the inheritance relationship has no maxdepth.
+
+- koji_call:
+    name: getInheritanceData
+    args: [maxdepth-6-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data[0].name == 'maxdepth-6-parent'
+      - inheritance.data[0].maxdepth is none

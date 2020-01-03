@@ -178,10 +178,14 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
             else:
                 raise ValueError(msg)
         parent_id = parent_taginfo['id']
+        # maxdepth: treat empty strings the same as None
+        maxdepth = rule.get('maxdepth')
+        if maxdepth == '':
+            maxdepth = None
         new_rule = {
             'child_id': tag_id,
             'intransitive': rule.get('intransitive', False),
-            'maxdepth': rule.get('maxdepth'),
+            'maxdepth': maxdepth,
             'name': parent_name,
             'noconfig': rule.get('noconfig', False),
             'parent_id': parent_id,
