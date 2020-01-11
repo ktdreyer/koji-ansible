@@ -111,7 +111,7 @@ def describe_inheritance_rule(rule):
     result = ["%4d   %s %s" % (rule['priority'], flags, rule['name'])]
 
     if rule['maxdepth'] not in ('', None):
-        result.append("    maxdepth: %d" % rule['maxdepth'])
+        result.append("    maxdepth: %d" % int(rule['maxdepth']))
     if rule['pkg_filter'] not in ('', None):
         result.append("    package filter: %s" % rule['pkg_filter'])
 
