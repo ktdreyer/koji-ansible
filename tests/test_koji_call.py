@@ -22,6 +22,13 @@ class TestNewRepo(object):
         assert result['changed'] is True
         assert result['data'] == 12345
 
+    def test_named_args(self):
+        session = FakeKojiSession()
+        result = koji_call.do_call(session, 'newRepo', {'tag': 'f30-build'},
+                                   False)
+        assert result['changed'] is True
+        assert result['data'] == 12345
+
 
 class TestDescribeCall(object):
 
