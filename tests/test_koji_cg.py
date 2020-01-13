@@ -1,4 +1,5 @@
 import koji_cg
+import pytest
 
 
 class GenericError(Exception):
@@ -45,6 +46,20 @@ class FakeKojiSession(object):
 class FakeOldKojiSession(FakeKojiSession):
     def listCGs(self):
         raise GenericError('Invalid method: listCGs')
+
+
+class TestListCGs(object):
+    def test_list_cgs(self):
+        session = FakeKojiSession()
+        session.cgs = {'debian': {'users': ['rcm/debbuild']}}
+        result = koji_cg.list_cgs(session)
+        assert result == {'debian': {'users': ['rcm/debbuild']}}
+
+    def test_unknown_list_cgs(self):
+        session = FakeOldKojiSession()
+        session.cgs = {'debian': {'users': ['rcm/debbuild']}}
+        with pytest.raises(koji_cg.UnknownCGsError):
+            koji_cg.list_cgs(session)
 
 
 class TestEnsureUnknownCG(object):
