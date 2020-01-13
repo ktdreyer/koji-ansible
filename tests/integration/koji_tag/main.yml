@@ -14,3 +14,4 @@
   - include: maxdepth-3.yml
   - include: maxdepth-4.yml
   - include: maxdepth-5.yml
+  - include: maxdepth-6.yml
