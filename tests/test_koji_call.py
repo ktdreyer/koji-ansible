@@ -36,6 +36,15 @@ class TestNewRepo(object):
         assert result['data'] == 12345
 
 
+class TestCheckMode(object):
+
+    def test_check_mode(self):
+        result = koji_call.check_mode_call('newRepo', ['f30-build'])
+        assert result['changed'] is True
+        assert result['stdout_lines'] == "would have called"\
+                                         " newRepo(*['f30-build'])"
+
+
 class TestDescribeCall(object):
 
     def test_positional_args(self):
