@@ -2,6 +2,7 @@
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 from ansible.module_utils import common_koji
+from ansible.module_utils.six import string_types
 
 try:
     from __main__ import display
@@ -182,6 +183,8 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
         maxdepth = rule.get('maxdepth')
         if maxdepth == '':
             maxdepth = None
+        if isinstance(maxdepth, string_types):
+            maxdepth = int(maxdepth)
         new_rule = {
             'child_id': tag_id,
             'intransitive': rule.get('intransitive', False),
