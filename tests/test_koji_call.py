@@ -28,3 +28,7 @@ class TestDescribeCall(object):
     def test_positional_args(self):
         result = koji_call.describe_call('newRepo', ['f30-build'])
         assert result == "newRepo(*['f30-build'])"
+
+    def test_named_args(self):
+        result = koji_call.describe_call('newRepo', {'tag': 'f30-build'})
+        assert result == "newRepo(**{'tag': 'f30-build'})"
