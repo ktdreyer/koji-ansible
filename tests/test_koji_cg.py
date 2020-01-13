@@ -44,7 +44,7 @@ class FakeKojiSession(object):
 
 class FakeOldKojiSession(FakeKojiSession):
     def listCGs(self):
-        raise GenericError('Invalid method name listCGs')
+        raise GenericError('Invalid method: listCGs')
 
 
 class TestEnsureUnknownCG(object):
