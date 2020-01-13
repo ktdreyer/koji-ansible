@@ -44,3 +44,9 @@ matrix:
          - python3-rpm
          - python3-setuptools
          - python3-six
+
+addons:
+  apt:
+    packages:
+    - rpm
+    - librpm-dev
