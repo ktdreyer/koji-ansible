@@ -16,15 +16,41 @@ class FakeKojiSession(object):
 
 class TestNewRepo(object):
 
-    def test_new_repo(self):
+    def test_positional_args(self):
         session = FakeKojiSession()
         result = koji_call.do_call(session, 'newRepo', ['f30-build'], False)
         assert result['changed'] is True
         assert result['data'] == 12345
 
+    def test_named_args(self):
+        session = FakeKojiSession()
+        result = koji_call.do_call(session, 'newRepo', {'tag': 'f30-build'},
+                                   False)
+        assert result['changed'] is True
+        assert result['data'] == 12345
+
+    def test_logged_in(self):
+        session = FakeKojiSession()
+        result = koji_call.do_call(session, 'newRepo', ['f30-build'], True)
+        assert result['changed'] is True
+        assert result['data'] == 12345
+
+
+class TestCheckMode(object):
+
+    def test_check_mode(self):
+        result = koji_call.check_mode_call('newRepo', ['f30-build'])
+        assert result['changed'] is True
+        assert result['stdout_lines'] == "would have called"\
+                                         " newRepo(*['f30-build'])"
+
 
 class TestDescribeCall(object):
 
-    def test_describe_call(self):
+    def test_positional_args(self):
         result = koji_call.describe_call('newRepo', ['f30-build'])
         assert result == "newRepo(*['f30-build'])"
+
+    def test_named_args(self):
+        result = koji_call.describe_call('newRepo', {'tag': 'f30-build'})
+        assert result == "newRepo(**{'tag': 'f30-build'})"
