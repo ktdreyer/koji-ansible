@@ -65,7 +65,7 @@ def list_cgs(session):
     try:
         return session.listCGs()
     except koji_profile.GenericError as e:
-        if e.value == 'Invalid method: listCGs':
+        if str(e) == 'Invalid method: listCGs':
             # Kojihub before version 1.20 will raise this error.
             raise UnknownCGsError
         raise
