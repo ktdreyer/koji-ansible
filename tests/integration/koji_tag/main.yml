@@ -2,17 +2,10 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - include: basic-1.yml
-  - include: external-repos-1.yml
-  - include: external-repos-2.yml
-  - include: groups-1.yml
-  - include: groups-2.yml
-  - include: inheritance-1.yml
-  - include: inheritance-2.yml
-  - include: maxdepth-1.yml
-  - include: maxdepth-2.yml
-  - include: maxdepth-3.yml
-  - include: maxdepth-4.yml
-  - include: maxdepth-5.yml
-  - include: maxdepth-6.yml
-  - include: maxdepth-7.yml
+  - set_fact:
+      tests: "{{ lookup('fileglob', '{{ playbook_dir }}/*.yml', wantlist=True)
+                 | difference([playbook_dir + '/main.yml'])
+              }}"
+
+  - include: "{{ item }}"
+    with_items: "{{ tests }}"
