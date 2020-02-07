@@ -24,6 +24,9 @@ a configuration from one Koji instance to another.
 """
 
 
+QUERYOPTS = {'order': 'name'}
+
+
 def interrogate(session, tags):
     """
     Interrogate Koji for all information about these tags.
@@ -152,16 +155,15 @@ def parse_args():
 
 
 def generate_tags_playbook(session, regex):
-    queryOpts = {'order': 'name'}
     # Optionally filter our tag list by a regular expression.
     if regex:
-        tag_matches = session.search(regex, 'tag', 'regexp', queryOpts)
+        tag_matches = session.search(regex, 'tag', 'regexp', QUERYOPTS)
         with session.multicall(strict=True, batch=100) as m:
             calls = [m.getTag(match['name']) for match in tag_matches]
             m.call_all()
         tags = [call.result for call in calls]
     else:
-        tags = session.listTags(queryOpts=queryOpts)
+        tags = session.listTags(queryOpts=QUERYOPTS)
 
     print('querying %i tags' % len(tags))
     tags = interrogate(session, tags)
