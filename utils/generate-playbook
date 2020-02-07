@@ -32,19 +32,21 @@ def interrogate(session, tags):
     Quickly get all the information we need from Koji with as few XML-RPC
     calls as possible.
     """
-    # Note: This client multiCall method bombs out after about 35 minutes for
-    # large Koji task lists (tested with 11,170 tags). If our tags list is
-    # very large, we need to chunk it up here before we send a
-    # multicall-of-death. This will take some tuning as we add more features
-    # (additional calls) to this code as well.
-    session.multicall = True
-    for tag in tags.copy():
-        tag_name = tag['name']
-        session.getInheritanceData(tag_name)
-        session.listPackages(tag_name)
-        session.getTagExternalRepos(tag_name)
-    multicall_results = session.multiCall(strict=True)
-    session.multicall = False
+    # The multicall() "batch" feature and context manager feature are
+    # available in Koji 1.18 or newer.
+    # Note: without batching, this client multiCall method bombs out after
+    # about 35 minutes for large Koji task lists (tested with 11,170 tags).
+    # Batching is essential. This performance also decreases as we add more
+    # features (additional calls) to this code as well.
+    # (I wonder if we could dynamically re-try with smaller batches if a
+    # larger batch value times out?)
+    with session.multicall(strict=True, batch=100) as m:
+        for tag in tags:
+            tag_name = tag['name']
+            m.getInheritanceData(tag_name)
+            m.listPackages(tag_name)
+            m.getTagExternalRepos(tag_name)
+        multicall_results = m.call_all()
 
     # flatten multicall results:
     multicall_results = [result[0] for result in multicall_results]
