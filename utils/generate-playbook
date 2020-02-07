@@ -27,7 +27,7 @@ a configuration from one Koji instance to another.
 QUERYOPTS = {'order': 'name'}
 
 
-def interrogate(session, tags):
+def interrogate_tags(session, tags):
     """
     Interrogate Koji for all information about these tags.
 
@@ -181,7 +181,7 @@ def generate_tags_playbook(session, regex):
         tags = session.listTags(queryOpts=QUERYOPTS)
 
     print('querying %i tags' % len(tags), file=sys.stderr)
-    tags = interrogate(session, tags)
+    tags = interrogate_tags(session, tags)
     tasks = koji_tag_tasks(tags)
     generate_playbook(tasks)
 
