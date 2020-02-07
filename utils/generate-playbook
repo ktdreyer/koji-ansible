@@ -169,7 +169,9 @@ def parse_args():
     parser.add_argument('--profile', default='koji',
                         help='koji client profile (defaults to "cbs")')
     parser.add_argument('--regex',
-                        help='match a subset of tags and targets (by name)')
+                        help='match a subset of tags and targets (by name). '
+                             'If you specify "foo", this will also match '
+                             '"foo-bar".')
     return parser.parse_args()
 
 
