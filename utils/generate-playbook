@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import argparse
 from argparse import RawTextHelpFormatter
-import re
 import sys
 from os.path import abspath, dirname, join
 from ruamel import yaml
@@ -156,12 +155,17 @@ def main():
     args = parse_args()
     session = common_koji.get_session(args.profile)
 
-    tags = session.listTags()
-
+    queryOpts = {'order': 'name'}
     # Optionally filter our tag list by a regular expression.
     if args.tag_regex:
-        regex = re.compile(args.tag_regex)
-        tags = [tag for tag in tags if regex.search(tag['name'])]
+        tag_matches = session.search(args.tag_regex, 'tag', 'regexp',
+                                     queryOpts)
+        with session.multicall(strict=True, batch=100) as m:
+            calls = [m.getTag(match['name']) for match in tag_matches]
+            m.call_all()
+        tags = [call.result for call in calls]
+    else:
+        tags = session.listTags(queryOpts=queryOpts)
 
     print('querying %i tags' % len(tags))
     tags = interrogate(session, tags)
