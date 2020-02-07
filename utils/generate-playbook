@@ -112,7 +112,7 @@ def koji_tag_tasks(tags):
     """ Generate the YAML data for all koji tags. """
     tasks = []
     for taginfo in tags:
-        # name = 'configure koji tag %s' % taginfo['name']
+        name = 'configure koji tag %s' % taginfo['name']
         # Do not configure tag ID numbers:
         del taginfo['id']
         # Do not configure things if they're "false" or "None":
@@ -129,7 +129,7 @@ def koji_tag_tasks(tags):
             parsed_packages = koji_tag_packages(taginfo['packages'])
             taginfo['packages'] = parsed_packages
         task = {
-            # 'name': name,
+            'name': name,
             'koji_tag': taginfo,
         }
         tasks.append(task)
