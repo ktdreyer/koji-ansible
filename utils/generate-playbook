@@ -154,14 +154,29 @@ def parse_args():
     return parser.parse_args()
 
 
+def search(session, type_, rpc_name, regex):
+    """ Search Koji for a type according to a regex
+    :param session: KojiSession
+    :param str type_: "tag" or "target"
+    :param str rpc_name: Batch up this RPC method to find the details for this
+                         type. For example 'getTag' or 'getBuildTarget'.
+    :param str regex: regular expression to match
+    """
+    matches = session.search(regex, type_, 'regexp', QUERYOPTS)
+    with session.multicall(strict=True, batch=100) as m:
+        virtual_calls = []
+        for match in matches:
+            rpc_method = getattr(m, rpc_name)
+            virtual_call = rpc_method(match['name'])
+            virtual_calls.append(virtual_call)
+        m.call_all()
+    return [call.result for call in virtual_calls]
+
+
 def generate_tags_playbook(session, regex):
     # Optionally filter our tag list by a regular expression.
     if regex:
-        tag_matches = session.search(regex, 'tag', 'regexp', QUERYOPTS)
-        with session.multicall(strict=True, batch=100) as m:
-            calls = [m.getTag(match['name']) for match in tag_matches]
-            m.call_all()
-        tags = [call.result for call in calls]
+        tags = search(session, 'tag', 'getTag', regex)
     else:
         tags = session.listTags(queryOpts=QUERYOPTS)
 
