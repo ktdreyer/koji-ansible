@@ -151,15 +151,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
-    session = common_koji.get_session(args.profile)
-
+def generate_tags_playbook(session, tag_regex):
     queryOpts = {'order': 'name'}
     # Optionally filter our tag list by a regular expression.
-    if args.tag_regex:
-        tag_matches = session.search(args.tag_regex, 'tag', 'regexp',
-                                     queryOpts)
+    if tag_regex:
+        tag_matches = session.search(tag_regex, 'tag', 'regexp', queryOpts)
         with session.multicall(strict=True, batch=100) as m:
             calls = [m.getTag(match['name']) for match in tag_matches]
             m.call_all()
@@ -171,6 +167,12 @@ def main():
     tags = interrogate(session, tags)
     tasks = koji_tag_tasks(tags)
     generate_playbook(tasks)
+
+
+def main():
+    args = parse_args()
+    session = common_koji.get_session(args.profile)
+    generate_tags_playbook(session, args.tag_regex)
 
 
 if __name__ == '__main__':
