@@ -140,6 +140,7 @@ def generate_playbook(tasks):
     """ Generate a playbook YAML from a set of tasks. """
     playbook = {'tasks': tasks}
     text = yaml.dump(playbook, default_flow_style=False, sort_keys=False)
+    text = text.replace('\n- ', '\n\n- ')
     print(text)
 
 
