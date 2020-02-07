@@ -136,6 +136,24 @@ def koji_tag_tasks(tags):
     return tasks
 
 
+def koji_target_tasks(targets):
+    """ Generate the YAML data for all koji tags. """
+    tasks = []
+    for targetinfo in targets:
+        name = 'configure koji target %s' % targetinfo['name']
+        koji_target = {
+            'name': targetinfo['name'],
+            'build_tag': targetinfo['build_tag_name'],
+            'dest_tag': targetinfo['dest_tag_name'],
+        }
+        task = {
+            'name': name,
+            'koji_target': koji_target,
+        }
+        tasks.append(task)
+    return tasks
+
+
 def generate_playbook(tasks):
     """ Generate a playbook YAML from a set of tasks. """
     playbook = {'tasks': tasks}
@@ -151,7 +169,7 @@ def parse_args():
     parser.add_argument('--profile', default='koji',
                         help='koji client profile (defaults to "cbs")')
     parser.add_argument('--regex',
-                        help='match a subset of tags (by name)')
+                        help='match a subset of tags and targets (by name)')
     return parser.parse_args()
 
 
@@ -185,10 +203,21 @@ def generate_tags_playbook(session, regex):
     generate_playbook(tasks)
 
 
+def generate_targets_playbook(session, regex):
+    if regex:
+        targets = search(session, 'target', 'getBuildTarget', regex)
+    else:
+        targets = session.getBuildTargets(queryOpts=QUERYOPTS)
+    print('querying %i targets' % len(targets), file=sys.stderr)
+    tasks = koji_target_tasks(targets)
+    generate_playbook(tasks)
+
+
 def main():
     args = parse_args()
     session = common_koji.get_session(args.profile)
     generate_tags_playbook(session, args.regex)
+    generate_targets_playbook(session, args.regex)
 
 
 if __name__ == '__main__':
