@@ -165,7 +165,7 @@ def generate_tags_playbook(session, regex):
     else:
         tags = session.listTags(queryOpts=QUERYOPTS)
 
-    print('querying %i tags' % len(tags))
+    print('querying %i tags' % len(tags), file=sys.stderr)
     tags = interrogate(session, tags)
     tasks = koji_tag_tasks(tags)
     generate_playbook(tasks)
