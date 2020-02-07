@@ -174,12 +174,10 @@ def search(session, type_, rpc_name, regex):
 
 
 def generate_tags_playbook(session, regex):
-    # Optionally filter our tag list by a regular expression.
     if regex:
         tags = search(session, 'tag', 'getTag', regex)
     else:
         tags = session.listTags(queryOpts=QUERYOPTS)
-
     print('querying %i tags' % len(tags), file=sys.stderr)
     tags = interrogate_tags(session, tags)
     tasks = koji_tag_tasks(tags)
