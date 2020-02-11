@@ -131,3 +131,30 @@ def describe_inheritance(rules):
     # sum(…, tuple()) will flatten tuples of tuples into just the child tuples
     # > sum( ((1, 2), (3, 4)), tuple() ) ⇒ (1, 2) + (3, 4) + (,) ⇒ (1, 2, 3, 4)
     return sum(tuple(map(describe_inheritance_rule, rules)), tuple())
+
+
+# permission utils
+
+
+perm_cache = {}
+
+
+def get_perms(session):
+    global perm_cache
+    if not perm_cache:
+        perm_cache = dict([
+            (perm['name'], perm['id']) for perm in session.getAllPerms()
+        ])
+    return perm_cache
+
+
+def get_perm_id(session, name):
+    perms = get_perms(session)
+    return perms[name]
+
+
+def get_perm_name(session, id_):
+    perms = get_perms(session)
+    for perm_name, perm_id in perms.items():
+        if perm_id == id_:
+            return perm_name
