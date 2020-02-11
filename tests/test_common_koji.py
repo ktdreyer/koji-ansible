@@ -1,7 +1,11 @@
 from textwrap import dedent
+from ansible.module_utils import common_koji
 from ansible.module_utils.common_koji import get_profile_name
 from ansible.module_utils.common_koji import get_session
 from ansible.module_utils.common_koji import describe_inheritance_rule
+from ansible.module_utils.common_koji import get_perms
+from ansible.module_utils.common_koji import get_perm_id
+from ansible.module_utils.common_koji import get_perm_name
 import pytest
 
 
@@ -129,6 +133,61 @@ class TestDescribeInheritance(object):
         }
         result = describe_inheritance_rule(rule)
         assert result == ('  50   ...N rhel-8-build-base',)
+
+
+class TestGetPerms(object):
+
+    class FakePermsKoji(object):
+        PERMS = [{'id': 1, 'name': 'admin'},
+                 {'id': 2, 'name': 'build'},
+                 {'id': 3, 'name': 'repo'}]
+
+        def __init__(self):
+            self.called = 0
+
+        def getAllPerms(self):
+            self.called += 1
+            return self.PERMS
+
+    @pytest.fixture(autouse=True)
+    def expire_cache(self):
+        # Reset the permission cache after every run.
+        common_koji.perm_cache = {}
+
+    @pytest.fixture()
+    def session(self):
+        return self.FakePermsKoji()
+
+    def test_get_perms(self, session):
+        result = get_perms(session)
+        expected = {'admin': 1, 'build': 2, 'repo': 3}
+        assert result == expected
+
+    def test_get_perms_cached(self, session):
+        get_perms(session)
+        assert session.called == 1
+        get_perms(session)
+        assert session.called == 1
+
+    def test_get_perm_id(self, session):
+        admin_perm_id = get_perm_id(session, 'admin')
+        build_perm_id = get_perm_id(session, 'build')
+        repo_perm_id = get_perm_id(session, 'repo')
+        assert admin_perm_id == 1
+        assert build_perm_id == 2
+        assert repo_perm_id == 3
+        # Verify that we used cached data for the calls above:
+        assert session.called == 1
+
+    def test_get_perm_name(self, session):
+        perm_name_1 = get_perm_name(session, 1)
+        perm_name_2 = get_perm_name(session, 2)
+        perm_name_3 = get_perm_name(session, 3)
+        assert perm_name_1 == 'admin'
+        assert perm_name_2 == 'build'
+        assert perm_name_3 == 'repo'
+        # Verify that we used cached data for the calls above:
+        assert session.called == 1
 
 
 """
