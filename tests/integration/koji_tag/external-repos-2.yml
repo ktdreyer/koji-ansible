@@ -23,7 +23,7 @@
     - repo: external-repos-2-epel
       priority: 20
 
-- name: Remove the external repo from our tag
+- name: Change an external repo priority for our tag
   koji_tag:
     name: external-repos-2
     external_repos:
