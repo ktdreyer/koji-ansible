@@ -167,7 +167,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                                      formatter_class=RawTextHelpFormatter)
     parser.add_argument('--profile', default='koji',
-                        help='koji client profile (defaults to "cbs")')
+                        help='koji client profile (defaults to "koji")')
     parser.add_argument('--regex',
                         help='match a subset of tags and targets (by name). '
                              'If you specify "foo", this will also match '
