@@ -16,6 +16,23 @@ cp $TOPDIR/COPYING .
 cp -r $TOPDIR/library/ plugins/modules
 cp -r $TOPDIR/module_utils/ plugins/module_utils/
 
+# Make our common_koji imports compatible with Ansible Collections.
+sed -i \
+  -e  's/from ansible.module_utils import common_koji/from ansible_collections.ktdreyer.koji_ansible.plugins.module_utils import common_koji/' \
+  plugins/modules/*.py
+
+# Sanity-check that we converted everything:
+set +x
+IMPORTS=$(grep "import " plugins/modules/*.py)
+COMMON_KOJI_IMPORTS=$(echo $IMPORTS | grep common_koji)
+MISSED_IMPORTS=$(echo $COMMON_KOJI_IMPORTS | grep -v ansible_collections || :)
+set -x
+if [[ ! -z $MISSED_IMPORTS ]]; then
+  echo Failed to convert some files for ansible_collections:
+  echo $MISSED_IMPORTS
+  exit 1
+fi
+
 # Convert README from reStructuredText to Markdown.
 # Ansible Galaxy's Markdown engine plays best with markdown_strict.
 pandoc $TOPDIR/README.rst -f rst -t markdown_strict -o README.md
