@@ -270,8 +270,34 @@ no explicit ``koji:`` argument::
 
    KOJI_PROFILE=kojidev ansible-playbook -v my-koji-playbook.yaml
 
-File paths
-----------
+
+Installing from Ansible Galaxy
+------------------------------
+
+We distribute koji-ansible through the `Ansible Galaxy
+<https://galaxy.ansible.com/ktdreyer/koji_ansible>`_.
+
+If you are using Ansible 2.9 or greater, you can `install
+<https://docs.ansible.com/ansible/latest/user_guide/collections_using.html>`_
+koji-ansible like so::
+
+  ansible-galaxy collection install ktdreyer.koji_ansible:<identifier>
+
+Where *<identifier>* is a specific Git reference. Please see the `Ansible
+Galaxy UI <https://galaxy.ansible.com/ktdreyer/koji_ansible>`_.
+
+Please note that you cannot install the "latest" Git snapshot automatically
+without specifying the version identifier explicitly. The problem is that the
+``ansible-galaxy`` client hides these versions when it picks the "latest" one
+to install. This issue is tracked in
+https://github.com/ansible/ansible/issues/64905 .
+
+
+Running from a Git clone
+------------------------
+
+Instead of using the Ansible Collection tarball, you can use this project
+directly from a Git clone. This is useful when hacking on the code.
 
 These modules import ``common_koji`` from the ``module_utils`` directory.
 
@@ -328,15 +354,3 @@ TODO
 ----
 
 * Unit tests
-
-* The long-term goal of this project is to merge into `ansible
-  <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ itself
-  so that the modules are built in. To that end, this koji-ansible project is
-  licensed under the GPLv3 to match Ansible's license.
-
-  Given some recent changes in Ansible upstream, it's possible that
-  `Collections
-  <https://galaxy.ansible.com/docs/contributing/creating_collections.html>`_
-  would be a good option for distributing this instead. This is evolving as
-  the Ansible community tries to decide the best way to distribute and share
-  ownership over modules.

@@ -1,0 +1,28 @@
+name: Upload Ansible Galaxy Package
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        # python -m pip install --upgrade pip
+        pip install ansible
+        sudo apt-get install pandoc
+    - name: Build and publish
+      env:
+        GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+      run: |
+        ./build-collection
+        cd _build
+        ansible-galaxy collection publish ktdreyer-koji_ansible-*.tar.gz --api-key=${GALAXY_API_KEY}
