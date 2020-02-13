@@ -47,6 +47,33 @@ class FakeSession(object):
         return True
 
 
+class TestValidateRepos(object):
+
+    def test_simple(self):
+        repos = [{'repo': 'epel-7', 'priority': 10}]
+        koji_tag.validate_repos(repos)
+
+    def test_empty(self):
+        repos = []
+        koji_tag.validate_repos(repos)
+
+    def test_duplicate_name(self):
+        repos = [
+            {'repo': 'epel-7', 'priority': 10},
+            {'repo': 'epel-7', 'priority': 20},
+        ]
+        with pytest.raises(koji_tag.DuplicateNameError):
+            koji_tag.validate_repos(repos)
+
+    def test_duplicate_priority(self):
+        repos = [
+            {'repo': 'centos', 'priority': 10},
+            {'repo': 'epel-7', 'priority': 10},
+        ]
+        with pytest.raises(koji_tag.DuplicatePriorityError):
+            koji_tag.validate_repos(repos)
+
+
 class TestEnsureExternalRepos(object):
 
     def test_from_no_repos(self):
