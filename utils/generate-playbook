@@ -215,9 +215,19 @@ def generate_targets_playbook(session, regex):
     generate_playbook(tasks)
 
 
+def verify_session(session):
+    """
+    Verify that this Koji client can use the multicall context manager.
+    """
+    if not callable(session.multicall):
+        print('This tool requires Koji 1.18 or greater', file=sys.stderr)
+        raise SystemExit(1)
+
+
 def main():
     args = parse_args()
     session = common_koji.get_session(args.profile)
+    verify_session(session)
     generate_tags_playbook(session, args.regex)
     generate_targets_playbook(session, args.regex)
 
