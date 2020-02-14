@@ -292,6 +292,51 @@ without specifying the version identifier explicitly. The problem is that the
 to install. This issue is tracked in
 https://github.com/ansible/ansible/issues/64905 .
 
+Using this Ansible Galaxy Collection inside a role
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here is an example of a simple playbook and role that uses this collection.
+``playbook.yml`` calls one role named ``my-koji-project``::
+
+    top
+    ├── playbook.yml
+    └── roles
+        └── my-koji-project
+            ├── collections
+            │   └── requirements.yml
+            ├── meta
+            │   └── main.yml
+            └── tasks
+                └── main.yml
+
+The ``playbook.yml`` file is a small playbook that simply loads our role::
+
+    - name: Test a role that uses koji-ansible
+      hosts: localhost
+      gather_facts: false
+      roles:
+       - my-koji-project
+
+The ``roles/my-koji-project/collections/requirements.yml`` file should require
+this collection (and a specific version, as described above)::
+
+    collections:
+    - name: ktdreyer.koji_ansible
+      version: 0.0.0-git.222+7fb2d32f
+
+The ``roles/my-koji-project/meta/main.yml`` file tells Ansible to load any
+custom modules in this role from the ``ktdreyer.koji_ansible`` collection
+namespace::
+
+    collections:
+    - ktdreyer.koji_ansible
+
+Lastly you can add your role's tasks as usual to ``roles/my-koji-project/tasks/main.yml``::
+
+    - name: create the "my-product-1.0" tag
+      koji_tag:
+        name: my-product-1.0
+
 
 Running from a Git clone
 ------------------------
