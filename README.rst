@@ -337,6 +337,16 @@ Lastly you can add your role's tasks as usual to ``roles/my-koji-project/tasks/m
       koji_tag:
         name: my-product-1.0
 
+Role and collection dependencies must be installed separately. This is true even if
+the dependencies are defined in the same requirements.yml.
+
+For role dependencies::
+
+  ansible-galaxy install -r requirements.yml
+
+For collection dependencies::
+
+  ansible-galaxy collection install -r requirements.yml
 
 Running from a Git clone
 ------------------------
