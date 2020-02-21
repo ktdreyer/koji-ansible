@@ -2,12 +2,6 @@
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import common_koji
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
