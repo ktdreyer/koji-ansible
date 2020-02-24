@@ -45,6 +45,15 @@ matrix:
          - python3-setuptools
          - python3-six
 
+    - name: "test collection build"
+      language: python
+      install: pip install ansible
+      script: tests/integration/collection.sh
+      addons:
+       apt:
+         packages:
+         - pandoc
+
 addons:
   apt:
     packages:
