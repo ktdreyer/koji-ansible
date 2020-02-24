@@ -27,8 +27,7 @@ mv travisci.cert ~/.koji/pki/
 
 # install hub certs
 sudo cp koji-ca.crt /etc/ssl/certs/
-cat localhost.crt koji-ca.crt | sudo tee /etc/ssl/certs/localhost.crt
-cat localhost.crt koji-ca.crt | sudo tee /etc/ssl/certs/localhost.crt
+sudo mv localhost.chain.crt /etc/ssl/certs/localhost.chain.crt
 sudo mv localhost.key /etc/ssl/private/localhost.key
 sudo chown root:ssl-cert /etc/ssl/private/localhost.key
 sudo chmod 640 /etc/ssl/private/localhost.key
