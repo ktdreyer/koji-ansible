@@ -26,14 +26,16 @@ description:
 options:
    name:
      description:
-       - The name of the Koji content generator. Example: "debian".
+       - The name of the Koji content generator.
+       - 'Example: "debian".'
      required: true
    user:
      description:
-       - The name of the Koji user account. Example: "cguser".
+       - The name of the Koji user account.
        - This user account must already exist in Koji's database. For example,
          you may run an authenticated "koji hello" command to create the
          account database entry.
+       - 'Example: "cguser".'
      required: true
 requirements:
   - "python >= 2.7"
