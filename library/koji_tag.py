@@ -60,7 +60,7 @@ options:
    arches:
      description:
        - space-separated string of arches this Koji tag supports.
-       - Note: the order in which you specify architectures does matter in a
+       - Note, the order in which you specify architectures does matter in a
          few subtle cases. For example, the SRPM that Koji includes in the
          build is the one built on the first arch in this list. Likewise,
          rpmdiff compares RPMs built on the first arch with RPMs built on
