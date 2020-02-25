@@ -38,10 +38,10 @@ options:
      description:
        - The priority of this parent for this child. Parents with smaller
          numbers will override parents with bigger numbers.
-       - When defining an inheritance relationship with "state: present", you
+       - 'When defining an inheritance relationship with "state: present", you
          must specify a priority. When deleting an inheritance relationship
          with "state: absent", you should not specify a priority. Ansible will
-         simply remove the parent_tag link, regardless of its priority.
+         simply remove the parent_tag link, regardless of its priority.'
      required: true
    maxdepth:
      description:
@@ -52,8 +52,8 @@ options:
          inheritance. For example "0" means that only the parent tag itself
          will be available in the inheritance - parent tags of the parent tag
          won't be available.
-       - To restore the default umlimited depth behavior on a tag, you can set
-         ``maxdepth: null`` or ``maxdepth: `` (empty value).
+       - 'To restore the default umlimited depth behavior on a tag, you can set
+         ``maxdepth: null`` or ``maxdepth: `` (empty value).'
        - If you do not set any ``maxdepth`` parameter at all, koji-ansible
          will overwrite an existing tag's current maxdepth setting to "null"
          (in other words, unlimited depth). This was the historical behavior

@@ -26,13 +26,14 @@ options:
      description:
        - The name of the "build" or "buildroot" tag. The latest builds in
          this tag will be available in the buildroot when you build an RPM or
-         container for this Koji target. Example: "f29-build"
+         container for this Koji target.
+       - 'Example: "f29-build"'
      required: true
    dest_tag:
      description:
        - The name of the "destination" tag. When Koji completes a build for
          this target, it will tag that build into this destination tag.
-         Example: "f29-updates-candidate"
+       - 'Example: "f29-updates-candidate"'
      required: true
 requirements:
   - "python >= 2.7"

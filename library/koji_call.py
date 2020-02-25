@@ -19,7 +19,7 @@ description:
    - Call Koji's RPC API directly.
    - Why would you use this module instead of the higher level modules like
      koji_tag, koji_target, etc? This koji_call module has two main
-     uses-cases:
+     uses-cases.
    - 1. You may want to do something that the higher level modules do not yet
      support. It can be easier to use this module to quickly prototype out
      your ideas for what actions you need, and then write the Python code to
@@ -30,19 +30,20 @@ description:
    - 2. You want to write some tests that verify Koji's data at a very low
      level. For example, you may want to write an integration test to verify
      that you've set up your Koji configuration in the way you expect.
-   - Note that this module will always report "changed: true" every time,
+   - 'Note that this module will always report "changed: true" every time,
      because it simply sends the RPC to the Koji Hub on every ansible run.
      This module cannot understand if your chosen RPC actually "changes"
-     anything.
+     anything.'
 options:
    name:
      description:
-       - The name of the Koji RPC to send. Example: "getTag"
+       - The name of the Koji RPC to send.
+       - 'Example: "getTag"'
      required: true
    args:
      description:
-       - The list or dict of arguments to pass into the call. Example:
-         ["f29-build"]
+       - The list or dict of arguments to pass into the call.
+       - 'Example: ["f29-build"]'
      required: false
    login:
      description:

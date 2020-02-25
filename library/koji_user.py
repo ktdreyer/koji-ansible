@@ -17,14 +17,15 @@ module: koji_user
 short_description: Create and manage Koji user accounts
 description:
    - This module can add new users and manage existing users.
-   - Koji only supports adding new users, not deleting them. Once they are
+   - 'Koji only supports adding new users, not deleting them. Once they are
      defined, you can enable or disable the users with "state: enabled" or
-     "state: disabled".
+     "state: disabled".'
 
 options:
    name:
      description:
-       - The name of the Koji user. Example: "kdreyer".
+       - The name of the Koji user.
+       - 'Example: "kdreyer".'
      required: true
    state:
      description:
@@ -32,12 +33,13 @@ options:
          defaults to "enabled".
    permissions:
      description:
-       - A list of permissions for this user. Example: [admin]
+       - A list of permissions for this user.
+       - 'Example: [admin]'
    krb_principal:
      description:
        - Set a non-default krb principal for this user. If unset, Koji will
          use the standard krb principal scheme for user accounts.
-       - Warning: Koji only allows you to set this one time, at the point at
+       - Warning, Koji only allows you to set this one time, at the point at
          which you create the new account. You cannot edit the krb_principal
          for an existing account.
 requirements:

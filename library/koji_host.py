@@ -17,28 +17,30 @@ module: koji_host
 short_description: Create and manage Koji build hosts
 description:
    - This module can add new hosts and manage existing hosts.
-   - Koji only supports adding new hosts, not deleting them. Once they are
+   - 'Koji only supports adding new hosts, not deleting them. Once they are
      defined, you can enable or disable the hosts with "state: enabled" or
-     "state: disabled".
+     "state: disabled".'
 
 options:
    name:
      description:
-       - The name of the Koji builder. Example: "builder1.example.com".
+       - The name of the Koji builder.
+       - 'Example: "builder1.example.com".'
      required: true
    arches:
      description:
-       - The list of arches this host supports. Example: [x86_64]
+       - The list of arches this host supports.
+       - 'Example: [x86_64]'
      required: true
    channels:
      description:
        - The list of channels this host should belong to.
-         Example: [default, createrepo]
        - If you specify a completely new channel here, Ansible will create the
          channel on the hub. For example, when you set up OSBS with Koji, you
          must add a builder host to a new "container" channel. You can simply
          specify "container" in the list here, and Ansible will create the new
          "container" channel when it adds your host to that channel.
+       - 'Example: [default, createrepo]'
      required: false
    state:
      description:
@@ -50,8 +52,9 @@ options:
          use the standard krb principal scheme for builder accounts.
    capacity:
      description:
-       - Total task weight for this host. This is a float value, example:
-         10.0. If unset, Koji will use the standard capacity for a host (2.0).
+       - Total task weight for this host. This is a float value. If unset,
+         Koji will use the standard capacity for a host (2.0).
+       - 'Example: 10.0'
    description:
      description:
        - Human-readable description for this host.

@@ -23,19 +23,20 @@ description:
 options:
    name:
      description:
-       - The name of the Koji archive type to create and manage. Example:
-         "deb".
+       - The name of the Koji archive type to create and manage.
+       - 'Example: "deb".'
      required: true
    description:
      description:
-       - The human-readable description of this Koji archive type. Example:
-         "Debian packages". Koji uses this value in the UI tooling that display
-         a build's files.
+       - The human-readable description of this Koji archive type.  Koji uses
+         this value in the UI tooling that display a build's files.
+       - 'Example: "Debian packages".'
      required: true
    extensions:
      description:
-       - The file extensions for this Koji archive type. Example: "deb" means
-         Koji will apply this archive type to files that end in ".deb".
+       - The file extensions for this Koji archive type.
+       - 'Example: "deb" means Koji will apply this archive type to files that
+         end in ".deb".'
      required: true
 requirements:
   - "python >= 2.7"
