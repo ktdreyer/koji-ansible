@@ -171,6 +171,40 @@ def validate_repos(repos):
         priorities.add(priority)
 
 
+def normalize_inheritance(inheritance):
+    """
+    Transform inheritance module argument input into the format returned by
+    getInheritanceData(). Only includes supported fields (excluding child_id
+    and parent_id), renames "parent" to "name", chooses correct defaults for
+    missing fields, and performs some limited type correction for maxdepth and
+    priority.
+
+    :param inheritance: list of inheritance dicts
+    """
+    normalized_inheritance = []
+
+    for rule in inheritance:
+        # maxdepth: treat empty strings the same as None
+        maxdepth = rule.get('maxdepth')
+        if maxdepth == '':
+            maxdepth = None
+        if isinstance(maxdepth, string_types):
+            maxdepth = int(maxdepth)
+
+        normalized_inheritance.append(dict(
+            # we don't know child_id yet
+            intransitive=rule.get('intransitive', False),
+            maxdepth=maxdepth,
+            name=rule['parent'],
+            noconfig=rule.get('noconfig', False),
+            # we don't know parent_id yet
+            pkg_filter=rule.get('pkg_filter', ''),
+            priority=int(rule['priority']),
+        ))
+
+    return sorted(normalized_inheritance, key=lambda i: i['priority'])
+
+
 def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     """
     Ensure that these inheritance rules are configured on this Koji tag.
@@ -181,10 +215,12 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     :param bool check_mode: don't make any changes
     :param list inheritance: ensure these rules are set, and no others
     """
-    rules = []
     result = {'changed': False, 'stdout_lines': []}
-    for rule in sorted(inheritance, key=lambda i: i['priority']):
-        parent_name = rule['parent']
+
+    # resolve parent tag IDs
+    rules = []
+    for rule in normalize_inheritance(inheritance):
+        parent_name = rule['name']
         parent_taginfo = session.getTag(parent_name)
         if not parent_taginfo:
             msg = "parent tag '%s' not found" % parent_name
@@ -195,22 +231,8 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
             else:
                 raise ValueError(msg)
         parent_id = parent_taginfo['id']
-        # maxdepth: treat empty strings the same as None
-        maxdepth = rule.get('maxdepth')
-        if maxdepth == '':
-            maxdepth = None
-        if isinstance(maxdepth, string_types):
-            maxdepth = int(maxdepth)
-        new_rule = {
-            'child_id': tag_id,
-            'intransitive': rule.get('intransitive', False),
-            'maxdepth': maxdepth,
-            'name': parent_name,
-            'noconfig': rule.get('noconfig', False),
-            'parent_id': parent_id,
-            'pkg_filter': rule.get('pkg_filter', ''),
-            'priority': rule['priority']}
-        rules.append(new_rule)
+        rules.append(dict(rule, child_id=tag_id, parent_id=parent_id))
+
     current_inheritance = session.getInheritanceData(tag_name)
     if current_inheritance != rules:
         result['stdout_lines'].extend(
