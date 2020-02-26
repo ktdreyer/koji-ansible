@@ -204,3 +204,24 @@ class TestEnsureInheritance(object):
                      'pkg_filter': '',
                      'priority': 0}]
         assert result == expected
+
+    def test_priority_string(self, session):
+        tag_name = 'my-centos-7-child'
+        tag_id = 2
+        check_mode = False
+        inheritance = [
+            {'parent': 'my-centos-7-parent',
+             'priority': '10'},
+        ]
+        koji_tag.ensure_inheritance(session, tag_name, tag_id, check_mode,
+                                    inheritance)
+        result = session.getInheritanceData('my-centos-7-child')
+        expected = [{'child_id': 2,
+                     'intransitive': False,
+                     'maxdepth': None,
+                     'name': 'my-centos-7-parent',
+                     'noconfig': False,
+                     'parent_id': 1,
+                     'pkg_filter': '',
+                     'priority': 10}]
+        assert result == expected
