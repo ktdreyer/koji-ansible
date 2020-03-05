@@ -7,11 +7,15 @@ set -eux
 sudo systemctl restart postgresql || sudo journalctl -xe
 
 git clone --depth 1 https://pagure.io/koji.git
+pushd koji
+git log HEAD -1 --no-decorate
+popd
 
 # Create SSL certs
 git clone --depth 1 https://pagure.io/koji-tools.git
 
 pushd koji-tools
+git log HEAD -1 --no-decorate
 ./src/bin/koji-ssl-admin new-ca --common-name "travisci Koji CA"
 ./src/bin/koji-ssl-admin server-csr localhost
 ./src/bin/koji-ssl-admin sign localhost.csr
