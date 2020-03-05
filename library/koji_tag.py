@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 from ansible.module_utils import common_koji

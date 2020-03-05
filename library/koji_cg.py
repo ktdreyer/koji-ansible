@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import common_koji
