@@ -189,16 +189,15 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         name=dict(required=True),
         arches=dict(type='list', required=True),
-        channels=dict(type='list', required=False, default=None),
-        krb_principal=dict(required=False, default=None),
-        capacity=dict(type='float', required=False, default=None),
-        description=dict(required=False, default=None),
-        comment=dict(required=False, default=None),
-        state=dict(choices=['enabled', 'disabled'], required=False,
-                   default='enabled'),
+        channels=dict(type='list', default=None),
+        krb_principal=dict(default=None),
+        capacity=dict(type='float', default=None),
+        description=dict(default=None),
+        comment=dict(default=None),
+        state=dict(choices=['enabled', 'disabled'], default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,

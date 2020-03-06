@@ -274,16 +274,15 @@ def remove_tag_inheritance(session, child_tag, parent_tag, check_mode):
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         child_tag=dict(required=True),
         parent_tag=dict(required=True),
-        priority=dict(type='int', required=False),
-        maxdepth=dict(type='int', required=False, default=None),
-        pkg_filter=dict(required=False, default=''),
-        intransitive=dict(type='bool', required=False, default=False),
-        noconfig=dict(type='bool', required=False, default=False),
-        state=dict(choices=['present', 'absent'], required=False,
-                   default='present'),
+        priority=dict(type='int'),
+        maxdepth=dict(type='int', default=None),
+        pkg_filter=dict(default=''),
+        intransitive=dict(type='bool', default=False),
+        noconfig=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,

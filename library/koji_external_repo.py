@@ -107,11 +107,10 @@ def delete_external_repo(session, name, check_mode):
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         name=dict(required=True),
-        state=dict(choices=['present', 'absent'], required=False,
-                   default='present'),
-        url=dict(required=False, default=None),
+        state=dict(choices=['present', 'absent'], default='present'),
+        url=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=module_args,

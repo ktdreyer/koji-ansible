@@ -129,10 +129,10 @@ def do_call(session, name, args, login):
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         name=dict(required=True),
-        args=dict(type='raw', required=False, default=[]),
-        login=dict(type='bool', required=False, default=False),
+        args=dict(type='raw', default=[]),
+        login=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=module_args,

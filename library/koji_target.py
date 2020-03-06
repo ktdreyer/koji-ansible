@@ -109,10 +109,9 @@ def delete_target(session, name, check_mode):
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         name=dict(required=True),
-        state=dict(choices=['present', 'absent'], required=False,
-                   default='present'),
+        state=dict(choices=['present', 'absent'], default='present'),
         build_tag=dict(),
         dest_tag=dict(),
     )
