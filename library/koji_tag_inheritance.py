@@ -278,7 +278,7 @@ def run_module():
         child_tag=dict(required=True),
         parent_tag=dict(required=True),
         priority=dict(type='int'),
-        maxdepth=dict(type='int', default=None),
+        maxdepth=dict(type='int'),
         pkg_filter=dict(default=''),
         intransitive=dict(type='bool', default=False),
         noconfig=dict(type='bool', default=False),

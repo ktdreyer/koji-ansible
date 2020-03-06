@@ -110,7 +110,7 @@ def run_module():
         koji=dict(),
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], default='present'),
-        url=dict(default=None),
+        url=dict(),
     )
     module = AnsibleModule(
         argument_spec=module_args,
