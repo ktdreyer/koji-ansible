@@ -1,0 +1,29 @@
+# Create a new koji build target.
+---
+
+- koji_tag:
+    name: create-1-build
+    state: present
+
+- koji_tag:
+    name: create-1-destination
+    state: present
+
+- koji_target:
+    name: create-1
+    build_tag: create-1-build
+    dest_tag: create-1-destination
+    state: present
+
+# Assert that this target looks correct.
+
+- koji_call:
+    name: getBuildTarget
+    args: [create-1]
+  register: target
+
+- assert:
+    that:
+      - target.data.name == 'create-1'
+      - target.data.build_tag_name == 'create-1-build'
+      - target.data.dest_tag_name == 'create-1-destination'
