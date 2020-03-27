@@ -100,7 +100,7 @@ def delete_target(session, name, check_mode):
     )
     if targetinfo:
         common_koji.ensure_logged_in(session)
-        session.deleteBuildTarget(targetinfo)
+        session.deleteBuildTarget(targetinfo['id'])
         result['stdout'] = 'deleted target %d' % targetinfo['id']
         result['changed'] = True
     return result
