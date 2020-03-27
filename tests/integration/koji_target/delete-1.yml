@@ -17,9 +17,6 @@
 
 - koji_target:
     name: delete-1
-    # TODO: make build_tag and dest_tag arguments optional for "state: absent"
-    build_tag: delete-1-build
-    dest_tag: delete-1-destination
     state: absent
 
 # Assert that this target is absent.

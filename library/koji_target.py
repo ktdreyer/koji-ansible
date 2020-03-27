@@ -113,8 +113,8 @@ def run_module():
         name=dict(type='str', required=True),
         state=dict(type='str', choices=[
                    'present', 'absent'], required=False, default='present'),
-        build_tag=dict(type='str', required=True),
-        dest_tag=dict(type='str', required=True),
+        build_tag=dict(type='str'),
+        dest_tag=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -135,6 +135,10 @@ def run_module():
     session = common_koji.get_session(profile)
 
     if state == 'present':
+        if not build_tag:
+            module.fail_json(msg='build_tag is required')
+        if not dest_tag:
+            module.fail_json(msg='dest_tag is required')
         result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     elif state == 'absent':
         result = delete_target(session, name, check_mode)
