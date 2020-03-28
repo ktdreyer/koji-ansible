@@ -50,7 +50,8 @@ def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['present', 'absent'], required=False, default='present'),
+        state=dict(type='str', choices=[
+                   'present', 'absent'], required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,

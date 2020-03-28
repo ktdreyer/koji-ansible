@@ -120,7 +120,8 @@ def run_module():
         name=dict(type='str', required=True),
         permissions=dict(type='list', required=True),
         krb_principal=dict(type='str', required=False, default=None),
-        state=dict(type='str', choices=['enabled', 'disabled'], required=False, default='enabled'),
+        state=dict(type='str', choices=[
+                   'enabled', 'disabled'], required=False, default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,

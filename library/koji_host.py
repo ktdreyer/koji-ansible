@@ -197,7 +197,8 @@ def run_module():
         capacity=dict(type='float', required=False, default=None),
         description=dict(type='str', required=False, default=None),
         comment=dict(type='str', required=False, default=None),
-        state=dict(type='str', choices=['enabled', 'disabled'], required=False, default='enabled'),
+        state=dict(type='str', choices=[
+                   'enabled', 'disabled'], required=False, default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
