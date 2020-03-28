@@ -109,7 +109,7 @@ def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='present'),
+        state=dict(type='str', choices=['present', 'absent'], required=False, default='present'),
         url=dict(type='str', required=False, default=None),
     )
     module = AnsibleModule(
@@ -135,9 +135,6 @@ def run_module():
         result = ensure_external_repo(session, name, check_mode, url)
     elif state == 'absent':
         result = delete_external_repo(session, name, check_mode)
-    else:
-        module.fail_json(msg="State must be 'present' or 'absent'.",
-                         changed=False, rc=1)
 
     module.exit_json(**result)
 

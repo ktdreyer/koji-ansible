@@ -153,7 +153,7 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.enableHost(name)
-    if state == 'disabled':
+    elif state == 'disabled':
         if host['enabled']:
             result['changed'] = True
             result['stdout_lines'].append('disabled host')
@@ -197,7 +197,7 @@ def run_module():
         capacity=dict(type='float', required=False, default=None),
         description=dict(type='str', required=False, default=None),
         comment=dict(type='str', required=False, default=None),
-        state=dict(type='str', required=False, default='enabled'),
+        state=dict(type='str', choices=['enabled', 'disabled'], required=False, default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -214,10 +214,6 @@ def run_module():
     state = params['state']
 
     session = common_koji.get_session(profile)
-
-    if state not in ('enabled', 'disabled'):
-        module.fail_json(msg="State must be 'enabled' or 'disabled'.",
-                         changed=False, rc=1)
 
     result = ensure_host(session, name, check_mode, state,
                          arches=params['arches'],

@@ -120,7 +120,7 @@ def run_module():
         name=dict(type='str', required=True),
         permissions=dict(type='list', required=True),
         krb_principal=dict(type='str', required=False, default=None),
-        state=dict(type='str', required=False, default='enabled'),
+        state=dict(type='str', choices=['enabled', 'disabled'], required=False, default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -137,10 +137,6 @@ def run_module():
     state = params['state']
 
     session = common_koji.get_session(profile)
-
-    if state not in ('enabled', 'disabled'):
-        module.fail_json(msg="State must be 'enabled' or 'disabled'.",
-                         changed=False, rc=1)
 
     result = ensure_user(session, name, check_mode, state,
                          permissions=params['permissions'],

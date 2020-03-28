@@ -282,7 +282,7 @@ def run_module():
         pkg_filter=dict(type='str', required=False, default=''),
         intransitive=dict(type='bool', required=False, default=False),
         noconfig=dict(type='bool', required=False, default=False),
-        state=dict(type='str', required=False, default='present'),
+        state=dict(type='str', choices=['present', 'absent'], required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -316,9 +316,6 @@ def run_module():
                                         child_tag=params['child_tag'],
                                         parent_tag=params['parent_tag'],
                                         check_mode=check_mode)
-    else:
-        module.fail_json(msg="State must be 'present' or 'absent'.",
-                         changed=False, rc=1)
 
     module.exit_json(**result)
 

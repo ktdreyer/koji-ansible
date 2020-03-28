@@ -50,7 +50,7 @@ def run_module():
     module_args = dict(
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='present'),
+        state=dict(type='str', choices=['present', 'absent'], required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -80,9 +80,6 @@ def run_module():
                 session.addBType(name)
     elif state == 'absent':
         module.fail_json(msg="Cannot remove Koji build types.",
-                         changed=False, rc=1)
-    else:
-        module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)
 
     module.exit_json(**result)
