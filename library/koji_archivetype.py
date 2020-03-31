@@ -71,7 +71,8 @@ def run_module():
         name=dict(type='str', required=True),
         description=dict(type='str', required=True),
         extensions=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='present'),
+        state=dict(type='str', choices=[
+                   'present', 'absent'], required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -101,9 +102,6 @@ def run_module():
                 session.addArchiveType(name, description, extensions)
     elif state == 'absent':
         module.fail_json(msg="Cannot remove Koji archive types.",
-                         changed=False, rc=1)
-    else:
-        module.fail_json(msg="State must be 'present' or 'absent'.",
                          changed=False, rc=1)
 
     module.exit_json(**result)

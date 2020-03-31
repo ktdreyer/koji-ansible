@@ -92,7 +92,7 @@ def ensure_cg(session, user, name, state, cgs, check_mode):
                 common_koji.ensure_logged_in(session)
                 session.grantCGAccess(user, name, create=True)
             result['changed'] = True
-    if state == 'absent':
+    elif state == 'absent':
         if name in cgs and user in cgs[name]['users']:
             if not check_mode:
                 common_koji.ensure_logged_in(session)
@@ -127,7 +127,7 @@ def ensure_unknown_cg(session, user, name, state):
         except koji_profile.GenericError as e:
             if 'User already has access to content generator' not in str(e):
                 raise
-    if state == 'absent':
+    elif state == 'absent':
         # There's no indication whether this changed anything, so we're going
         # to be pessimistic and say we're always changing it.
         session.revokeCGAccess(user, name)
@@ -140,7 +140,8 @@ def run_module():
         koji=dict(type='str', required=False),
         name=dict(type='str', required=True),
         user=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='present'),
+        state=dict(type='str', choices=[
+                   'present', 'absent'], required=False, default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
@@ -156,10 +157,6 @@ def run_module():
     name = params['name']
     user = params['user']
     state = params['state']
-
-    if state not in ('present', 'absent'):
-        module.fail_json(msg="State must be 'present' or 'absent'.",
-                         changed=False, rc=1)
 
     session = common_koji.get_session(profile)
 
