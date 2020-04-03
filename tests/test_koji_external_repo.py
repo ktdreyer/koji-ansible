@@ -68,13 +68,12 @@ class TestEnsureExternalRepo(object):
 
     @pytest.fixture
     def kwargs(self, session):
-        kwargs = {
+        return {
             'session': session,
             'name': 'centos-7-cr',
             'check_mode': False,
             'url': 'http://mirror.centos.org/centos/7/cr/x86_64/',
         }
-        return kwargs
 
     def test_create(self, session, kwargs):
         result = ensure_external_repo(**kwargs)
