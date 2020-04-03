@@ -187,3 +187,12 @@ class TestEnsureUser(object):
         assert result == {'changed': True,
                           'stdout_lines': ['grant ceph', 'revoke admin']}
         assert session.permissions['kdreyer'] == ['ceph']
+
+    def test_remove_all_permissions(self, kwargs, kdreyer):
+        session = kwargs['session']
+        session.users['kdreyer'] = kdreyer
+        session.permissions['kdreyer'] = ['admin']
+        result = ensure_user(**kwargs)
+        assert result == {'changed': True,
+                          'stdout_lines': ['revoke admin']}
+        assert session.permissions['kdreyer'] == []

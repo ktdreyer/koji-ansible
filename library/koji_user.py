@@ -34,7 +34,8 @@ options:
    permissions:
      description:
        - A list of permissions for this user. If unset, Ansible will not edit
-         the permissions for this user.
+         the permissions for this user. To remove all permissions, set this to
+         an empty list.
        - 'Example: [admin]'
    krb_principal:
      description:
@@ -95,7 +96,7 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
             session.enableUser(name)
         else:
             session.disableUser(name)
-    if not permissions:
+    if permissions is None:
         return result
     current_perms = session.getUserPerms(user['id'])
     to_grant = set(permissions) - set(current_perms)
