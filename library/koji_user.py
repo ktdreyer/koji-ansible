@@ -33,7 +33,8 @@ options:
          defaults to "enabled".
    permissions:
      description:
-       - A list of permissions for this user.
+       - A list of permissions for this user. If unset, Ansible will not edit
+         the permissions for this user.
        - 'Example: [admin]'
    krb_principal:
      description:
