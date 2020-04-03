@@ -1,0 +1,27 @@
+# Create a new koji user.
+---
+
+- name: Add new kdreyer user
+  koji_user:
+    name: kdreyer
+    state: enabled
+    permissions: [admin]
+
+# Assert that this user looks correct.
+
+- koji_call:
+    name: getUser
+    args: [kdreyer]
+  register: user
+
+- koji_call:
+    name: getUserPerms
+    args: [kdreyer]
+  register: perms
+
+- assert:
+    that:
+      - user.data.name == 'kdreyer'
+      # See USER_STATUS enum. 0 is "NORMAL", 1 is "BLOCKED".
+      - user.data.status == 0
+      - perms.data == ['admin']
