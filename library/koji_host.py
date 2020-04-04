@@ -50,6 +50,12 @@ options:
      description:
        - Set a non-default krb principal for this host. If unset, Koji will
          use the standard krb principal scheme for builder accounts.
+       - Mutually exclusive with I(krb_principals).
+   krb_principals:
+     description:
+       - Set a non-default krb principals for this host. If unset, Koji will
+         use the standard krb principal scheme for builder accounts.
+       - Mutually exclusive with I(krb_principal).
    capacity:
      description:
        - Total task weight for this host. This is a float value. If unset,
@@ -122,7 +128,7 @@ def ensure_channels(session, host_id, host_name, check_mode, desired_channels):
     return result
 
 
-def ensure_host(session, name, check_mode, state, arches, krb_principal,
+def ensure_host(session, name, check_mode, state, arches, krb_principals,
                 channels, **kwargs):
     """
     Ensure that this host is configured in Koji.
@@ -132,7 +138,7 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
     :param bool check_mode: don't make any changes
     :param str state: "enabled" or "disabled"
     :param list arches: list of arches for this builder.
-    :param str krb_principal: custom kerberos principal, or None
+    :param list krb_principals: custom kerberos principals, or None
     :param list chanels: list of channels this host should belong to.
     :param **kwargs: Pass remaining kwargs directly into Koji's editHost RPC.
     """
@@ -144,6 +150,7 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
         if check_mode:
             return result
         common_koji.ensure_logged_in(session)
+        krb_principal = krb_principals[0] if krb_principals else None
         id_ = session.addHost(name, arches, krb_principal)
         host = session.getHost(id_)
     if state == 'enabled':
@@ -184,6 +191,11 @@ def ensure_host(session, name, check_mode, state, arches, krb_principal,
             result['changed'] = True
         result['stdout_lines'].extend(channels_result['stdout_lines'])
 
+    if krb_principals is not None:
+        user = session.getUser(host['user_id'])
+        common_koji.ensure_krb_principals(
+            session, user, check_mode, result, krb_principals)
+
     return result
 
 
@@ -194,6 +206,11 @@ def run_module():
         arches=dict(type='list', required=True),
         channels=dict(type='list', required=False, default=None),
         krb_principal=dict(type='str', required=False, default=None),
+        krb_principals=dict(
+            type='list',
+            elements='str',
+            required=False,
+        ),
         capacity=dict(type='float', required=False, default=None),
         description=dict(type='str', required=False, default=None),
         comment=dict(type='str', required=False, default=None),
@@ -202,6 +219,7 @@ def run_module():
     )
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('krb_principal', 'krb_principals')],
         supports_check_mode=True
     )
 
@@ -213,13 +231,19 @@ def run_module():
     profile = params['koji']
     name = params['name']
     state = params['state']
+    if params['krb_principals'] is not None:
+        krb_principals = params['krb_principals']
+    elif params['krb_principal'] is not None:
+        krb_principals = [params['krb_principal']]
+    else:
+        krb_principals = None
 
     session = common_koji.get_session(profile)
 
     result = ensure_host(session, name, check_mode, state,
                          arches=params['arches'],
                          channels=params['channels'],
-                         krb_principal=params['krb_principal'],
+                         krb_principals=krb_principals,
                          capacity=params['capacity'],
                          description=params['description'],
                          comment=params['comment'])

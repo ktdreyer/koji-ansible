@@ -39,9 +39,12 @@ options:
      description:
        - Set a non-default krb principal for this user. If unset, Koji will
          use the standard krb principal scheme for user accounts.
-       - Warning, Koji only allows you to set this one time, at the point at
-         which you create the new account. You cannot edit the krb_principal
-         for an existing account.
+       - Mutually exclusive with I(krb_principals).
+   krb_principals:
+     description:
+       - Set a non-default krb principals for this user. If unset, Koji will
+         use the standard krb principal scheme for user accounts.
+       - Mutually exclusive with I(krb_principal).
 requirements:
   - "python >= 2.7"
   - "koji"
@@ -59,7 +62,7 @@ EXAMPLES = '''
 '''
 
 
-def ensure_user(session, name, check_mode, state, permissions, krb_principal):
+def ensure_user(session, name, check_mode, state, permissions, krb_principals):
     """
     Ensure that this user is configured in Koji.
 
@@ -68,8 +71,7 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
     :param bool check_mode: don't make any changes
     :param str state: "enabled" or "disabled"
     :param list permissions: list of permissions for this user.
-    :param str krb_principal: custom kerberos principal, or None. Used only at
-                              account creation time.
+    :param list krb_principals: list of kerberos principals for this user.
     """
     result = {'changed': False, 'stdout_lines': []}
     if state == 'enabled':
@@ -83,6 +85,7 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
         if check_mode:
             return result
         common_koji.ensure_logged_in(session)
+        krb_principal = krb_principals[0] if krb_principals else None
         id_ = session.createUser(name, desired_status, krb_principal)
         user = session.getUser(id_)
     if user['status'] != desired_status:
@@ -94,23 +97,26 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
             session.enableUser(name)
         else:
             session.disableUser(name)
-    if not permissions:
-        return result
-    current_perms = session.getUserPerms(user['id'])
-    to_grant = set(permissions) - set(current_perms)
-    to_revoke = set(current_perms) - set(permissions)
-    if to_grant or to_revoke:
-        result['changed'] = True
-        if not check_mode:
-            common_koji.ensure_logged_in(session)
-    for permission in to_grant:
-        result['stdout_lines'].append('grant %s' % permission)
-        if not check_mode:
-            session.grantPermission(name, permission, True)
-    for permission in to_revoke:
-        result['stdout_lines'].append('revoke %s' % permission)
-        if not check_mode:
-            session.revokePermission(name, permission)
+    if permissions is not None:
+        current_perms = session.getUserPerms(user['id'])
+        to_grant = set(permissions) - set(current_perms)
+        to_revoke = set(current_perms) - set(permissions)
+        if to_grant or to_revoke:
+            result['changed'] = True
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+        for permission in to_grant:
+            result['stdout_lines'].append('grant %s' % permission)
+            if not check_mode:
+                session.grantPermission(name, permission, True)
+        for permission in to_revoke:
+            result['stdout_lines'].append('revoke %s' % permission)
+            if not check_mode:
+                session.revokePermission(name, permission)
+    if krb_principals is not None:
+        common_koji.ensure_krb_principals(
+            session, user, check_mode, result, krb_principals)
+
     return result
 
 
@@ -120,11 +126,17 @@ def run_module():
         name=dict(type='str', required=True),
         permissions=dict(type='list', required=True),
         krb_principal=dict(type='str', required=False, default=None),
+        krb_principals=dict(
+            type='list',
+            elements='str',
+            required=False,
+        ),
         state=dict(type='str', choices=[
                    'enabled', 'disabled'], required=False, default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
+        mutually_exclusive=[('krb_principal', 'krb_principals')],
         supports_check_mode=True
     )
 
@@ -136,12 +148,18 @@ def run_module():
     profile = params['koji']
     name = params['name']
     state = params['state']
+    if params['krb_principals'] is not None:
+        krb_principals = params['krb_principals']
+    elif params['krb_principal'] is not None:
+        krb_principals = [params['krb_principal']]
+    else:
+        krb_principals = None
 
     session = common_koji.get_session(profile)
 
     result = ensure_user(session, name, check_mode, state,
                          permissions=params['permissions'],
-                         krb_principal=params['krb_principal'])
+                         krb_principals=krb_principals)
 
     module.exit_json(**result)
 

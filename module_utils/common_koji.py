@@ -158,3 +158,21 @@ def get_perm_name(session, id_):
     for perm_name, perm_id in perms.items():
         if perm_id == id_:
             return perm_name
+
+
+def ensure_krb_principals(session, user, check_mode, result, krb_principals):
+    current_principals = user['krb_principals']
+    to_add = set(krb_principals) - set(current_principals)
+    to_remove = set(current_principals) - set(krb_principals)
+    if to_add or to_remove:
+        result['changed'] = True
+        if not check_mode:
+            ensure_logged_in(session)
+    for principal in to_add:
+        result['stdout_lines'].append('add %s principal' % principal)
+        if not check_mode:
+            session.addUserKrbPrincipal(user['name'], principal)
+    for principal in to_remove:
+        result['stdout_lines'].append('remove %s principal' % principal)
+        if not check_mode:
+            session.removeUserKrbPrincipal(user['name'], principal)
