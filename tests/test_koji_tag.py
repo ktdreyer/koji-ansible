@@ -47,6 +47,11 @@ class FakeSession(object):
         return True
 
 
+@pytest.fixture
+def session():
+    return FakeSession()
+
+
 class TestValidateRepos(object):
 
     def test_simple(self):
@@ -76,8 +81,7 @@ class TestValidateRepos(object):
 
 class TestEnsureExternalRepos(object):
 
-    def test_from_no_repos(self):
-        session = FakeSession()
+    def test_from_no_repos(self, session):
         tag_name = 'my-centos-7'
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
@@ -87,8 +91,7 @@ class TestEnsureExternalRepos(object):
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
 
-    def test_add_one_repo(self):
-        session = FakeSession()
+    def test_add_one_repo(self, session):
         session.repos = [{'external_repo_name': 'centos-7-cr',
                           'priority': 10}]
         tag_name = 'my-centos-7'
@@ -104,8 +107,7 @@ class TestEnsureExternalRepos(object):
 class TestEnsureInheritance(object):
 
     @pytest.fixture
-    def session(self):
-        session = FakeSession()
+    def session(self, session):
         session.tags = {'my-centos-7-parent': {'id': 1},
                         'my-centos-7-child': {'id': 2}}
         return session
