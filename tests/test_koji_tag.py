@@ -1,5 +1,6 @@
 import pytest
 import koji_tag
+from collections import defaultdict
 
 
 class GenericError(Exception):
@@ -9,7 +10,7 @@ class GenericError(Exception):
 
 class FakeSession(object):
     def __init__(self):
-        self.repos = []
+        self.tag_repos = defaultdict(list)
         self.tags = {}
         self.inheritance = {}
 
@@ -20,12 +21,45 @@ class FakeSession(object):
             return None
         return self.tags[tagInfo]
 
-    def getTagExternalRepos(self, tag_info=None, repo_info=None):
-        return self.repos
+    def getTagExternalRepos(self, tag_info=None, repo_info=None, event=None):
+        if isinstance(tag_info, int):
+            raise NotImplementedError('specify a tag by name')
+        if isinstance(repo_info, int):
+            raise NotImplementedError('specify a repo by name')
+        if event is not None:
+            raise NotImplementedError('cannot specify event')
+        if tag_info:
+            repos = self.tag_repos[tag_info]
+        else:
+            repos = []
+            for tag in self.tag_repos:
+                repos.append(self.tag_repos[tag])
+        if repo_info:
+            repos = [repo for repo in repos
+                     if repo['external_repo_name'] == repo_info]
+        return sorted(repos, key=lambda r: r['priority'])
 
     def addExternalRepoToTag(self, tag_info, repo_info, priority,
                              merge_mode='koji'):
-        pass
+        if isinstance(tag_info, int):
+            raise NotImplementedError('specify a tag by name')
+        if isinstance(repo_info, int):
+            raise NotImplementedError('specify a repo by name')
+        existing = self.getTagExternalRepos(tag_info, repo_info)
+        if existing:
+            # TODO: discover the exact error here:
+            raise RuntimeError('%s repo already exists for %s'
+                               % (repo_info, tag_info))
+        repo = {
+            # 'tag_id': tag_id,
+            'tag_name': tag_info,
+            # 'external_repo_id': external_repo_id,
+            'external_repo_name': repo_info,
+            # 'url': url,
+            'merge_mode': merge_mode,
+            'priority': priority,
+        }
+        self.tag_repos[tag_info].append(repo)
 
     def getInheritanceData(self, tag, event=None):
         if tag not in self.inheritance:
@@ -93,10 +127,21 @@ class TestEnsureExternalRepos(object):
                   'priority': 20},
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
+        result_repos = session.getTagExternalRepos('my-centos-7')
+        expected_repos = [
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'centos-7-cr',
+             'merge_mode': 'koji',
+             'priority': 10},
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'epel-7',
+             'merge_mode': 'koji',
+             'priority': 20},
+        ]
+        assert result_repos == expected_repos
 
     def test_add_one_repo(self, session, tag_name):
-        session.repos = [{'external_repo_name': 'centos-7-cr',
-                          'priority': 10}]
+        session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
                   'priority': 10},
@@ -104,6 +149,18 @@ class TestEnsureExternalRepos(object):
                   'priority': 20},
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
+        result_repos = session.getTagExternalRepos('my-centos-7')
+        expected_repos = [
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'centos-7-cr',
+             'merge_mode': 'koji',
+             'priority': 10},
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'epel-7',
+             'merge_mode': 'koji',
+             'priority': 20},
+        ]
+        assert result_repos == expected_repos
 
 
 class TestEnsureInheritance(object):
