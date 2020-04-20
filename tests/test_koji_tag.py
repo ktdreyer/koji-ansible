@@ -124,6 +124,24 @@ class TestValidateRepos(object):
             koji_tag.validate_repos(repos)
 
 
+class TestAddExternalRepos(object):
+
+    def test_simple(self, session):
+        tag_name = 'my-centos-7'
+        repos_to_add = [{'repo_info': 'centos-7-cr', 'priority': 10}]
+        koji_tag.add_external_repos(session, tag_name, repos_to_add)
+
+
+class TestRemoveExternalRepos(object):
+
+    def test_simple(self, session):
+        tag_name = 'my-centos-7'
+        session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
+        session.addExternalRepoToTag(tag_name, 'epel-7', 20)
+        repos_to_remove = ['centos-7-cr', 'epel-7']
+        koji_tag.remove_external_repos(session, tag_name, repos_to_remove)
+
+
 class TestEnsureExternalRepos(object):
 
     @pytest.fixture

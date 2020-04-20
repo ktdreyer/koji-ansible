@@ -247,6 +247,35 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     return result
 
 
+def remove_external_repos(session, tag_name, repos):
+    """
+    Remove all these external repos from this Koji tag.
+
+    :param session: Koji client session
+    :param str tag_name: Koji tag name
+    :param list repos: list of repository names (str) to remove.
+    """
+    # TODO: refactor this loop to one single multicall.
+    common_koji.ensure_logged_in(session)
+    for name in repos:
+        session.removeExternalRepoFromTag(tag_name, name)
+
+
+def add_external_repos(session, tag_name, repos):
+    """
+    Add all these external repos to this Koji tag.
+
+    :param session: Koji client session
+    :param str tag_name: Koji tag name
+    :param list repos: list of dicts, one for each repository to add. These
+                       dicts are kwargs to the addExternalRepoToTag RPC.
+    """
+    # TODO: refactor this loop to one single multicall.
+    common_koji.ensure_logged_in(session)
+    for repo in repos:
+        session.addExternalRepoToTag(tag_name, **repo)
+
+
 def ensure_external_repos(session, tag_name, check_mode, repos):
     """
     Ensure that these external repos are configured on this Koji tag.
@@ -258,59 +287,45 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
     """
     result = {'changed': False, 'stdout_lines': []}
     validate_repos(repos)
-    current_repo_list = session.getTagExternalRepos(tag_name)
-    current = {repo['external_repo_name']: repo for repo in current_repo_list}
-    current_priorities = {
-        str(repo['priority']): repo for repo in current_repo_list
-    }
-    for repo in sorted(repos, key=lambda r: r['priority']):
-        repo_name = repo['repo']
-        repo_priority = repo['priority']
-        if repo_name in current:
-            # The repo is present for this tag.
-            # Now ensure the priority is correct.
-            if repo_priority == current[repo_name]['priority']:
+    current = session.getTagExternalRepos(tag_name)
+    current_repos = {repo['external_repo_name']: repo for repo in current}
+    desired_repos = {repo['repo']: repo for repo in repos}
+    # Remove all the incorrect repos first.
+    repos_to_remove = set()
+    for name, repo in current_repos.items():
+        if name not in desired_repos:
+            msg = 'Removing %s repo from tag %s' % (name, tag_name)
+            result['stdout_lines'].append(msg)
+            repos_to_remove.add(name)
+            continue
+        priority = repo['priority']
+        desired_priority = desired_repos[name]['priority']
+        if priority != desired_priority:
+            msg = 'Removing %s repo at priority %d from tag %s' \
+                  % (name, priority, tag_name)
+            result['stdout_lines'].append(msg)
+            repos_to_remove.add(name)
+    # Perform the removals.
+    if repos_to_remove and not check_mode:
+        remove_external_repos(session, tag_name, repos_to_remove)
+    # Next, find all the repos to add.
+    repos_to_add = []
+    for name, desired_repo in desired_repos.items():
+        if name in current_repos:
+            current_repo = current_repos[name]
+            if desired_repo['priority'] == current_repo['priority']:
+                # This repo is currently correct. Move on to the next one.
                 continue
-            result['changed'] = True
-            msg = 'set %s repo priority to %i' % (repo_name, repo_priority)
-            result['stdout_lines'].append(msg)
-            if not check_mode:
-                common_koji.ensure_logged_in(session)
-                session.editTagExternalRepo(tag_name, repo_name, repo_priority)
-            continue
-        elif str(repo_priority) in current_priorities:
-            # No need to check for name equivalence here; it would already
-            # have happened
-            result['changed'] = True
-            msg = 'set repo at priority %i to %s' % (repo_priority, repo_name)
-            result['stdout_lines'].append(msg)
-            if not check_mode:
-                common_koji.ensure_logged_in(session)
-                same_priority_repo = current_priorities.get(
-                        str(repo_priority)).get('external_repo_name')
-                session.removeExternalRepoFromTag(tag_name, same_priority_repo)
-                session.addExternalRepoToTag(
-                        tag_name, repo_name, repo_priority)
-                # Prevent duplicate attempts
-                del current_priorities[str(repo_priority)]
-            continue
-        result['changed'] = True
-        msg = 'add %s external repo to %s' % (repo_name, tag_name)
+        msg = 'Adding %s repo with prio %d to tag %s' \
+              % (name, desired_repo['priority'], tag_name)
+        new_repo = {'repo_info': name, 'priority': desired_repo['priority']}
         result['stdout_lines'].append(msg)
-        if not check_mode:
-            common_koji.ensure_logged_in(session)
-            session.addExternalRepoToTag(tag_name, repo_name, repo_priority)
-    # Find the repos to remove from this tag.
-    repo_names = [repo['repo'] for repo in repos]
-    current_names = current.keys()
-    repos_to_remove = set(current_names) - set(repo_names)
-    for repo_name in repos_to_remove:
+        repos_to_add.append(new_repo)
+    # Perform the additions.
+    if repos_to_add and not check_mode:
+        add_external_repos(session, tag_name, repos_to_add)
+    if result['stdout_lines']:
         result['changed'] = True
-        msg = 'removed %s repo from %s tag' % (repo_name, tag_name)
-        result['stdout_lines'].append(msg)
-        if not check_mode:
-            common_koji.ensure_logged_in(session)
-            session.removeExternalRepoFromTag(tag_name, repo_name)
     return result
 
 
