@@ -205,6 +205,20 @@ class TestEnsureExternalRepos(object):
         ]
         assert result_repos == expected_repos
 
+    def test_edit_priority(self, session, tag_name):
+        session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
+        check_mode = False
+        repos = [{'repo': 'centos-7-cr', 'priority': 20}]
+        koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
+        result_repos = session.getTagExternalRepos('my-centos-7')
+        expected_repos = [
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'centos-7-cr',
+             'merge_mode': 'koji',
+             'priority': 20},
+        ]
+        assert result_repos == expected_repos
+
     def test_remove_one_repo(self, session, tag_name):
         session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
         session.addExternalRepoToTag(tag_name, 'epel-7', 20)
