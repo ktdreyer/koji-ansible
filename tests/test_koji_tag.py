@@ -89,7 +89,7 @@ class TestEnsureExternalRepos(object):
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
                   'priority': 10},
-                 {'repo': 'epel-7-cr',
+                 {'repo': 'epel-7',
                   'priority': 20},
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
@@ -100,7 +100,7 @@ class TestEnsureExternalRepos(object):
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
                   'priority': 10},
-                 {'repo': 'epel-7-cr',
+                 {'repo': 'epel-7',
                   'priority': 20},
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
