@@ -81,8 +81,11 @@ class TestValidateRepos(object):
 
 class TestEnsureExternalRepos(object):
 
-    def test_from_no_repos(self, session):
-        tag_name = 'my-centos-7'
+    @pytest.fixture
+    def tag_name(self):
+        return 'my-centos-7'
+
+    def test_from_no_repos(self, session, tag_name):
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
                   'priority': 10},
@@ -91,10 +94,9 @@ class TestEnsureExternalRepos(object):
                  ]
         koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
 
-    def test_add_one_repo(self, session):
+    def test_add_one_repo(self, session, tag_name):
         session.repos = [{'external_repo_name': 'centos-7-cr',
                           'priority': 10}]
-        tag_name = 'my-centos-7'
         check_mode = False
         repos = [{'repo': 'centos-7-cr',
                   'priority': 10},
