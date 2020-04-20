@@ -67,7 +67,18 @@ class FakeSession(object):
         return self.inheritance[tag]
 
     def removeExternalRepoFromTag(self, tag_info, repo_info):
-        pass
+        if isinstance(tag_info, int):
+            raise NotImplementedError('specify a tag by name')
+        if isinstance(repo_info, int):
+            raise NotImplementedError('specify a repo by name')
+        repos = self.tag_repos[tag_info]
+        found = None
+        for i, repo in enumerate(repos):
+            if repo['external_repo_name'] == repo_info:
+                found = i
+        if found is None:
+            raise GenericError('external repo not associated with tag')
+        del repos[found]
 
     def setInheritanceData(self, tag, data, clear=False):
         if not clear:
@@ -173,6 +184,21 @@ class TestEnsureExternalRepos(object):
              'external_repo_name': 'epel-7',
              'merge_mode': 'koji',
              'priority': 20},
+        ]
+        assert result_repos == expected_repos
+
+    def test_remove_one_repo(self, session, tag_name):
+        session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
+        session.addExternalRepoToTag(tag_name, 'epel-7', 20)
+        check_mode = False
+        repos = [{'repo': 'centos-7-cr', 'priority': 10}]
+        koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
+        result_repos = session.getTagExternalRepos('my-centos-7')
+        expected_repos = [
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'centos-7-cr',
+             'merge_mode': 'koji',
+             'priority': 10},
         ]
         assert result_repos == expected_repos
 
