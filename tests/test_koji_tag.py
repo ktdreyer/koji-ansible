@@ -131,6 +131,15 @@ class TestAddExternalRepos(object):
         repos_to_add = [{'repo_info': 'centos-7-cr', 'priority': 10}]
         koji_tag.add_external_repos(session, tag_name, repos_to_add)
 
+    def test_merge_mode(self, session):
+        tag_name = 'my-centos-7'
+        repos_to_add = [{'repo_info': 'centos-7-cr',
+                         'priority': 10},
+                        {'repo_info': 'epel-7',
+                         'priority': 20,
+                         'merge_mode': 'simple'}]
+        koji_tag.add_external_repos(session, tag_name, repos_to_add)
+
 
 class TestRemoveExternalRepos(object):
 
