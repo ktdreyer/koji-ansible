@@ -1,0 +1,114 @@
+# Edit merge mode for a repository.
+---
+
+- name: Create an external repo for CentOS
+  koji_external_repo:
+    name: external-repos-4-os
+    url: http://mirror.centos.org/centos/7/os/$arch/
+    state: present
+
+- name: Create an external repo for EPEL
+  koji_external_repo:
+    name: external-repos-4-epel
+    url: http://download.fedoraproject.org/pub/epel/7/$arch
+    state: present
+
+- name: Create an external repo for private el7 repo
+  koji_external_repo:
+    name: external-repos-4-private-el-7
+    url: http://example.com/el/7/$arch
+    state: present
+
+- name: Set the external repos on our tag
+  koji_tag:
+    name: external-repos-4
+    state: present
+    external_repos:
+    - repo: external-repos-4-os
+      priority: 10
+    - repo: external-repos-4-epel
+      priority: 20
+    - repo: external-repos-4-private-el-7
+      priority: 30
+
+# Assert that each merge_mode defaults to "koji".
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-4]
+  register: repos
+
+- set_fact:
+    os_repo: "{{ repos.data
+                 | selectattr('external_repo_name', 'equalto', 'external-repos-4-os')
+                 | list
+                 | first
+              }}"
+
+- set_fact:
+    epel_repo: "{{ repos.data
+                   | selectattr('external_repo_name', 'equalto', 'external-repos-4-epel')
+                   | list
+                   | first
+                }}"
+
+- set_fact:
+    private_repo: "{{ repos.data
+                   | selectattr('external_repo_name', 'equalto', 'external-repos-4-private-el-7')
+                   | list
+                   | first
+                }}"
+
+- name: all merge_mode values are "koji"
+  assert:
+    that:
+      - epel_repo.merge_mode == 'koji'
+      - os_repo.merge_mode == 'koji'
+      - private_repo.merge_mode == 'koji'
+
+- name: Set the merge mode on an external repo
+  koji_tag:
+    name: external-repos-4
+    external_repos:
+    - repo: external-repos-4-os
+      priority: 10
+    - repo: external-repos-4-epel
+      priority: 20
+    - repo: external-repos-4-private-el-7
+      priority: 30
+      merge_mode: bare
+
+# Assert that the merge_mode has changed
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-4]
+  register: repos
+
+- set_fact:
+    os_repo: "{{ repos.data
+                 | selectattr('external_repo_name', 'equalto', 'external-repos-4-os')
+                 | list
+                 | first
+              }}"
+
+- set_fact:
+    epel_repo: "{{ repos.data
+                   | selectattr('external_repo_name', 'equalto', 'external-repos-4-epel')
+                   | list
+                   | first
+                }}"
+
+- set_fact:
+    private_repo: "{{ repos.data
+                   | selectattr('external_repo_name', 'equalto', 'external-repos-4-private-el-7')
+                   | list
+                   | first
+                }}"
+
+- name: one merge_mode values has changed
+  assert:
+    that:
+      - epel_repo.merge_mode == 'koji'
+      - os_repo.merge_mode == 'koji'
+      - private_repo.merge_mode == 'bare'

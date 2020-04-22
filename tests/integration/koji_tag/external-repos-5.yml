@@ -1,0 +1,49 @@
+# Ensure that a missing merge_mode setting will not reset the existing merge
+# mode for a repo-tag assocation.
+---
+
+- name: Create an external repo for CentOS
+  koji_external_repo:
+    name: external-repos-5-os
+    url: http://mirror.centos.org/centos/7/os/$arch/
+    state: present
+
+- name: Set an external repo on our tag with "bare" merge mode
+  koji_tag:
+    name: external-repos-5
+    external_repos:
+    - repo: external-repos-5-os
+      priority: 10
+      merge_mode: bare
+
+# Assert that the merge_mode is "bare".
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-5]
+  register: repos
+
+- name: the merge_mode value is "bare"
+  assert:
+    that:
+      - repos.data[0].merge_mode == 'bare'
+
+- name: Re-declare our external repo without specifying merge_mode
+  koji_tag:
+    name: external-repos-5
+    external_repos:
+    - repo: external-repos-5-os
+      priority: 10
+      # Note: no merge_mode here.
+
+# Assert that the merge_mode is still "bare".
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [external-repos-5]
+  register: repos
+
+- name: the merge_mode value is still "bare"
+  assert:
+    that:
+      - repos.data[0].merge_mode == 'bare'
