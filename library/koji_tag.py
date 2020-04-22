@@ -387,7 +387,8 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     :param session: Koji client session
     :param int tag_id: Koji tag ID
     :param bool check_mode: don't make any changes
-    :param dict desired_groups: ensure these groups are set (?)
+    :param dict desired_groups: Ensure that these group names and packages are
+                                configured for this tag.
     """
     result = {'changed': False, 'stdout_lines': []}
     common_koji.ensure_logged_in(session)
