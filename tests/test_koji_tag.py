@@ -131,6 +131,15 @@ class TestAddExternalRepos(object):
         repos_to_add = [{'repo_info': 'centos-7-cr', 'priority': 10}]
         koji_tag.add_external_repos(session, tag_name, repos_to_add)
 
+    def test_merge_mode(self, session):
+        tag_name = 'my-centos-7'
+        repos_to_add = [{'repo_info': 'centos-7-cr',
+                         'priority': 10},
+                        {'repo_info': 'epel-7',
+                         'priority': 20,
+                         'merge_mode': 'simple'}]
+        koji_tag.add_external_repos(session, tag_name, repos_to_add)
+
 
 class TestRemoveExternalRepos(object):
 
@@ -216,6 +225,38 @@ class TestEnsureExternalRepos(object):
              'external_repo_name': 'centos-7-cr',
              'merge_mode': 'koji',
              'priority': 20},
+        ]
+        assert result_repos == expected_repos
+
+    def test_edit_merge_mode(self, session, tag_name):
+        session.addExternalRepoToTag(tag_name, 'centos-7-cr', 10)
+        session.addExternalRepoToTag(tag_name, 'epel-7', 20)
+        session.addExternalRepoToTag(tag_name, 'private-el-7', 30)
+        check_mode = False
+        repos = [{'repo': 'centos-7-cr',
+                  'priority': 10},
+                 {'repo': 'epel-7',
+                  'priority': 20,
+                  'merge_mode': 'koji'},
+                 {'repo': 'private-el-7',
+                  'priority': 30,
+                  'merge_mode': 'bare'},
+                 ]
+        koji_tag.ensure_external_repos(session, tag_name, check_mode, repos)
+        result_repos = session.getTagExternalRepos(tag_name)
+        expected_repos = [
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'centos-7-cr',
+             'merge_mode': 'koji',
+             'priority': 10},
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'epel-7',
+             'merge_mode': 'koji',
+             'priority': 20},
+            {'tag_name': 'my-centos-7',
+             'external_repo_name': 'private-el-7',
+             'merge_mode': 'bare',
+             'priority': 30},
         ]
         assert result_repos == expected_repos
 

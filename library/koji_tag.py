@@ -31,7 +31,11 @@ options:
      description:
        - list of Koji external repos to set for this tag. Each element of the
          list should have a "repo" (the external repo name) and "priority"
-         (integer).
+         (integer). You may optionally set a "merge_mode" for this external
+         repo ("koji", "simple", or "bare"). For backwards compatibility, if
+         you do not set a "merge_mode" and the external repository already
+         exists at the given priority, then Ansible will not edit the existing
+         merge mode.
    packages:
      description:
        - dict of package owners and the a lists of packages each owner
@@ -305,6 +309,15 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
                   % (name, priority, tag_name)
             result['stdout_lines'].append(msg)
             repos_to_remove.add(name)
+            continue
+        if 'merge_mode' in desired_repos[name]:
+            merge_mode = repo['merge_mode']
+            desired_merge_mode = desired_repos[name]['merge_mode']
+            if merge_mode != desired_merge_mode:
+                msg = 'Removing %s repo with merge mode "%s" from tag %s' \
+                      % (name, merge_mode, tag_name)
+                result['stdout_lines'].append(msg)
+                repos_to_remove.add(name)
     # Perform the removals.
     if repos_to_remove and not check_mode:
         remove_external_repos(session, tag_name, repos_to_remove)
@@ -314,11 +327,18 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
         if name in current_repos:
             current_repo = current_repos[name]
             if desired_repo['priority'] == current_repo['priority']:
-                # This repo is currently correct. Move on to the next one.
-                continue
+                if 'merge_mode' not in desired_repo:
+                    # This repo is currently correct. Move on to the next one.
+                    continue
+                if desired_repo['merge_mode'] == current_repo['merge_mode']:
+                    # This repo is currently correct. Move on to the next one.
+                    continue
         msg = 'Adding %s repo with prio %d to tag %s' \
               % (name, desired_repo['priority'], tag_name)
         new_repo = {'repo_info': name, 'priority': desired_repo['priority']}
+        if 'merge_mode' in desired_repo:
+            new_repo['merge_mode'] = desired_repo['merge_mode']
+            msg += ' with merge mode "%s"' % desired_repo['merge_mode']
         result['stdout_lines'].append(msg)
         repos_to_add.append(new_repo)
     # Perform the additions.
