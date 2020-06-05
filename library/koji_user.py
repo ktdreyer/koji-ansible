@@ -66,7 +66,7 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
     Ensure that this user is configured in Koji.
 
     :param session: Koji client session
-    :param str name: Koji builder user name
+    :param str name: Koji user name
     :param bool check_mode: don't make any changes
     :param str state: "enabled" or "disabled"
     :param list permissions: list of permissions for this user.
