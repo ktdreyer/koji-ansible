@@ -99,7 +99,7 @@ def ensure_channels(session, host_id, host_name, check_mode, desired_channels):
 
     :param session: Koji client session
     :param int host_id: Koji host ID
-    :param int host_name: Koji host name
+    :param str host_name: Koji host name
     :param bool check_mode: don't make any changes
     :param list desired_channels: channels that the host should belong to
     """
