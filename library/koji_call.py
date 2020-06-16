@@ -129,8 +129,8 @@ def do_call(session, name, args, login):
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False),
-        name=dict(type='str', required=True),
+        koji=dict(required=False),
+        name=dict(required=True),
         args=dict(type='raw', required=False, default=[]),
         login=dict(type='bool', required=False, default=False),
     )

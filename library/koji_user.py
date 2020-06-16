@@ -118,12 +118,12 @@ def ensure_user(session, name, check_mode, state, permissions, krb_principal):
 
 def run_module():
     module_args = dict(
-        koji=dict(type='str', required=False),
-        name=dict(type='str', required=True),
+        koji=dict(required=False),
+        name=dict(required=True),
         permissions=dict(type='list', required=True),
-        krb_principal=dict(type='str', required=False, default=None),
-        state=dict(type='str', choices=[
-                   'enabled', 'disabled'], required=False, default='enabled'),
+        krb_principal=dict(required=False, default=None),
+        state=dict(choices=['enabled', 'disabled'], required=False,
+                   default='enabled'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
