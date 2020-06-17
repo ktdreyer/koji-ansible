@@ -14,7 +14,7 @@ class GenericError(Exception):
         return str(self.args[0])
 
 
-class FakeSession(object):
+class FakeKojiSession(object):
     def __init__(self):
         self.repos = {}
 
@@ -61,7 +61,7 @@ class FakeSession(object):
 
 @pytest.fixture
 def session():
-    return FakeSession()
+    return FakeKojiSession()
 
 
 class TestEnsureExternalRepo(object):
