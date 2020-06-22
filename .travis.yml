@@ -39,6 +39,10 @@ jobs:
     <<: *integration_test
     install: PIP_IGNORE_INSTALLED=0 pip3 install ansible --user
 
+  - name: integration tests (ansible prerelease)
+    <<: *integration_test
+    install: PIP_IGNORE_INSTALLED=0 pip3 install ansible --user --pre
+
   - name: test collection build
     install: pip install ansible
     script: tests/integration/collection.sh
