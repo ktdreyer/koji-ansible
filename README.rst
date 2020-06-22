@@ -281,16 +281,10 @@ If you are using Ansible 2.9 or greater, you can `install
 <https://docs.ansible.com/ansible/latest/user_guide/collections_using.html>`_
 koji-ansible like so::
 
-  ansible-galaxy collection install ktdreyer.koji_ansible:<identifier>
+  ansible-galaxy collection install ktdreyer.koji_ansible
 
-Where *<identifier>* is a specific Git reference. Please see the `Ansible
-Galaxy UI <https://galaxy.ansible.com/ktdreyer/koji_ansible>`_.
-
-Please note that you cannot install the "latest" Git snapshot automatically
-without specifying the version identifier explicitly. The problem is that the
-``ansible-galaxy`` client hides these versions when it picks the "latest" one
-to install. This issue is tracked in
-https://github.com/ansible/ansible/issues/64905 .
+This will install the latest Git snapshot automatically. Use ``--force``
+upgrade your installed version to the latest version.
 
 Using this Ansible Galaxy Collection inside a role
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,7 +316,6 @@ this collection (and a specific version, as described above)::
 
     collections:
     - name: ktdreyer.koji_ansible
-      version: 0.0.0-git.222+7fb2d32f
 
 The ``roles/my-koji-project/meta/main.yml`` file tells Ansible to load any
 custom modules in this role from the ``ktdreyer.koji_ansible`` collection
