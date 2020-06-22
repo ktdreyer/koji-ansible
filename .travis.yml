@@ -5,6 +5,29 @@ python:
 install: pip install tox-travis
 script: tox
 
+_integration_test: &integration_test
+  language: minimal
+  dist: bionic
+  install:
+  before_script: tests/integration/setup.sh
+  script: tests/integration/run.sh
+  # This appears to be broken on bionic:
+  #services:
+  # - postgresql
+  addons:
+   apt:
+     packages:
+     - apache2
+     - libapache2-mod-wsgi-py3
+     - postgresql
+     - python3-cryptography
+     - python3-dateutil
+     - python3-pip
+     - python3-psycopg2
+     - python3-rpm
+     - python3-setuptools
+     - python3-six
+
 jobs:
   include:
   - python: 3.7
@@ -13,27 +36,8 @@ jobs:
     - coveralls
 
   - name: integration tests
-    language: minimal
-    dist: bionic
-    install:
-    before_script: tests/integration/setup.sh
-    script: tests/integration/run.sh
-    # This appears to be broken on bionic:
-    #services:
-    # - postgresql
-    addons:
-     apt:
-       packages:
-       - apache2
-       - libapache2-mod-wsgi-py3
-       - postgresql
-       - python3-cryptography
-       - python3-dateutil
-       - python3-pip
-       - python3-psycopg2
-       - python3-rpm
-       - python3-setuptools
-       - python3-six
+    <<: *integration_test
+    install: PIP_IGNORE_INSTALLED=0 pip3 install ansible --user
 
   - name: test collection build
     install: pip install ansible

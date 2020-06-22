@@ -67,5 +67,3 @@ mkdir -p $HOME/mnt/koji
 reset_instance
 
 cp tests/integration/ansible.cfg ~/.ansible.cfg
-
-PIP_IGNORE_INSTALLED=0 pip3 install ansible --user
