@@ -67,12 +67,11 @@ RETURN = ''' # '''
 
 def run_module():
     module_args = dict(
-        koji=dict(required=False),
+        koji=dict(),
         name=dict(required=True),
         description=dict(required=True),
         extensions=dict(required=True),
-        state=dict(choices=['present', 'absent'], required=False,
-                   default='present'),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
     module = AnsibleModule(
         argument_spec=module_args,
