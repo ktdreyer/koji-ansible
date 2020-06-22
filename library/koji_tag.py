@@ -447,16 +447,6 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     return result
 
 
-def compound_parameter_present(param_name, param, expected_type):
-    if param not in (None, ''):
-        if not isinstance(param, expected_type):
-            raise ValueError(param_name + ' must be a '
-                             + expected_type.__class__.__name__
-                             + ', not a ' + param.__class__.__name__)
-        return True
-    return False
-
-
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
                packages, groups, **kwargs):
     """
@@ -517,7 +507,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                 session.editTag2(name, **edits)
 
     # Ensure inheritance rules are all set.
-    if compound_parameter_present('inheritance', inheritance, list):
+    if inheritance is not None:
         inheritance_result = ensure_inheritance(session, name, taginfo['id'],
                                                 check_mode, inheritance)
         if inheritance_result['changed']:
@@ -525,7 +515,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(inheritance_result['stdout_lines'])
 
     # Ensure external repos.
-    if compound_parameter_present('external_repos', external_repos, list):
+    if external_repos is not None:
         repos_result = ensure_external_repos(session, name, check_mode,
                                              external_repos)
         if repos_result['changed']:
@@ -533,7 +523,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(repos_result['stdout_lines'])
 
     # Ensure package list.
-    if compound_parameter_present('packages', packages, dict):
+    if packages is not None:
         packages_result = ensure_packages(session, name, taginfo['id'],
                                           check_mode, packages)
         if packages_result['changed']:
@@ -541,7 +531,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(packages_result['stdout_lines'])
 
     # Ensure group list.
-    if compound_parameter_present('groups', groups, dict):
+    if groups is not None:
         groups_result = ensure_groups(session, taginfo['id'],
                                       check_mode, groups)
         if groups_result['changed']:
@@ -573,10 +563,10 @@ def run_module():
         name=dict(required=True),
         state=dict(choices=['present', 'absent'], required=False,
                    default='present'),
-        inheritance=dict(type='raw', required=False, default=None),
-        external_repos=dict(type='raw', required=False, default=None),
-        packages=dict(type='raw', required=False, default=None),
-        groups=dict(type='raw', required=False, default=None),
+        inheritance=dict(type='list', required=False, default=None),
+        external_repos=dict(type='list', required=False, default=None),
+        packages=dict(type='dict', required=False, default=None),
+        groups=dict(type='dict', required=False, default=None),
         arches=dict(required=False, default=None),
         perm=dict(required=False, default=None),
         locked=dict(type='bool', required=False, default=False),
