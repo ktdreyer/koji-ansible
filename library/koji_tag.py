@@ -507,7 +507,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                 session.editTag2(name, **edits)
 
     # Ensure inheritance rules are all set.
-    if inheritance is not None:
+    if inheritance not in (None, ['']):
         inheritance_result = ensure_inheritance(session, name, taginfo['id'],
                                                 check_mode, inheritance)
         if inheritance_result['changed']:
@@ -515,7 +515,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(inheritance_result['stdout_lines'])
 
     # Ensure external repos.
-    if external_repos is not None:
+    if external_repos not in (None, ['']):
         repos_result = ensure_external_repos(session, name, check_mode,
                                              external_repos)
         if repos_result['changed']:
@@ -523,7 +523,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(repos_result['stdout_lines'])
 
     # Ensure package list.
-    if packages is not None:
+    if packages not in (None, ''):
+        if not isinstance(packages, dict):
+            raise ValueError('packages must be a dict')
         packages_result = ensure_packages(session, name, taginfo['id'],
                                           check_mode, packages)
         if packages_result['changed']:
@@ -531,7 +533,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         result['stdout_lines'].extend(packages_result['stdout_lines'])
 
     # Ensure group list.
-    if groups is not None:
+    if groups not in (None, ''):
+        if not isinstance(groups, dict):
+            raise ValueError('groups must be a dict')
         groups_result = ensure_groups(session, taginfo['id'],
                                       check_mode, groups)
         if groups_result['changed']:
@@ -564,8 +568,8 @@ def run_module():
         state=dict(choices=['present', 'absent'], default='present'),
         inheritance=dict(type='list', default=None),
         external_repos=dict(type='list', default=None),
-        packages=dict(type='dict', default=None),
-        groups=dict(type='dict', default=None),
+        packages=dict(type='raw', default=None),
+        groups=dict(type='raw', default=None),
         arches=dict(default=None),
         perm=dict(default=None),
         locked=dict(type='bool', default=False),
