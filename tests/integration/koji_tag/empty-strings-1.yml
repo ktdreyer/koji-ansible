@@ -1,0 +1,53 @@
+# Test behavior with empty strings
+# Ansible evaluates default(None) to an empty string when jinja2_native=False
+---
+
+- koji_tag:
+    name: empty-strings-1
+    state: present
+    inheritance: ""
+    external_repos: ""
+    packages: ""
+    groups: ""
+
+# Assert that this tag looks correct.
+
+- koji_call:
+    name: getInheritanceData
+    args: [empty-strings-1]
+  register: inheritance
+
+- name: inheritance list is empty
+  assert:
+    that:
+      - inheritance.data == []
+
+- koji_call:
+    name: getTagExternalRepos
+    args: [empty-strings-1]
+  register: repos
+
+- name: external repos list is empty
+  assert:
+    that:
+      - repos.data == []
+
+- koji_call:
+    name: getTagGroups
+    args: [empty-strings-1]
+  register: package_groups
+
+- name: groups list is empty
+  assert:
+    that:
+      - package_groups.data == []
+
+- koji_call:
+    name: listPackages
+    args: [empty-strings-1]
+  register: packages
+
+- name: package list is empty
+  assert:
+    that:
+      - packages.data == []
