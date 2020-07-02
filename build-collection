@@ -40,10 +40,9 @@ pandoc $TOPDIR/README.rst -f rst -t markdown_strict -o README.md
 # Determine our semver-compatible version number from Git.
 BASE_COMMIT=$(git rev-list --max-parents=0 HEAD)
 COMMIT_COUNT=$(($(git rev-list --count $BASE_COMMIT..HEAD) - 1))
-COMMIT_ABBREV=$(git rev-parse --short=8 HEAD)
 
-# Versions will always be 0.0.XXX, plus the Git commit sha identifier.
-VERSION="0.0.${COMMIT_COUNT}+git.${COMMIT_ABBREV}"
+# Versions will always be 0.0.XXX.
+VERSION="0.0.${COMMIT_COUNT}"
 
 sed $TOPDIR/galaxy.yml -e "s/{{ version }}/$VERSION/" > galaxy.yml
 
