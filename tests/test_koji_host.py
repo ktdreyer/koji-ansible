@@ -27,7 +27,7 @@ def session():
 @pytest.fixture
 def builder():
     return {
-        'arches': '',
+        'arches': 'x86_64',
         'capacity': 20.0,
         'comment': 'my builder host',
         'description': '',
@@ -45,12 +45,12 @@ class TestEnsureHostUnchanged(object):
     def test_state_enabled(self, session, builder):
         session.hosts['builder'] = builder
         result = koji_host.ensure_host(session, 'builder', False, 'enabled',
-                                       [], None, None)
+                                       ['x86_64'], None, None)
         assert result['changed'] is False
 
     def test_state_disabled(self, session, builder):
         session.hosts['builder'] = builder
         session.hosts['builder']['enabled'] = False
         result = koji_host.ensure_host(session, 'builder', False, 'disabled',
-                                       [], None, None)
+                                       ['x86_64'], None, None)
         assert result['changed'] is False
