@@ -1,5 +1,3 @@
-import pytest
-import mock
 import koji_tag_packages
 
 from mock import Mock, call

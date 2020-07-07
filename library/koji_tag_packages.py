@@ -21,7 +21,7 @@ description:
    - The `koji_tag` module is all-or-nothing when it comes to managing tag
      packages. When you set packages with `koji_tag`, the module will
      delete any packages that are not defined there.
-   - In some cases you may want to declare *some* packages 
+   - In some cases you may want to declare *some* packages
      within Ansible without clobbering other existing tag
      packages.
 options:
@@ -60,7 +60,7 @@ EXAMPLES = '''
   koji_tag_packages:
     koji: kojidev
     tag: ceph-3.1-rhel-7
-    state: absent 
+    state: absent
     packages:
       kdreyer:
         - ansible
