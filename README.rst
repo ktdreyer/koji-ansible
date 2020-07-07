@@ -205,7 +205,8 @@ koji_call
 ---------
 
 The ``koji_call`` module allows you to send raw RPCs to the Koji hub. This
-exposes the entire Koji API to you directly.
+exposes the entire `Koji API <https://koji.fedoraproject.org/koji/api>`_ to
+you directly.
 
 Why would you use this module instead of the higher level modules like
 ``koji_tag``, ``koji_target``, etc? This ``koji_call`` module has two main

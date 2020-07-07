@@ -34,6 +34,8 @@ description:
      because it simply sends the RPC to the Koji Hub on every ansible run.
      This module cannot understand if your chosen RPC actually "changes"
      anything.'
+   - Read the full Koji API documentation at
+     https://koji.fedoraproject.org/koji/api
 options:
    name:
      description:
