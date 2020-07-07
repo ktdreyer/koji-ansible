@@ -1,0 +1,46 @@
+---
+
+- koji_tag:
+    name: basic-1
+    state: present
+
+- koji_tag_packages:
+    tag: basic-1
+    state: present
+    packages:
+      travisci:
+      - ceph
+
+- koji_call:
+    name: getTag
+    args: [basic-1]
+  register: taginfo
+
+- koji_call:
+    name: listPackages
+    args: [basic-1]
+  register: packages
+
+- assert:
+    that:
+      - taginfo.data.name == 'basic-1'
+        
+- assert:
+    that:
+      - packages.data[0].package_name == 'ceph'
+
+- koji_tag_packages:
+    tag: basic-1
+    state: absent
+    packages:
+      travisci:
+      - ceph
+
+- koji_call:
+    name: listPackages
+    args: [basic-1]
+  register: packages
+
+- assert:
+    that:
+      - packages.data == []
