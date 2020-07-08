@@ -30,9 +30,5 @@
 
 - assert:
     that:
-      - taginfo.data.name == 'basic-1'
-        
-- assert:
-    that:
       - packages.data[0].package_name == 'ceph'
       - packages.data[0].owner_name == 'aschoen'
