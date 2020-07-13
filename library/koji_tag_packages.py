@@ -125,6 +125,7 @@ def remove_packages(session, tag_name, check_mode, packages):
                 session.packageListRemove(tag_name, package, owner)
     return result
 
+
 def run_module():
     module_args = dict(
         koji=dict(),
@@ -152,7 +153,8 @@ def run_module():
 
     if state == 'present':
         # ensure packages are there
-        result = ensure_packages(session, tag_name, tag_info['id'], check_mode, packages)
+        result = ensure_packages(
+            session, tag_name, tag_info['id'], check_mode, packages)
     elif state == 'absent':
         # delete packages
         result = remove_packages(session, tag_name, check_mode, packages)

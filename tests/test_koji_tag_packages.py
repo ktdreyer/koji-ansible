@@ -12,7 +12,8 @@ class TestKojiTagPackages(object):
         }
         check_mode = False
         session = Mock()
-        result = koji_tag_packages.remove_packages(session, "tag", check_mode, packages)
+        result = koji_tag_packages.remove_packages(
+            session, "tag", check_mode, packages)
         assert result['changed']
         calls = [
             call("tag", "foo", "user1"),
@@ -33,7 +34,8 @@ class TestKojiTagPackages(object):
         check_mode = False
         session = Mock()
         session.listPackages = Mock(return_value=current_packages)
-        result = koji_tag_packages.ensure_packages(session, "tag", "5", check_mode, packages)
+        result = koji_tag_packages.ensure_packages(
+            session, "tag", "5", check_mode, packages)
         assert result['changed']
         session.packageListAdd.assert_called_with("tag", "bar", "user1")
 
@@ -50,7 +52,8 @@ class TestKojiTagPackages(object):
         check_mode = False
         session = Mock()
         session.listPackages = Mock(return_value=current_packages)
-        result = koji_tag_packages.ensure_packages(session, "tag", "5", check_mode, packages)
+        result = koji_tag_packages.ensure_packages(
+            session, "tag", "5", check_mode, packages)
         assert not result['changed']
 
     def test_fix_package_ownership(self):
@@ -66,6 +69,7 @@ class TestKojiTagPackages(object):
         check_mode = False
         session = Mock()
         session.listPackages = Mock(return_value=current_packages)
-        result = koji_tag_packages.ensure_packages(session, "tag", "5", check_mode, packages)
+        result = koji_tag_packages.ensure_packages(
+            session, "tag", "5", check_mode, packages)
         assert result['changed']
         session.packageListSetOwner.assert_called_with("tag", "baz", "user2")
