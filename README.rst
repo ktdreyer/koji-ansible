@@ -201,6 +201,42 @@ To declare inheritance relationships with finer granularity, you may use the
 This will only mange that single parent-child relationship between the two
 tags, and it will not delete any other inheritance relationships.
 
+koji_tag_packages
+-----------------
+
+The ``koji_tag`` module (above) is all-or-nothing when it comes to managing
+packages. When you set packages with ``koji_tag``, the module will
+delete any packages that are not defined there.
+
+In some cases you may want to declare *some* packages within
+Ansible without clobbering existing packages.
+
+To declare packages with finer granularity, you may use the
+``koji_tag_packages`` module.
+
+.. code-block:: yaml
+
+    - name: ensure ceph packages are present and ownership set
+      koji_tag_packages:
+        tag: ceph-3.1-rhel-7
+        packages:
+          kdreyer:
+            - ceph
+          aschoen:
+            - ansible
+        state: present
+
+    - name: ensure koji packages are absent
+      koji_tag_packages:
+        tag: ceph-3.1-rhel-7
+        packages:
+          kdreyer:
+            - koji
+        state: absent
+
+This will only mange the packages defined and will not change any packages
+created previously with the ``koji_tag`` module.
+
 koji_call
 ---------
 

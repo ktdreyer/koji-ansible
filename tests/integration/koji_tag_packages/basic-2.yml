@@ -1,0 +1,34 @@
+---
+- koji_tag:
+    name: basic-1
+    state: present
+
+- koji_tag_packages:
+    tag: basic-1
+    state: present
+    packages:
+      travisci:
+      - ceph
+
+- name: Add new aschoen user
+  koji_user:
+    name: aschoen 
+    state: enabled
+    permissions: [admin]
+
+- koji_tag_packages:
+    tag: basic-1
+    state: present
+    packages:
+      aschoen:
+      - ceph
+
+- koji_call:
+    name: listPackages
+    args: [basic-1]
+  register: packages
+
+- assert:
+    that:
+      - packages.data[0].package_name == 'ceph'
+      - packages.data[0].owner_name == 'aschoen'
