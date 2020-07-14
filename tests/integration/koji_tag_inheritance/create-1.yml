@@ -14,7 +14,7 @@
     child_tag: create-1-child
     priority: 0
 
-# Assert that we have the new parent.
+# Assert that we have the new parent with the default inheritance settings.
 
 - koji_call:
     name: getInheritanceData
@@ -25,4 +25,8 @@
     that:
       - inheritance.data|length == 1
       - inheritance.data[0].name == 'create-1-parent'
+      - not inheritance.data[0].intransitive
+      - inheritance.data[0].maxdepth is none
+      - not inheritance.data[0].noconfig
+      - inheritance.data[0].pkg_filter == ''
       - inheritance.data[0].priority == 0
