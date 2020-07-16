@@ -1,0 +1,36 @@
+# Create an inheritance relationship with non-default options.
+---
+
+- koji_tag:
+    name: create-2-parent
+    state: present
+
+- koji_tag:
+    name: create-2-child
+    state: present
+
+- koji_tag_inheritance:
+    parent_tag: create-2-parent
+    child_tag: create-2-child
+    intransitive: true
+    maxdepth: 1
+    noconfig: true
+    pkg_filter: ^coreutils$
+    priority: 10
+
+# Assert that we have the new parent with all our custom inheritance settings.
+
+- koji_call:
+    name: getInheritanceData
+    args: [create-2-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 1
+      - inheritance.data[0].name == 'create-2-parent'
+      - inheritance.data[0].intransitive
+      - inheritance.data[0].maxdepth == 1
+      - inheritance.data[0].noconfig
+      - inheritance.data[0].pkg_filter == '^coreutils$'
+      - inheritance.data[0].priority == 10
