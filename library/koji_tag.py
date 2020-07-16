@@ -40,6 +40,13 @@ options:
      description:
        - dict of package owners and the a lists of packages each owner
          maintains.
+       - If you omit this "packages" setting, Ansible will not edit the
+         existing package list for this tag. For example, if you have another
+         system that already manages the package list for this tag, you may
+         want to omit this setting in Ansible.
+         https://github.com/project-ncl/causeway is one example of a system
+         that independently manages the package lists for individual Koji
+         tags.
    groups:
      description:
        - A tag's "groups" tell Koji what packages will be present in the
