@@ -1,0 +1,23 @@
+%global collection_namespace ktdreyer
+%global collection_name koji_ansible
+
+Name: ansible-collection-%{collection_namespace}-koji-ansible
+Summary: Ansible modules to manage Koji resources
+URL: https://github.com/ktdreyer/koji-ansible
+Version: {{ version }}
+Release: 1
+Source0: https://galaxy.ansible.com/download/%{collection_namespace}-%{collection_name}-%{version}.tar.gz
+License: GPLv3+
+BuildArch: noarch
+Requires: ansible
+
+%description
+This is not about installing Koji. Instead, it is a way to declaratively
+define things within Koji, where you might normally use the koji CLI.
+
+%install
+mkdir -p %{buildroot}%{_datadir}/ansible/collections/ansible_collections/%{collection_namespace}/%{collection_name}
+tar xf %SOURCE0 -C %{buildroot}%{_datadir}/ansible/collections/ansible_collections/%{collection_namespace}/%{collection_name}
+
+%files
+%{_datadir}/ansible/collections/ansible_collections/%{collection_namespace}/%{collection_name}
