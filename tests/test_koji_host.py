@@ -343,3 +343,15 @@ class TestMain(object):
             koji_host.main()
         result = exit.value.args[0]
         assert result['msg'] == 'missing required arguments: arches'
+
+    def test_kerberos_principal(self):
+        set_module_args({
+            'name': 'builder',
+            'arches': ['x86_64'],
+            'krb_principal': 'compile/builder.example.com@EXAMPLE.COM',
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_host.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == ['added krb princ']
