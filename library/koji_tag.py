@@ -47,6 +47,8 @@ options:
          https://github.com/project-ncl/causeway is one example of a system
          that independently manages the package lists for individual Koji
          tags.
+       - If you explicitly set "packages" to an empty dict, Ansible will
+         remove all the packages defined on this tag.
    groups:
      description:
        - A tag's "groups" tell Koji what packages will be present in the
