@@ -71,9 +71,8 @@ def run_module():
     result = {'changed': False}
 
     if state == 'present':
-        btype_data = session.listBTypes()
-        btypes = [data['name'] for data in btype_data]
-        if name not in btypes:
+        btypes = session.listBTypes(query={'name': name})
+        if not btypes:
             result['changed'] = True
             if not check_mode:
                 common_koji.ensure_logged_in(session)

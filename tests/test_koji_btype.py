@@ -15,8 +15,15 @@ class FakeKojiSession(object):
                        {'id': 4, 'name': 'image'}]
 
     def listBTypes(self, query=None, queryOpts=None):
-        if query or queryOpts:
+        if queryOpts:
             raise NotImplementedError()
+        if query:
+            if 'id' in query:
+                raise NotImplementedError()
+            for btype in self.btypes:
+                if btype['name'] == query['name']:
+                    return [btype]
+            return []
         return self.btypes
 
     def addBType(self, name):
