@@ -45,7 +45,7 @@ options:
    args:
      description:
        - The list or dict of arguments to pass into the call.
-       - 'Example: ["f29-build"]'
+       - 'Example: ["f32-build"]'
      required: false
    login:
      description:
@@ -79,7 +79,7 @@ EXAMPLES = '''
     - name: call the API
       koji_call:
         name: getTag
-        args: [f29-build]
+        args: [f32-build]
       register: call_result
 
     - debug:
