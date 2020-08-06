@@ -234,8 +234,8 @@ To declare packages with finer granularity, you may use the
             - koji
         state: absent
 
-This will only mange the packages defined and will not change any packages
-created previously with the ``koji_tag`` module.
+This will only mange the packages defined and will not change any other
+packages on the tag.
 
 koji_call
 ---------
