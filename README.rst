@@ -209,7 +209,9 @@ packages. When you set packages with ``koji_tag``, the module will
 delete any packages that are not defined there.
 
 In some cases you may want to declare *some* packages within
-Ansible without clobbering existing packages.
+Ansible without clobbering existing packages. For example, if you have a
+separate tool that might add or remove packages from tags dynamically, you do
+not want Ansible to fight that other tooling.
 
 To declare packages with finer granularity, you may use the
 ``koji_tag_packages`` module.
@@ -234,8 +236,8 @@ To declare packages with finer granularity, you may use the
             - koji
         state: absent
 
-This will only mange the packages defined and will not change any packages
-created previously with the ``koji_tag`` module.
+This will only mange the packages defined and will not change any other
+packages on the tag.
 
 koji_call
 ---------
