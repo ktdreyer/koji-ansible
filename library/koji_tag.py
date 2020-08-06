@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 from ansible.module_utils import common_koji
@@ -513,7 +514,13 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
             result['changed'] = True
             if not check_mode:
                 common_koji.ensure_logged_in(session)
-                session.editTag2(name, **edits)
+                koji_profile = sys.modules[session.__module__]
+                try:
+                    session.editTag2(name, **edits)
+                except koji_profile.ActionNotAllowed:
+                    print(edits)
+                    print(session.getLoggedInUser())
+                    raise
 
     # Ensure inheritance rules are all set.
     if inheritance not in (None, ['']):
