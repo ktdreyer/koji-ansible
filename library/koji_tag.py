@@ -372,7 +372,6 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     result = {'changed': False, 'stdout_lines': []}
     # Note: this in particular could really benefit from koji's
     # multicalls...
-    common_koji.ensure_logged_in(session)
     current_pkgs = session.listPackages(tagID=tag_id)
     current_names = set([pkg['package_name'] for pkg in current_pkgs])
     # Create a "current_owned" dict to compare with what's in Ansible.
@@ -386,6 +385,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
             if package not in current_names:
                 # The package was missing from the tag entirely.
                 if not check_mode:
+                    common_koji.ensure_logged_in(session)
                     session.packageListAdd(tag_name, package, owner)
                 result['stdout_lines'].append('added pkg %s' % package)
                 result['changed'] = True
@@ -394,6 +394,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
                 # Verify ownership.
                 if package not in current_owned.get(owner, []):
                     if not check_mode:
+                        common_koji.ensure_logged_in(session)
                         session.packageListSetOwner(tag_name, package, owner)
                     result['stdout_lines'].append('set %s owner %s' %
                                                   (package, owner))
@@ -405,6 +406,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
         result['stdout_lines'].append('remove pkg %s' % package)
         result['changed'] = True
         if not check_mode:
+            common_koji.ensure_logged_in(session)
             session.packageListRemove(tag_name, package, owner)
     return result
 
@@ -420,11 +422,11 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
                                 configured for this tag.
     """
     result = {'changed': False, 'stdout_lines': []}
-    common_koji.ensure_logged_in(session)
     current_groups = session.getTagGroups(tag_id)
     for group in current_groups:
         if group['tag_id'] == tag_id and group['name'] not in desired_groups:
             if not check_mode:
+                common_koji.ensure_logged_in(session)
                 session.groupListRemove(tag_id, group['name'])
             result['stdout_lines'].append('removed group %s' % group['name'])
             result['changed'] = True
@@ -437,6 +439,7 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
         else:
             current_pkgs = {}
             if not check_mode:
+                common_koji.ensure_logged_in(session)
                 session.groupListAdd(tag_id, group_name)
             result['stdout_lines'].append('added group %s' % group_name)
             result['changed'] = True
@@ -444,12 +447,14 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
         for package, pkg_tag_id in current_pkgs.items():
             if pkg_tag_id == tag_id and package not in desired_pkgs:
                 if not check_mode:
+                    common_koji.ensure_logged_in(session)
                     session.groupPackageListRemove(tag_id, group_name, package)
                 result['stdout_lines'].append('removed pkg %s from group %s' % (package, group_name))
                 result['changed'] = True
         for package in desired_pkgs:
             if package not in current_pkgs:
                 if not check_mode:
+                    common_koji.ensure_logged_in(session)
                     session.groupPackageListAdd(tag_id, group_name, package)
                 result['stdout_lines'].append('added pkg %s to group %s' % (package, group_name))
                 result['changed'] = True
