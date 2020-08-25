@@ -168,7 +168,7 @@ def validate_repos(repos):
     This prevents the user from accidentally specifying two or more external
     repositories with the same name or priority.
 
-    :param repos: list of repository dicts
+    :param list repos: list of repository dicts
     :raises: DuplicatePriorityError if two repos have the same priority.
     """
     names = set()
