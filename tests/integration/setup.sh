@@ -42,6 +42,13 @@ popd  # koji-tools
 mkdir -p ~/.koji/config.d/
 cp -f tests/integration/travisci.conf ~/.koji/config.d/
 sed -e "s?%HOME%?$HOME?g" --in-place ~/.koji/config.d/travisci.conf
+# separate client profile to test without authentication:
+# (If we call activate_session() with this profile, we will get an AuthError
+# because no cert file exists for this profile.)
+cp -f tests/integration/travisci.conf ~/.koji/config.d/anonymous.conf
+sed -e "s/^\\[travisci\\]/[anonymous]/" -i ~/.koji/config.d/anonymous.conf
+sed -e "/^cert = /d" -i ~/.koji/config.d/anonymous.conf
+sed -e "s?%HOME%?$HOME?g" -i ~/.koji/config.d/anonymous.conf
 
 # py2 -> py3 submitted upstream at https://pagure.io/koji/pull-request/1748
 sed -i -e "s,/usr/bin/python2,/usr/bin/python3,g" koji/cli/koji

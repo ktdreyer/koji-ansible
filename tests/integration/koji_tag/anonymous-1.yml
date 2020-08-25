@@ -1,0 +1,76 @@
+# Ensure that check mode works correctly and anonymously (without
+# authentication).
+---
+
+- koji_tag:
+    name: anonymous-1-parent
+    state: present
+
+- name: Create an external repo for CentOS "CR"
+  koji_external_repo:
+    name: anonymous-1
+    url: http://mirror.centos.org/centos/7/cr/$arch/
+    state: present
+
+- name: create a tag with settings that we will "modify" later
+  koji_tag:
+    name: anonymous-1
+    state: present
+    inheritance:
+    - parent: anonymous-1-parent
+      priority: 0
+    external_repos:
+    - repo: anonymous-1
+      priority: 5
+    packages:
+      travisci:
+      - ceph
+    groups:
+      build:
+        - bash
+        - coreutils
+    arches: x86_64 ppc64le
+    perm: admin
+    locked: false
+    extra:
+      mock.package_manager: dnf
+
+# Anonymously test making changes in check mode.
+
+- name: test check mode with no authentication
+  koji_tag:
+    name: anonymous-1
+    state: present
+    inheritance: []
+    external_repos: []
+    packages: {}
+    groups: {}
+    arches: x86_64
+    locked: true
+    extra:
+      mock.package_manager: yum
+  environment:
+    KOJI_PROFILE: anonymous
+  check_mode: yes
+  register: anonymous_1
+
+# Assert that Ansible's check mode found changes:
+
+- assert:
+    that:
+      - anonymous_1.changed
+
+# Assert that check mode effected no real changes:
+
+- koji_call:
+    name: getTag
+    args: [anonymous-1]
+  register: taginfo
+
+- assert:
+    that:
+      - taginfo.data.name == 'anonymous-1'
+      - taginfo.data.arches == 'x86_64 ppc64le'
+      - not taginfo.data.locked
+      - taginfo.data.perm == 'admin'
+      - taginfo.data.extra['mock.package_manager'] == 'dnf'
