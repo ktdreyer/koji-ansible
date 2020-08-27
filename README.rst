@@ -276,8 +276,8 @@ cannot understand if your chosen RPC actually "changes" anything.
     - debug:
         var: call_result.data
 
-This will print the tag information for the `Fedora 29 -build tag
-<https://koji.fedoraproject.org/koji/taginfo?tagID=3428>`_. It is similar
+This will print the tag information for the `Fedora 32 -build tag
+<https://koji.fedoraproject.org/koji/taginfo?tagID=f32-build>`_. It is similar
 to running ``koji taginfo f32-build`` on the command-line.
 
 Koji profiles
