@@ -198,19 +198,16 @@ class TestEnsureHostChanged(object):
 
 class TestEnsureHostCreated(object):
 
-    def test_created(self, session, builder):
-        result = koji_host.ensure_host(session, 'builder', False, 'enabled',
-                                       ['x86_64'], None, None)
+    @pytest.mark.parametrize('check_mode', (True, False))
+    def test_created(self, session, builder, check_mode):
+        result = koji_host.ensure_host(session, 'builder', check_mode,
+                                       'enabled', ['x86_64'], None, None)
         assert result['changed'] is True
         assert result['stdout_lines'] == ['created host']
-        assert 'builder' in session.hosts
-
-    def test_created_check_mode(self, session, builder):
-        result = koji_host.ensure_host(session, 'builder', True, 'enabled',
-                                       ['x86_64'], None, None)
-        assert result['changed'] is True
-        assert result['stdout_lines'] == ['created host']
-        assert session.hosts == {}
+        if check_mode:
+            assert session.hosts == {}
+        else:
+            assert 'builder' in session.hosts
 
 
 class TestMain(object):
