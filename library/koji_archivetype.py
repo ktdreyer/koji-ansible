@@ -79,6 +79,9 @@ def run_module():
     )
 
     if not common_koji.HAS_KOJI:
+        import sys
+        from pprint import pprint
+        pprint(sys.path)
         module.fail_json(msg='koji is required for this module')
 
     check_mode = module.check_mode
