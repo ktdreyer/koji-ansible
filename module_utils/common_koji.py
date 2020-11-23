@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-try:
-    import koji
-    from koji_cli.lib import activate_session
-    HAS_KOJI = True
-except ImportError:
-    HAS_KOJI = False
+import koji
+from koji_cli.lib import activate_session
+HAS_KOJI = True
 
 
 def get_profile_name(profile):
