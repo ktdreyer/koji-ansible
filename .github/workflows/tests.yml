@@ -30,3 +30,54 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ansible:
+        - ga
+        - pre
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install test dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+          apache2 \
+          libapache2-mod-wsgi-py3 \
+          postgresql \
+          python3-cryptography \
+          python3-dateutil \
+          python3-pip \
+          python3-psycopg2 \
+          python3-rpm \
+          python3-setuptools \
+          python3-six
+    - name: Install Ansible
+      env:
+        ANSIBLE: ${{ matrix.ansible }}
+      run: |
+        sudo apt-get purge ansible
+        if [ "$ANSIBLE" = ga ] ; then
+          PIP_IGNORE_INSTALLED=0 pip3 install ansible --user
+        else
+          PIP_IGNORE_INSTALLED=0 pip3 install ansible --user --pre
+        fi
+    - name: Set up test environment
+      run: tests/integration/setup.sh
+    - name: Run integration tests
+      run: tests/integration/run.sh
+
+  test-collection:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install pandoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install pandoc
+    - name: Test collection build
+      run: tests/integration/collection.sh
