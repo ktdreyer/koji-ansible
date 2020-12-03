@@ -1,12 +1,11 @@
 koji-ansible
 ============
 
-.. image:: https://travis-ci.com/ktdreyer/koji-ansible.svg?branch=master
-             :target: https://travis-ci.com/ktdreyer/koji-ansible
+.. image:: https://github.com/ktdreyer/koji-ansible/workflows/tests/badge.svg
+             :target: https://github.com/ktdreyer/koji-ansible/actions
 
-.. image:: https://coveralls.io/repos/github/ktdreyer/koji-ansible/badge.svg
-             :target: https://coveralls.io/github/ktdreyer/koji-ansible
-
+.. image:: https://codecov.io/gh/ktdreyer/koji-ansible/branch/master/graph/badge.svg
+             :target: https://codecov.io/gh/ktdreyer/koji-ansible
 
 Ansible modules to manage `Koji <https://pagure.io/koji>`_ resources.
 
