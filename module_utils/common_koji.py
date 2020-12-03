@@ -45,8 +45,6 @@ def get_session(profile):
     # this.
     if '~' in str(mykoji.config.cert):
         mykoji.config.cert = os.path.expanduser(mykoji.config.cert)
-    if '~' in str(mykoji.config.ca):
-        mykoji.config.ca = os.path.expanduser(mykoji.config.ca)
     # Note, Koji has a grab_session_options() method that can also create a
     # stripped-down dict of our module's (OptParse) configuration, like:
     #   opts = mykoji.grab_session_options(mykoji.config)
