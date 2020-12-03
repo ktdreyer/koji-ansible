@@ -4,13 +4,13 @@
 - name: Grant our user access to a debian content generator
   koji_cg:
     name: debian
-    user: travisci
+    user: admin
     state: present
 
 - name: Revoke access to the debian content generator
   koji_cg:
     name: debian
-    user: travisci
+    user: admin
     state: absent
 
 # Assert that this content generator has no users.

@@ -4,7 +4,7 @@
 - name: Create a debian content generator
   koji_cg:
     name: debian
-    user: travisci
+    user: admin
     state: present
 
 # Assert that this content generator looks correct.
@@ -15,4 +15,4 @@
 
 - assert:
     that:
-      - cgs.data.debian.users == ['travisci']
+      - cgs.data.debian.users == ['admin']

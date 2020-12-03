@@ -15,7 +15,7 @@ reset_database () {
     psql -q koji koji < koji/docs/schema.sql
 
     # Bootstrap the administrator account
-    psql -U koji -c "INSERT INTO users (name, status, usertype) VALUES ('travisci', 0, 0);"
+    psql -U koji -c "INSERT INTO users (name, status, usertype) VALUES ('admin', 0, 0);"
     psql -U koji -c "INSERT INTO user_perms (user_id, perm_id, creator_id) VALUES (1, 1, 1);"
     unset PGPASSWORD
     unset PGHOST
@@ -27,5 +27,5 @@ reset_instance () {
     reset_database
     sudo systemctl start apache2
     # Verify that we can log in.
-    PYTHONPATH=$(pwd)/koji ./koji/cli/koji -p travisci hello
+    PYTHONPATH=$(pwd)/koji ./koji/cli/koji -p ci hello
 }

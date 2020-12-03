@@ -16,18 +16,18 @@ git clone --depth 1 https://pagure.io/koji-tools.git
 
 pushd koji-tools
 git log HEAD -1 --no-decorate
-./src/bin/koji-ssl-admin new-ca --common-name "travisci Koji CA"
+./src/bin/koji-ssl-admin new-ca --common-name "CI Koji CA"
 ./src/bin/koji-ssl-admin server-csr localhost
 ./src/bin/koji-ssl-admin sign localhost.csr
 
-./src/bin/koji-ssl-admin user-csr travisci
-./src/bin/koji-ssl-admin sign travisci.csr
+./src/bin/koji-ssl-admin user-csr admin
+./src/bin/koji-ssl-admin sign admin.csr
 
 # install client certs
 mkdir -p ~/.koji/pki
 cp koji-ca.crt ~/.koji/pki
-cat travisci.crt travisci.key > travisci.cert
-mv travisci.cert ~/.koji/pki/
+cat admin.crt admin.key > admin.cert
+mv admin.cert ~/.koji/pki/
 
 # install hub certs
 sudo cp koji-ca.crt /etc/ssl/certs/
@@ -40,13 +40,13 @@ popd  # koji-tools
 
 # Install/configure Koji client
 mkdir -p ~/.koji/config.d/
-cp -f tests/integration/travisci.conf ~/.koji/config.d/
-sed -e "s?%HOME%?$HOME?g" --in-place ~/.koji/config.d/travisci.conf
+cp -f tests/integration/ci.conf ~/.koji/config.d/
+sed -e "s?%HOME%?$HOME?g" --in-place ~/.koji/config.d/ci.conf
 # separate client profile to test without authentication:
 # (If we call activate_session() with this profile, we will get an AuthError
 # because no cert file exists for this profile.)
-cp -f tests/integration/travisci.conf ~/.koji/config.d/anonymous.conf
-sed -e "s/^\\[travisci\\]/[anonymous]/" -i ~/.koji/config.d/anonymous.conf
+cp -f tests/integration/ci.conf ~/.koji/config.d/anonymous.conf
+sed -e "s/^\\[ci\\]/[anonymous]/" -i ~/.koji/config.d/anonymous.conf
 sed -e "/^cert = /d" -i ~/.koji/config.d/anonymous.conf
 sed -e "s?%HOME%?$HOME?g" -i ~/.koji/config.d/anonymous.conf
 
@@ -60,7 +60,7 @@ sudo sed -i -e "s,www-data,$USER,g" /etc/apache2/envvars
 
 # configure apache virtual hosts
 sudo cp -f tests/integration/apache.conf /etc/apache2/sites-available/000-default.conf
-sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/000-default.conf
+sudo sed -e "s?%BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/000-default.conf
 
 # configuration to use our local kojihub Git clone
 sed -i -e "s,/usr/share/koji-hub,$(pwd)/koji/hub,g" koji/hub/httpd.conf

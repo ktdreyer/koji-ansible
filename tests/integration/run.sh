@@ -12,7 +12,7 @@ export ANSIBLE_MODULE_UTILS=$(pwd)/module_utils
 # Use our local Ansible installation (from pip):
 export PATH=$PATH:$HOME/.local/bin
 
-export KOJI_PROFILE=travisci
+export KOJI_PROFILE=ci
 
 . tests/integration/functions.sh
 

@@ -8,7 +8,7 @@
     tag: basic-1
     state: present
     packages:
-      travisci:
+      admin:
       - ceph
 
 - koji_call:
@@ -33,7 +33,7 @@
     tag: basic-1
     state: absent
     packages:
-      travisci:
+      admin:
       - ceph
 
 - koji_call:

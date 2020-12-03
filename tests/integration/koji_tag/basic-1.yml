@@ -21,7 +21,7 @@
     - repo: basic-1
       priority: 5
     packages:
-      travisci:
+      admin:
       - ceph
     groups:
       build:

@@ -7,7 +7,7 @@
     tag: basic-1
     state: present
     packages:
-      travisci:
+      admin:
       - ceph
 
 - name: Add new aschoen user
