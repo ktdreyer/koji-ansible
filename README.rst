@@ -7,6 +7,9 @@ koji-ansible
 .. image:: https://codecov.io/gh/ktdreyer/koji-ansible/branch/master/graph/badge.svg
              :target: https://codecov.io/gh/ktdreyer/koji-ansible
 
+.. image:: https://img.shields.io/badge/dynamic/json?style=flat&label=galaxy&prefix=v&url=https://galaxy.ansible.com/api/v2/collections/ktdreyer/koji_ansible/&query=latest_version.version
+             :target: https://galaxy.ansible.com/ktdreyer/koji_ansible
+
 Ansible modules to manage `Koji <https://pagure.io/koji>`_ resources.
 
 This is not about installing Koji. Instead, it is a way to declaratively
