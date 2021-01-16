@@ -25,6 +25,9 @@ description:
      relationships. For example, `MBS
      <https://fedoraproject.org/wiki/Changes/ModuleBuildService>`_ will
      dynamically manage some inheritance relationships of tags.
+   - Another approach is to have MBS operate on a dedicated "-modules" tag and
+     then inherit from that, so that you do not have to use this Ansible
+     module.
 options:
    child_tag:
      description:

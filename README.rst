@@ -203,6 +203,9 @@ To declare inheritance relationships with finer granularity, you may use the
 This will only mange that single parent-child relationship between the two
 tags, and it will not delete any other inheritance relationships.
 
+Another approach is to have MBS operate on a dedicated "-modules" tag and then
+inherit from that, so that you do not have to use this Ansible module.
+
 koji_tag_packages
 -----------------
 
