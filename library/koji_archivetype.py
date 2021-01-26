@@ -24,19 +24,20 @@ options:
    name:
      description:
        - The name of the Koji archive type to create and manage.
-       - 'Example: "deb".'
+       - 'Examples: "dsc", "opk".'
      required: true
    description:
      description:
        - The human-readable description of this Koji archive type.  Koji uses
          this value in the UI tooling that display a build's files.
-       - 'Example: "Debian packages".'
+       - 'Examples: "Debian source control file", "OpenWrt package".'
      required: true
    extensions:
      description:
        - The file extensions for this Koji archive type.
-       - 'Example: "deb" means Koji will apply this archive type to files that
-         end in ".deb".'
+       - 'For example, "dsc" means Koji will apply this archive type to files
+         that end in ".dsc". "opk" will apply to files that end in ".opk",
+         etc.'
      required: true
 requirements:
   - "python >= 2.7"
@@ -44,21 +45,21 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Add deb archive types into koji
+- name: Add new archive types into koji
   hosts: localhost
   tasks:
-    - name: Add deb archive type
-      koji_archivetype:
-        name: deb
-        description: Debian packages
-        extensions: deb
-        state: present
-
     - name: Add dsc archive type
       koji_archivetype:
         name: dsc
-        description: Debian source control files
+        description: Debian source control file
         extensions: dsc
+        state: present
+
+    - name: Add opk archive type
+      koji_archivetype:
+        name: opk
+        description: OpenWrt package
+        extensions: opk
         state: present
 '''
 

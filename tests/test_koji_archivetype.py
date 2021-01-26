@@ -49,7 +49,7 @@ def test_simple(monkeypatch):
                         lambda x: session)
     set_module_args({
         'name': 'deb',
-        'description': 'Debian packages',
+        'description': 'Debian package',
         'extensions': 'deb',
     })
     with pytest.raises(AnsibleExitJson) as exit:
@@ -65,7 +65,7 @@ def test_absent(monkeypatch):
                         lambda x: session)
     set_module_args({
         'name': 'deb',
-        'description': 'Debian packages',
+        'description': 'Debian package',
         'extensions': 'deb',
         'state': 'absent',
     })
