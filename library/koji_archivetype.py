@@ -30,7 +30,7 @@ options:
      description:
        - The human-readable description of this Koji archive type.  Koji uses
          this value in the UI tooling that display a build's files.
-       - 'Example: "Debian packages".'
+       - 'Example: "Debian package".'
      required: true
    extensions:
      description:
@@ -50,14 +50,14 @@ EXAMPLES = '''
     - name: Add deb archive type
       koji_archivetype:
         name: deb
-        description: Debian packages
+        description: Debian package
         extensions: deb
         state: present
 
     - name: Add dsc archive type
       koji_archivetype:
         name: dsc
-        description: Debian source control files
+        description: Debian source control file
         extensions: dsc
         state: present
 '''

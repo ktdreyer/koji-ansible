@@ -128,7 +128,7 @@ Your Koji Hub must be version 1.20 or newer in order to use the new
     - name: Add deb archive type
       koji_archivetype:
         name: deb
-        description: Debian packages
+        description: Debian package
         extensions: deb
         state: present
 

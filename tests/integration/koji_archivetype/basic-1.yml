@@ -4,7 +4,7 @@
 - name: Add deb archive type
   koji_archivetype:
     name: deb
-    description: Debian packages
+    description: Debian package
     extensions: deb
     state: present
 
@@ -19,5 +19,5 @@
 - assert:
     that:
       - archivetype.data.name == 'deb'
-      - archivetype.data.description == 'Debian packages'
+      - archivetype.data.description == 'Debian package'
       - archivetype.data.extensions == 'deb'
