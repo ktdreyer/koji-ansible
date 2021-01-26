@@ -1,11 +1,11 @@
 # Create a new archive type.
 ---
 
-- name: Add deb archive type
+- name: Add dsc archive type
   koji_archivetype:
-    name: deb
-    description: Debian package
-    extensions: deb
+    name: dsc
+    description: Debian source control file
+    extensions: dsc
     state: present
 
 # Assert that this archivetype looks correct.
@@ -13,11 +13,11 @@
 - koji_call:
     name: getArchiveType
     args:
-      type_name: deb
+      type_name: dsc
   register: archivetype
 
 - assert:
     that:
-      - archivetype.data.name == 'deb'
-      - archivetype.data.description == 'Debian package'
-      - archivetype.data.extensions == 'deb'
+      - archivetype.data.name == 'dsc'
+      - archivetype.data.description == 'Debian source control file'
+      - archivetype.data.extensions == 'dsc'

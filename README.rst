@@ -114,7 +114,7 @@ koji_archivetype
 ----------------
 
 The ``koji_archivetype`` module can add new archive types. This allows Koji to
-recognize new build archive files, for example ``.deb`` files.  These are
+recognize new build archive files, for example ``.dsc`` files.  These are
 typically in support of `content generators
 <https://docs.pagure.org/koji/content_generators/>`_.
 
@@ -125,11 +125,11 @@ Your Koji Hub must be version 1.20 or newer in order to use the new
 
 .. code-block:: yaml
 
-    - name: Add deb archive type
+    - name: Add dsc archive type
       koji_archivetype:
-        name: deb
-        description: Debian package
-        extensions: deb
+        name: dsc
+        description: Debian source control file
+        extensions: dsc
         state: present
 
 koji_host
