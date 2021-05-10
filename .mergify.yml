@@ -1,0 +1,19 @@
+pull_request_rules:
+  - name: automatic merge for master when CI passes
+    conditions:
+      - author=ktdreyer
+      - status-success=tox (2.7)
+      - status-success=tox (3.6)
+      - status-success=integration-tests (ga)
+      - status-success=test-collection
+      - base=master
+    actions:
+      merge:
+        strict: true
+        strict_method: rebase
+        method: rebase
+  - name: delete head branch after merge
+    conditions:
+      - merged
+    actions:
+      delete_head_branch: {}
