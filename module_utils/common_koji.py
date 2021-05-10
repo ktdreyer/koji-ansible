@@ -156,3 +156,35 @@ def get_perm_name(session, id_):
     for perm_name, perm_id in perms.items():
         if perm_id == id_:
             return perm_name
+
+
+def ensure_krb_principals(session, user, check_mode, krb_principals):
+    """
+    Ensure that a user or host has a list of Kerberos principals.
+
+    This method adds or removes Kerberos principals on a user or host.
+    The Koji Hub must be running Koji v1.19 or greater.
+
+    :param session: Koji client session
+    :param dict user: Koji "user" (person or host) information, from the
+                      getUser RPC.
+    :param bool check_mode: don't make any changes
+    :param list krb_principals: list of desired Kerberos principals for this
+                                user or host.
+    :returns: a possibly-empty list of human-readable changes
+    """
+    current_principals = user['krb_principals']
+    to_add = set(krb_principals) - set(current_principals)
+    to_remove = set(current_principals) - set(krb_principals)
+    changes = []
+    mappings = []  # list of dicts
+    for principal in to_add:
+        changes.append('add %s krb principal' % principal)
+        mappings.append({'old': None, 'new': principal})
+    for principal in to_remove:
+        changes.append('remove %s krb principal' % principal)
+        mappings.append({'old': principal, 'new': None})
+    if changes and not check_mode:
+        ensure_logged_in(session)
+        session.editUser(user['id'], krb_principal_mappings=mappings)
+    return changes

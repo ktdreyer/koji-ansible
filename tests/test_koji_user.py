@@ -69,12 +69,21 @@ class FakeKojiSession(object):
             if principal not in current:
                 raise GenericError('Cannot remove non-existent Kerberos'
                                    ' principals')
-            self.removeKrbPrincipal(user['id'], krb_principal=principal)
+            self._removeKrbPrincipal(user['id'], krb_principal=principal)
         for principal in krb_to_add:
             if new in current:
                 raise GenericError('Cannot add existing Kerberos'
                                    ' principals')
-            self.setKrbPrincipal(user['id'], krb_principal=principal)
+            self._setKrbPrincipal(user['id'], krb_principal=principal)
+
+    def _removeKrbPrincipal(self, username, krb_principal):
+        user = self.getUser(username, strict=True)
+        user['krb_principals'].remove(krb_principal)
+
+    def _setKrbPrincipal(self, username, krb_principal):
+        user = self.getUser(username, strict=True)
+        if krb_principal not in user['krb_principals']:
+            user['krb_principals'].append(krb_principal)
 
     def enableUser(self, username):
         user = self.getUser(username, strict=True)
@@ -126,7 +135,7 @@ class TestEnsureUser(object):
             'check_mode': False,
             'state': 'enabled',
             'permissions': [],
-            'krb_principal': 'kdreyer@EXAMPLE.COM',
+            'krb_principals': ['kdreyer@EXAMPLE.COM'],
         }
 
     @pytest.fixture
@@ -196,3 +205,25 @@ class TestEnsureUser(object):
         assert result == {'changed': True,
                           'stdout_lines': ['revoke admin']}
         assert session.permissions['kdreyer'] == []
+
+    def test_add_krb_principal(self, kwargs, kdreyer):
+        session = kwargs['session']
+        session.users['kdreyer'] = kdreyer
+        kwargs['krb_principals'] = ['kdreyer@EXAMPLE.COM',
+                                    'kdreyer@FOO.EXAMPLE.COM']
+        result = ensure_user(**kwargs)
+        expected_line = 'add kdreyer@FOO.EXAMPLE.COM krb principal'
+        assert result == {'changed': True, 'stdout_lines': [expected_line]}
+        result_princs = session.users['kdreyer']['krb_principals']
+        expected_princs = ['kdreyer@EXAMPLE.COM', 'kdreyer@FOO.EXAMPLE.COM']
+        assert set(result_princs) == set(expected_princs)
+
+    def test_remove_krb_principal(self, kwargs, kdreyer):
+        session = kwargs['session']
+        session.users['kdreyer'] = kdreyer
+        kwargs['krb_principals'] = []
+        result = ensure_user(**kwargs)
+        expected_line = 'remove kdreyer@EXAMPLE.COM krb principal'
+        assert result == {'changed': True, 'stdout_lines': [expected_line]}
+        result_princs = session.users['kdreyer']['krb_principals']
+        assert set(result_princs) == set()

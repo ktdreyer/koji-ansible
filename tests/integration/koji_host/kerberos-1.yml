@@ -1,4 +1,4 @@
-# Create a host with a non-standard krb_principal.
+# Create and edit a non-standard krb_principal for a host.
 ---
 
 - name: Add new krbbuilder1 host
@@ -17,3 +17,29 @@
   assert:
     that:
       - account.data.krb_principals == ['special/krbbuilder1.example.com@EXAMPLE.NET']
+
+#############
+
+- name: Update krbbuilder1 host principal
+  koji_host:
+    name: krbbuilder1.example.com
+    arches: [x86_64]
+    krb_principal: other/krbbuilder1.example.com@EXAMPLE.ORG
+  register: result
+
+- name: assert module reports krb_principal changing
+  assert:
+    that:
+      - result.changed
+      - result.stdout_lines == ['add other/krbbuilder1.example.com@EXAMPLE.ORG krb principal', 'remove special/krbbuilder1.example.com@EXAMPLE.NET krb principal']
+
+- name: query host account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['krbbuilder1.example.com']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['other/krbbuilder1.example.com@EXAMPLE.ORG']

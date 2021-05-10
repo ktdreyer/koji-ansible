@@ -1,0 +1,47 @@
+# Configure a second krb_principal on a host.
+---
+
+- name: Add new krbbuilder2 host with a single principal
+  koji_host:
+    name: krbbuilder2.example.com
+    arches: [x86_64]
+    krb_principal: special/krbbuilder2.example.com@EXAMPLE.NET
+
+- name: query host account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['krbbuilder2.example.com']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['special/krbbuilder2.example.com@EXAMPLE.NET']
+
+#############
+
+- name: Update krbbuilder2 to have multiple principals
+  koji_host:
+    name: krbbuilder2.example.com
+    arches: [x86_64]
+    krb_principals:
+    - special/krbbuilder2.example.com@EXAMPLE.NET
+    - special/krbbuilder2.example.com@IPA.EXAMPLE.NET
+  register: result
+
+- name: assert module reports krb_principal changing
+  assert:
+    that:
+      - result.changed
+      - result.stdout_lines == ['add special/krbbuilder2.example.com@IPA.EXAMPLE.NET krb principal']
+
+- name: query host account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['krbbuilder2.example.com']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['special/krbbuilder2.example.com@EXAMPLE.NET', 'special/krbbuilder2.example.com@IPA.EXAMPLE.NET']
