@@ -1,4 +1,4 @@
-# Create a user with a non-standard krb_principal.
+# Create and edit a non-standard krb_principal for a user.
 ---
 
 - name: Add new cooluser
@@ -17,3 +17,29 @@
   assert:
     that:
       - account.data.krb_principals == ['cooluser/admin@EXAMPLE.NET']
+
+#############
+
+- name: Update cooluser principal
+  koji_user:
+    name: cooluser
+    krb_principal: cooluser@EXAMPLE.ORG
+    permissions: [admin]
+  register: result
+
+- name: assert module reports krb_principal changing
+  assert:
+    that:
+      - result.changed
+      - result.stdout_lines == ['add cooluser@EXAMPLE.ORG krb principal', 'remove cooluser/admin@EXAMPLE.NET krb principal']
+
+- name: query user account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['cooluser']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['cooluser@EXAMPLE.ORG']

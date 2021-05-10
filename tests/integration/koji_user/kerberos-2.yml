@@ -1,0 +1,47 @@
+# Configure a second krb_principal on a user.
+---
+
+- name: Add new frodo user
+  koji_user:
+    name: frodo
+    krb_principal: frodo@EXAMPLE.NET
+    permissions: [admin]
+
+- name: query user account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['frodo']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['frodo@EXAMPLE.NET']
+
+#############
+
+- name: Update frodo user to have multiple principals
+  koji_user:
+    name: frodo
+    krb_principals:
+    - frodo@EXAMPLE.NET
+    - frodo@IPA.EXAMPLE.NET
+    permissions: [admin]
+  register: result
+
+- name: assert module reports krb_principal changing
+  assert:
+    that:
+      - result.changed
+      - result.stdout_lines == ['add frodo@IPA.EXAMPLE.NET krb principal']
+
+- name: query user account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['frodo']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['frodo@EXAMPLE.NET', 'frodo@IPA.EXAMPLE.NET']

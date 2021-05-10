@@ -1,6 +1,7 @@
 import koji_host
 import pytest
 from koji import GenericError
+from koji import USERTYPES, USER_STATUS
 from utils import exit_json
 from utils import fail_json
 from utils import set_module_args
@@ -13,6 +14,7 @@ class FakeKojiSession(object):
     def __init__(self):
         self.hosts = {}
         self.host_channels = {}
+        self.user_krb_principals = {}
 
     def addHost(self, hostname, arches, krb_principal=None, force=False):
         if hostname in self.hosts:
@@ -50,6 +52,37 @@ class FakeKojiSession(object):
         if strict and hostInfo not in self.hosts:
             raise GenericError('Host %s not found' % hostInfo)
         return self.hosts.get(hostInfo)
+
+    def getUser(self, userInfo=None, strict=False, krb_princs=True):
+        # Find our host's user ID and username.
+        user_id = None
+        name = None
+        if isinstance(userInfo, int):
+            for host in self.hosts.values():
+                if host['user_id'] == userInfo:
+                    user_id = host['user_id']
+                    name = host['name']
+                    continue
+            if not user_id:
+                if strict:
+                    raise GenericError('No such user: %s' % userInfo)
+                return None
+        elif userInfo in self.hosts:
+            host = self.hosts[userInfo]
+            user_id = host['user_id']
+            name = host['name']
+        else:
+            if strict:
+                raise GenericError('No such user: %s' % userInfo)
+            return None
+        krb_principals = self.user_krb_principals.get(user_id, [])
+        return {
+            'id': user_id,
+            'krb_principals': krb_principals,
+            'name': name,
+            'status': USER_STATUS['NORMAL'],
+            'usertype': USERTYPES['HOST'],
+        }
 
     def editHost(self, hostInfo, **kw):
         host = self.getHost(hostInfo, strict=True)
@@ -94,6 +127,53 @@ class FakeKojiSession(object):
             raise GenericError('host is not subscribed to channel %s')
         del channels[found]
 
+    def editUser(self, userInfo, name=None, krb_principal_mappings=None):
+        user = self.getUser(userInfo, strict=True)
+        user_id = user['id']
+        if name is not None and name != user['name']:
+            raise NotImplementedError('cannot rename users')
+        if not krb_principal_mappings:
+            return
+        current = self.user_krb_principals.get(user_id, [])
+        krb_to_add = set()
+        krb_to_remove = set()
+        for mapping in krb_principal_mappings:
+            old = mapping['old']
+            new = mapping['new']
+            if old is None and new is None:
+                raise ValueError('invalid mapping %s' % mapping)
+            elif new is None:
+                krb_to_remove.add(old)
+            elif old is None:
+                krb_to_add.add(new)
+            else:
+                # rename "old" to "new".
+                krb_to_remove.add(old)
+                krb_to_add.add(new)
+        for principal in krb_to_remove:
+            if principal not in current:
+                raise GenericError('Cannot remove non-existent Kerberos'
+                                   ' principals')
+            self._removeKrbPrincipal(user['id'], krb_principal=principal)
+        for principal in krb_to_add:
+            if new in current:
+                raise GenericError('Cannot add existing Kerberos'
+                                   ' principals')
+            self._setKrbPrincipal(user['id'], krb_principal=principal)
+
+    def _removeKrbPrincipal(self, username, krb_principal):
+        user = self.getUser(username, strict=True)
+        user_id = user['id']
+        self.user_krb_principals[user_id].remove(krb_principal)
+
+    def _setKrbPrincipal(self, username, krb_principal):
+        user = self.getUser(username, strict=True)
+        user_id = user['id']
+        if user_id not in self.user_krb_principals:
+            self.user_krb_principals[user_id] = []
+        if krb_principal not in self.user_krb_principals[user_id]:
+            self.user_krb_principals[user_id].append(krb_principal)
+
     def ensure_logged_in(self, session):
         return self._session
 
@@ -126,15 +206,21 @@ class TestEnsureHostUnchanged(object):
 
     def test_state_enabled(self, session, builder):
         session.hosts['builder'] = builder
+        session.user_krb_principals[2] = ['compile/builder@EXAMPLE.COM']
         result = koji_host.ensure_host(session, 'builder', False, 'enabled',
-                                       ['x86_64'], None, None)
+                                       ['x86_64'],
+                                       ['compile/builder@EXAMPLE.COM'],
+                                       None)
         assert result['changed'] is False
 
     def test_state_disabled(self, session, builder):
         session.hosts['builder'] = builder
         session.hosts['builder']['enabled'] = False
+        session.user_krb_principals[2] = ['compile/builder@EXAMPLE.COM']
         result = koji_host.ensure_host(session, 'builder', False, 'disabled',
-                                       ['x86_64'], None, None)
+                                       ['x86_64'],
+                                       ['compile/builder@EXAMPLE.COM'],
+                                       None)
         assert result['changed'] is False
 
 
@@ -259,3 +345,29 @@ class TestMain(object):
             koji_host.main()
         result = exit.value.args[0]
         assert result['msg'] == 'missing required arguments: arches'
+
+    def test_kerberos_principal(self):
+        set_module_args({
+            'name': 'builder',
+            'arches': ['x86_64'],
+            'krb_principal': 'compile/builder.example.com@EXAMPLE.COM',
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_host.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == [
+            'add compile/builder.example.com@EXAMPLE.COM krb principal']
+
+    def test_kerberos_principals(self):
+        set_module_args({
+            'name': 'builder',
+            'arches': ['x86_64'],
+            'krb_principals': ['compile/builder.example.com@EXAMPLE.COM'],
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_host.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == [
+            'add compile/builder.example.com@EXAMPLE.COM krb principal']
