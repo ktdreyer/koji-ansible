@@ -1,0 +1,19 @@
+# Create a user with a non-standard krb_principal.
+---
+
+- name: Add new cooluser
+  koji_user:
+    name: cooluser
+    krb_principal: cooluser/admin@EXAMPLE.NET
+    permissions: [admin]
+
+- name: query user account for krb_principals
+  koji_call:
+    name: getUser
+    args: ['cooluser']
+  register: account
+
+- name: assert krb_principals list is correct
+  assert:
+    that:
+      - account.data.krb_principals == ['cooluser/admin@EXAMPLE.NET']
