@@ -38,7 +38,8 @@ fi
 pandoc $TOPDIR/README.rst -f rst -t markdown_strict -o README.md
 
 # Determine our semver-compatible version number from Git.
-BASE_COMMIT=$(git rev-list --max-parents=0 HEAD)
+BASE_REF="${GITHUB_BASE_REF:-HEAD}"
+BASE_COMMIT=$(git rev-list --max-parents=0 $BASE_REF)
 COMMIT_COUNT=$(($(git rev-list --count $BASE_COMMIT..HEAD) - 1))
 
 # Versions will always be 0.0.XXX.
