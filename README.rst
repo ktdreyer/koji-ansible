@@ -45,11 +45,11 @@ The ``koji_target`` module can create, update, and delete targets within Koji.
 
 .. code-block:: yaml
 
-    - name: Create a koji build target for Fedora 32
+    - name: Create a koji build target for Fedora 34
       koji_target:
-        name: f32-candidate
-        build_tag: f32-build
-        dest_tag: f32-updates-candidate
+        name: f34-candidate
+        build_tag: f34-build
+        dest_tag: f34-updates-candidate
         state: present
 
 koji_external_repo
@@ -275,15 +275,15 @@ cannot understand if your chosen RPC actually "changes" anything.
     - name: make a raw API call:
       koji_call:
         name: getTag
-        args: [f32-build]
+        args: [f34-build]
       register: call_result
 
     - debug:
         var: call_result.data
 
-This will print the tag information for the `Fedora 32 -build tag
-<https://koji.fedoraproject.org/koji/taginfo?tagID=f32-build>`_. It is similar
-to running ``koji taginfo f32-build`` on the command-line.
+This will print the tag information for the `Fedora 34 -build tag
+<https://koji.fedoraproject.org/koji/taginfo?tagID=f34-build>`_. It is similar
+to running ``koji taginfo f34-build`` on the command-line.
 
 Koji profiles
 -------------

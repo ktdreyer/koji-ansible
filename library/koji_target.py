@@ -27,13 +27,13 @@ options:
        - The name of the "build" or "buildroot" tag. The latest builds in
          this tag will be available in the buildroot when you build an RPM or
          container for this Koji target.
-       - 'Example: "f32-build"'
+       - 'Example: "f34-build"'
      required: true
    dest_tag:
      description:
        - The name of the "destination" tag. When Koji completes a build for
          this target, it will tag that build into this destination tag.
-       - 'Example: "f32-updates-candidate"'
+       - 'Example: "f34-updates-candidate"'
      required: true
 requirements:
   - "python >= 2.7"
@@ -60,8 +60,8 @@ def ensure_target(session, name, check_mode, build_tag, dest_tag):
     :param session: Koji client session
     :param name: Koji target name
     :param check_mode: don't make any changes
-    :param build_tag: Koji build tag name, eg. "f32-build"
-    :param dest_tag: Koji destination tag name, eg "f32-updates-candidate"
+    :param build_tag: Koji build tag name, eg. "f34-build"
+    :param dest_tag: Koji destination tag name, eg "f34-updates-candidate"
     """
     targetinfo = session.getBuildTarget(name)
     result = {'changed': False, 'stdout_lines': []}
