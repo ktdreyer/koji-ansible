@@ -13,6 +13,7 @@ cd _build
 
 mkdir plugins
 cp $TOPDIR/COPYING .
+cp -r $TOPDIR/meta/ .
 cp -r $TOPDIR/library/ plugins/modules
 cp -r $TOPDIR/module_utils/ plugins/module_utils/
 
