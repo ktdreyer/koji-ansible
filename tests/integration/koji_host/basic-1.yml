@@ -29,7 +29,7 @@
 
 - koji_call:
     name: listChannels
-    args: ["{{ host.data.id }}"]
+    args: ['builder1.example.com']
   register: channels
 
 - set_fact:
