@@ -26,7 +26,6 @@ git log HEAD -1 --no-decorate
 # install client certs
 mkdir -p ~/.koji/pki
 cp koji-ca.crt ~/.koji/pki
-cat admin.crt admin.key > admin.cert
 mv admin.cert ~/.koji/pki/
 
 # install hub certs
