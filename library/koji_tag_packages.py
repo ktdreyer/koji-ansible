@@ -161,7 +161,7 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     common_koji.ensure_logged_in(session)
     current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
     current_blocked = set(pkg['package_name']
-                          for pkg in current_pkgs if pkg['blocked'] == True)
+                          for pkg in current_pkgs if pkg['blocked'] is True)
 
     for package in packages:
         if package not in current_blocked:
