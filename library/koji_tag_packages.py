@@ -150,6 +150,7 @@ def remove_packages(session, tag_name, check_mode, packages):
                 session.packageListRemove(tag_name, package, owner)
     return result
 
+
 def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     """
     Note: here "packages" is just a list of package names, no owners
@@ -159,8 +160,9 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
 
     common_koji.ensure_logged_in(session)
     current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
-    current_blocked = set(pkg['package_name'] for pkg in current_pkgs if pkg['blocked'] == True)
-    
+    current_blocked = set(pkg['package_name']
+                          for pkg in current_pkgs if pkg['blocked'] == True)
+
     for package in packages:
         if package not in current_blocked:
             if not check_mode:
@@ -169,9 +171,11 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
             result['changed'] = True
         else:
             # The packge is already blocked
-            result['stdout_lines'].append('pkg %s is already blocked' % package)
+            result['stdout_lines'].append(
+                'pkg %s is already blocked' % package)
 
     return result
+
 
 def remove_package_blocks(session, tag_name, check_mode, packages):
     result = {'changed': False, 'stdout_lines': []}
@@ -184,11 +188,13 @@ def remove_package_blocks(session, tag_name, check_mode, packages):
                 session.packageListUnblock(tag_name, package)
     return result
 
+
 def run_module():
     module_args = dict(
         koji=dict(),
         tag=dict(required=True),
-        state=dict(choices=['present', 'absent', 'blocked', 'unblocked'], default='present'),
+        state=dict(choices=['present', 'absent', 'blocked',
+                            'unblocked'], default='present'),
         packages=dict(type='dict'),
         blocked_packages=dict(type='list')
     )
@@ -198,7 +204,7 @@ def run_module():
             ('state', 'blocked', ['blocked_packages']),
             ('state', 'unblocked', ['blocked_packages']),
             ('state', 'present', ['packages']),
-            ('state', 'absent', ['packages']),            
+            ('state', 'absent', ['packages']),
         ],
         supports_check_mode=True
     )
@@ -229,7 +235,8 @@ def run_module():
             session, tag_name, tag_info['id'], check_mode, blocked_packages)
     elif state == 'unblocked':
         # delete packages
-        result = remove_package_blocks(session, tag_name, check_mode, blocked_packages)
+        result = remove_package_blocks(
+            session, tag_name, check_mode, blocked_packages)
 
     module.exit_json(**result)
 
