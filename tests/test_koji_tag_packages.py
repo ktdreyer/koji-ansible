@@ -73,14 +73,14 @@ class TestKojiTagPackages(object):
             call("tag", "baz"),
         ]
         session.packageListUnblock.assert_has_calls(calls, any_order=True)
-    
+
     def test_block_packages(self):
         packages = ["foo", "bar", "baz"]
         current_packages = [
             {"package_name": "foo", "blocked": True},
             {"package_name": "baz", "blocked": True},
         ]
-        
+
         check_mode = False
         session = Mock()
         session.listPackages = Mock(return_value=current_packages)
@@ -96,7 +96,7 @@ class TestKojiTagPackages(object):
             {"package_name": "baz", "blocked": True},
             {"package_name": "bar", "blocked": True},
         ]
-        
+
         check_mode = False
         session = Mock()
         session.listPackages = Mock(return_value=current_packages)
