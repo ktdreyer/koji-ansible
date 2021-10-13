@@ -20,6 +20,7 @@ cp -r $TOPDIR/module_utils/ plugins/module_utils/
 # Make our common_koji imports compatible with Ansible Collections.
 sed -i \
   -e  's/from ansible.module_utils import common_koji/from ansible_collections.ktdreyer.koji_ansible.plugins.module_utils import common_koji/' \
+  -e  's/from ansible.module_utils.common_koji import /from ansible_collections.ktdreyer.koji_ansible.plugins.module_utils.common_koji import /' \
   plugins/modules/*.py
 
 # Sanity-check that we converted everything:
