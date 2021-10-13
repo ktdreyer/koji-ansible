@@ -7,12 +7,13 @@ set -eux
 sudo systemctl restart postgresql || sudo journalctl -xe
 
 git clone --depth 1 https://pagure.io/koji.git
+
 pushd koji
 git log HEAD -1 --no-decorate
 popd
 
 # Create SSL certs
-git clone --depth 1 https://pagure.io/koji-tools.git
+git clone --depth 1 --branch user-uid https://pagure.io/forks/ktdreyer/koji-tools.git
 
 pushd koji-tools
 git log HEAD -1 --no-decorate
