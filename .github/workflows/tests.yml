@@ -24,7 +24,9 @@ jobs:
         sudo apt-get install libkrb5-dev
         pip install tox
     - name: Test with tox
-      run: tox -e py -- --cov-report=xml tests
+      run: |
+        PY=py$(echo ${{ matrix.python-version }} | tr -d ".")
+        tox -e ${PY} -- --cov-report=xml tests
     - name: Upload coverage to codecov
       uses: codecov/codecov-action@v1
       with:
