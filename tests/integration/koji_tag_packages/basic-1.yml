@@ -1,3 +1,4 @@
+# Ensure we can add and remove one package from a tag.
 ---
 
 - koji_tag:
