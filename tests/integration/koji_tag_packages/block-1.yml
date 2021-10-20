@@ -1,0 +1,44 @@
+# Ensure we can block and unblock a package from a tag.
+---
+
+- koji_tag:
+    name: block-1-parent
+    packages:
+      admin:
+      - ceph
+
+- koji_tag:
+    name: block-1-child
+    inheritance:
+      - parent: block-1-parent
+        priority: 0
+
+- koji_tag_packages:
+    tag: basic-1-child
+    blocked_packages:
+      - ceph
+
+- koji_call:
+    name: listPackages
+    args: [block-1-child]
+  register: packages
+
+- assert:
+    that:
+      - packages.data[0].package_name == 'ceph'
+      - packages.data[0].blocked
+
+- koji_tag_packages:
+    tag: basic-1
+    state: absent
+    blocked_packages:
+      - ceph
+
+- koji_call:
+    name: listPackages
+    args: [block-1-child]
+  register: packages
+
+- assert:
+    that:
+      - packages.data == []
