@@ -1,11 +1,11 @@
 # Ensure that we can change an owner for a package.
 ---
 - koji_tag:
-    name: basic-1
+    name: basic-2
     state: present
 
 - koji_tag_packages:
-    tag: basic-1
+    tag: basic-2
     state: present
     packages:
       admin:
@@ -18,7 +18,7 @@
     permissions: [admin]
 
 - koji_tag_packages:
-    tag: basic-1
+    tag: basic-2
     state: present
     packages:
       aschoen:
@@ -26,7 +26,7 @@
 
 - koji_call:
     name: listPackages
-    args: [basic-1]
+    args: [basic-2]
   register: packages
 
 - assert:
