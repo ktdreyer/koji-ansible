@@ -14,7 +14,7 @@
         priority: 0
 
 - koji_tag_packages:
-    tag: basic-1-child
+    tag: block-1-child
     blocked_packages:
       - ceph
 
@@ -29,7 +29,7 @@
       - packages.data[0].blocked
 
 - koji_tag_packages:
-    tag: basic-1
+    tag: block-1-child
     state: absent
     blocked_packages:
       - ceph

@@ -181,7 +181,7 @@ def run_module():
     )
     module = AnsibleModule(
         argument_spec=module_args,
-        required_one_of=('packages', 'blocked_packages'),
+        required_one_of=[('packages', 'blocked_packages')],
         supports_check_mode=True
     )
 
@@ -198,7 +198,10 @@ def run_module():
 
     session = common_koji.get_session(profile)
     tag_info = session.getTag(tag_name)
+    if tag_info is None:
+        module.fail_json(msg='tag %s does not exist' % tag_name)
 
+    result = {'changed': False, 'stdout_lines': []}
     if state == 'present':
         if packages:
             result = ensure_packages(
