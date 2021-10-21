@@ -168,7 +168,7 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
             raise
 
     current_blocked = set(pkg['package_name']
-                          for pkg in current_pkgs if pkg['blocked'] is True)
+                          for pkg in current_pkgs if pkg['blocked'])
 
     for package in packages:
         if package not in current_blocked:
