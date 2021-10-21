@@ -169,11 +169,6 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
                 session.packageListBlock(tag_name, package)
             result['stdout_lines'].append('block pkg %s' % package)
             result['changed'] = True
-        else:
-            # The packge is already blocked
-            result['stdout_lines'].append(
-                'pkg %s is already blocked' % package)
-
     return result
 
 
