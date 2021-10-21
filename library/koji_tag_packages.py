@@ -158,8 +158,6 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     as koji doesn't require an owner for a blocked package listing
     """
     result = {'changed': False, 'stdout_lines': []}
-
-    common_koji.ensure_logged_in(session)
     koji_profile = sys.modules[session.__module__]
     try:
         current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
@@ -177,6 +175,7 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     for package in packages:
         if package not in current_blocked:
             if not check_mode:
+                common_koji.ensure_logged_in(session)
                 session.packageListBlock(tag_name, package)
             result['stdout_lines'].append('block pkg %s' % package)
             result['changed'] = True
