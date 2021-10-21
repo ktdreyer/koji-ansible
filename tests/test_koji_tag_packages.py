@@ -87,7 +87,7 @@ class TestKojiTagPackages(object):
         result = koji_tag_packages.ensure_blocked_packages(
             session, "tag", "5", check_mode, packages)
         assert result['changed']
-        session.packageListBlock.assert_called_with("tag", "bar", "user1")
+        session.packageListBlock.assert_called_with("tag", "bar")
 
     def test_block_no_change(self):
         packages = ["foo", "bar", "baz"]
