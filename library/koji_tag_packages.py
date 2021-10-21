@@ -174,11 +174,24 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
 
 def remove_package_blocks(session, tag_name, check_mode, packages):
     changes = []
+    koji_profile = sys.modules[session.__module__]
+    try:
+        current_pkgs = session.listPackages(tagID=tag_name, with_owners=False)
+    except koji_profile.ParameterError as e:
+        # Koji Hubs before v1.25 do not have with_owners performance
+        # optimization
+        if "unexpected keyword argument 'with_owners'" in str(e):
+            current_pkgs = session.listPackages(tagID=tag_name)
+        else:
+            raise
+    current_blocked = set(pkg['package_name']
+                          for pkg in current_pkgs if pkg['blocked'])
     for package in packages:
-        changes.append('unblock pkg %s' % package)
-        if not check_mode:
-            common_koji.ensure_logged_in(session)
-            session.packageListUnblock(tag_name, package)
+        if package in current_blocked:
+            changes.append('unblock pkg %s' % package)
+            if not check_mode:
+                common_koji.ensure_logged_in(session)
+                session.packageListUnblock(tag_name, package)
     return changes
 
 

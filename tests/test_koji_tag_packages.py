@@ -60,21 +60,23 @@ class TestKojiTagPackages(object):
         packages = [
             'foo',
             'bar',
-            'baz',
+        ]
+        current_packages = [
+            {"package_name": "foo", "blocked": True},
+            {"package_name": "bar", "blocked": True},
         ]
         check_mode = False
         session = Mock()
+        session.listPackages = Mock(return_value=current_packages)
         result = koji_tag_packages.remove_package_blocks(
             session, "tag", check_mode, packages)
         assert result == [
             'unblock pkg foo',
             'unblock pkg bar',
-            'unblock pkg baz',
         ]
         calls = [
             call("tag", "foo"),
             call("tag", "bar"),
-            call("tag", "baz"),
         ]
         session.packageListUnblock.assert_has_calls(calls, any_order=True)
 
