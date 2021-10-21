@@ -75,7 +75,6 @@ EXAMPLES = '''
 
 - name: Ensure packages are blocked for ceph-3.1-rhel-7
   koji_tag_packages:
-    koji: kojidev
     tag: ceph-3.1-rhel-7
     state: blocked
     packages:
@@ -85,7 +84,6 @@ EXAMPLES = '''
 
 - name: Remove package block from packages for ceph-3.1-rhel-7
   koji_tag_packages:
-    koji: kojidev
     tag: ceph-3.1-rhel-7
     state: unblocked
     packages:
