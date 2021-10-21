@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from collections import defaultdict
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import common_koji
@@ -159,7 +160,17 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     result = {'changed': False, 'stdout_lines': []}
 
     common_koji.ensure_logged_in(session)
-    current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
+    koji_profile = sys.modules[session.__module__]
+    try:
+        current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
+    except koji_profile.ParameterError as e:
+        # Koji Hubs before v1.25 do not have with_owners performance
+        # optimization
+        if "unexpected keyword argument 'with_owners'" in str(e):
+            current_pkgs = session.listPackages(tagID=tag_id)
+        else:
+            raise
+
     current_blocked = set(pkg['package_name']
                           for pkg in current_pkgs if pkg['blocked'] is True)
 
