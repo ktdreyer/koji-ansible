@@ -60,17 +60,23 @@ class TestKojiTagPackages(object):
         packages = [
             'foo',
             'bar',
-            'baz',
+        ]
+        current_packages = [
+            {"package_name": "foo", "blocked": True},
+            {"package_name": "bar", "blocked": True},
         ]
         check_mode = False
         session = Mock()
+        session.listPackages = Mock(return_value=current_packages)
         result = koji_tag_packages.remove_package_blocks(
             session, "tag", check_mode, packages)
-        assert result['changed']
+        assert result == [
+            'unblock pkg foo',
+            'unblock pkg bar',
+        ]
         calls = [
             call("tag", "foo"),
             call("tag", "bar"),
-            call("tag", "baz"),
         ]
         session.packageListUnblock.assert_has_calls(calls, any_order=True)
 
@@ -86,8 +92,8 @@ class TestKojiTagPackages(object):
         session.listPackages = Mock(return_value=current_packages)
         result = koji_tag_packages.ensure_blocked_packages(
             session, "tag", "5", check_mode, packages)
-        assert result['changed']
-        session.packageListBlock.assert_called_with("tag", "bar", "user1")
+        assert result == ['block pkg bar']
+        session.packageListBlock.assert_called_with("tag", "bar")
 
     def test_block_no_change(self):
         packages = ["foo", "bar", "baz"]
@@ -102,7 +108,7 @@ class TestKojiTagPackages(object):
         session.listPackages = Mock(return_value=current_packages)
         result = koji_tag_packages.ensure_blocked_packages(
             session, "tag", "5", check_mode, packages)
-        assert not result['changed']
+        assert result == []
 
     def test_fix_package_ownership(self):
         packages = {

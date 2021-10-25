@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from collections import defaultdict
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import common_koji
@@ -34,11 +35,9 @@ options:
      description:
        - dict of package owners and the a lists of packages each owner
          maintains.
-     required: when state is 'present' or 'absent'
    blocked_packages:
      description:
        - list of package names to be blocked or unblocked
-     required: when state is 'blocked' or 'unblocked'
    state:
      description:
        - Whether to add or remove the given packages.
@@ -72,24 +71,17 @@ EXAMPLES = '''
         - ceph
         - ceph-ansible
 
-- name: Ensure packages are blocked for ceph-3.1-rhel-7
+- name: Block the ceph-ansible package for ceph-3.1-rhel-7
   koji_tag_packages:
-    koji: kojidev
     tag: ceph-3.1-rhel-7
-    state: blocked
-    packages:
-      - ansible
-      - ceph
+    blocked_packages:
       - ceph-ansible
 
-- name: Remove package block from packages for ceph-3.1-rhel-7
+- name: Unblock the ceph-ansible package for ceph-3.1-rhel-7
   koji_tag_packages:
-    koji: kojidev
     tag: ceph-3.1-rhel-7
-    state: unblocked
-    packages:
-      - ansible
-      - ceph
+    state: absent
+    blocked_packages:
       - ceph-ansible
 '''
 
@@ -156,56 +148,64 @@ def ensure_blocked_packages(session, tag_name, tag_id, check_mode, packages):
     Note: here "packages" is just a list of package names, no owners
     as koji doesn't require an owner for a blocked package listing
     """
-    result = {'changed': False, 'stdout_lines': []}
+    changes = []
+    koji_profile = sys.modules[session.__module__]
+    try:
+        current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
+    except koji_profile.ParameterError as e:
+        # Koji Hubs before v1.25 do not have with_owners performance
+        # optimization
+        if "unexpected keyword argument 'with_owners'" in str(e):
+            current_pkgs = session.listPackages(tagID=tag_id)
+        else:
+            raise
 
-    common_koji.ensure_logged_in(session)
-    current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
     current_blocked = set(pkg['package_name']
-                          for pkg in current_pkgs if pkg['blocked'] is True)
+                          for pkg in current_pkgs if pkg['blocked'])
 
     for package in packages:
         if package not in current_blocked:
             if not check_mode:
+                common_koji.ensure_logged_in(session)
                 session.packageListBlock(tag_name, package)
-            result['stdout_lines'].append('block pkg %s' % package)
-            result['changed'] = True
-        else:
-            # The packge is already blocked
-            result['stdout_lines'].append(
-                'pkg %s is already blocked' % package)
-
-    return result
+            changes.append('block pkg %s' % package)
+    return changes
 
 
 def remove_package_blocks(session, tag_name, check_mode, packages):
-    result = {'changed': False, 'stdout_lines': []}
+    changes = []
+    koji_profile = sys.modules[session.__module__]
+    try:
+        current_pkgs = session.listPackages(tagID=tag_name, with_owners=False)
+    except koji_profile.ParameterError as e:
+        # Koji Hubs before v1.25 do not have with_owners performance
+        # optimization
+        if "unexpected keyword argument 'with_owners'" in str(e):
+            current_pkgs = session.listPackages(tagID=tag_name)
+        else:
+            raise
+    current_blocked = set(pkg['package_name']
+                          for pkg in current_pkgs if pkg['blocked'])
     for package in packages:
-        for package in packages:
-            result['stdout_lines'].append('unblock pkg %s' % package)
-            result['changed'] = True
+        if package in current_blocked:
+            changes.append('unblock pkg %s' % package)
             if not check_mode:
                 common_koji.ensure_logged_in(session)
                 session.packageListUnblock(tag_name, package)
-    return result
+    return changes
 
 
 def run_module():
     module_args = dict(
         koji=dict(),
         tag=dict(required=True),
-        state=dict(choices=['present', 'absent', 'blocked',
-                            'unblocked'], default='present'),
+        state=dict(choices=['present', 'absent'], default='present'),
         packages=dict(type='dict'),
         blocked_packages=dict(type='list')
     )
     module = AnsibleModule(
         argument_spec=module_args,
-        required_if=[
-            ('state', 'blocked', ['blocked_packages']),
-            ('state', 'unblocked', ['blocked_packages']),
-            ('state', 'present', ['packages']),
-            ('state', 'absent', ['packages']),
-        ],
+        required_one_of=[('packages', 'blocked_packages')],
         supports_check_mode=True
     )
 
@@ -223,20 +223,27 @@ def run_module():
     session = common_koji.get_session(profile)
     tag_info = session.getTag(tag_name)
 
+    result = {'changed': False, 'stdout_lines': []}
     if state == 'present':
-        # ensure packages are there
-        result = ensure_packages(
-            session, tag_name, tag_info['id'], check_mode, packages)
+        if packages:
+            result = ensure_packages(
+                session, tag_name, tag_info['id'], check_mode, packages)
+        if blocked_packages:
+            changes = ensure_blocked_packages(session, tag_name,
+                                              tag_info['id'], check_mode,
+                                              blocked_packages)
+            if changes:
+                result['changed'] = True
+                result['stdout_lines'] += changes
     elif state == 'absent':
-        # delete packages
-        result = remove_packages(session, tag_name, check_mode, packages)
-    elif state == 'blocked':
-        result = ensure_blocked_packages(
-            session, tag_name, tag_info['id'], check_mode, blocked_packages)
-    elif state == 'unblocked':
-        # delete packages
-        result = remove_package_blocks(
-            session, tag_name, check_mode, blocked_packages)
+        if packages:
+            result = remove_packages(session, tag_name, check_mode, packages)
+        if blocked_packages:
+            changes = remove_package_blocks(
+                session, tag_name, check_mode, blocked_packages)
+            if changes:
+                result['changed'] = True
+                result['stdout_lines'] += changes
 
     module.exit_json(**result)
 
