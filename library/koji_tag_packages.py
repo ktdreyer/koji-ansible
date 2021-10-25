@@ -139,7 +139,7 @@ def remove_packages(session, tag_name, check_mode, packages):
             result['changed'] = True
             if not check_mode:
                 common_koji.ensure_logged_in(session)
-                session.packageListRemove(tag_name, package, owner)
+                session.packageListRemove(tag_name, package)
     return result
 
 

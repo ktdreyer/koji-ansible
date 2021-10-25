@@ -16,9 +16,9 @@ class TestKojiTagPackages(object):
             session, "epel8", check_mode, packages)
         assert result['changed']
         calls = [
-            call("epel8", "ceph", "user1"),
-            call("epel8", "curl", "user1"),
-            call("epel8", "coreutils", "user2"),
+            call("epel8", "ceph"),
+            call("epel8", "curl"),
+            call("epel8", "coreutils"),
         ]
         session.packageListRemove.assert_has_calls(calls, any_order=True)
 
