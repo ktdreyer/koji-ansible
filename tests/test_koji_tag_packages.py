@@ -126,4 +126,5 @@ class TestKojiTagPackages(object):
         result = koji_tag_packages.ensure_packages(
             session, "epel8", "5", check_mode, packages)
         assert result['changed']
-        session.packageListSetOwner.assert_called_with("epel8", "coreutils", "user2")
+        session.packageListSetOwner.assert_called_with(
+            "epel8", "coreutils", "user2")
