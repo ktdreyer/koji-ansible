@@ -50,7 +50,7 @@ options:
    login:
      description:
        - Whether to authenticate to Koji for this API call or not.
-         Authentication is an extra round-trip to the Hub, so it slower and
+         Authentication is an extra round-trip to the Hub, so it is slower and
          more load on the database. You should not authenticate if this call
          is read-only (one of the "get" API calls). If you are doing some
          create or write operation, you must authenticate. The default
