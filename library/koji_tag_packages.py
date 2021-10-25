@@ -102,7 +102,6 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     result = {'changed': False, 'stdout_lines': []}
     # Note: this in particular could really benefit from koji's
     # multicalls...
-    common_koji.ensure_logged_in(session)
     current_pkgs = session.listPackages(tagID=tag_id)
     current_names = set([pkg['package_name'] for pkg in current_pkgs])
     # Create a "current_owned" dict to compare with what's in Ansible.
@@ -116,6 +115,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
             if package not in current_names:
                 # The package was missing from the tag entirely.
                 if not check_mode:
+                    common_koji.ensure_logged_in(session)
                     session.packageListAdd(tag_name, package, owner)
                 result['stdout_lines'].append('added pkg %s' % package)
                 result['changed'] = True
@@ -124,6 +124,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
                 # Verify ownership.
                 if package not in current_owned.get(owner, []):
                     if not check_mode:
+                        common_koji.ensure_logged_in(session)
                         session.packageListSetOwner(tag_name, package, owner)
                     result['stdout_lines'].append('set %s owner %s' %
                                                   (package, owner))
