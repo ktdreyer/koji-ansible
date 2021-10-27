@@ -160,7 +160,8 @@ class TestMain(object):
             koji_tag_inheritance.main()
         result = exit.value.args[0]
         assert result['changed'] is True
-        assert result['stdout_lines'] == ['add inheritance link:', '  25   .... parent-tag-a']
+        assert result['stdout_lines'] == [
+            'add inheritance link:', '  25   .... parent-tag-a']
 
     def test_remove_inheritance(self, session):
         session._inheritance = FAKE_INHERITANCE_DATA
@@ -173,4 +174,5 @@ class TestMain(object):
             koji_tag_inheritance.main()
         result = exit.value.args[0]
         assert result['changed'] is True
-        assert result['stdout_lines'] == ['remove inheritance link:', '  10   .... parent-tag-a']
+        assert result['stdout_lines'] == [
+            'remove inheritance link:', '  10   .... parent-tag-a']
