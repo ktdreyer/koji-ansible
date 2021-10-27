@@ -1,8 +1,10 @@
 import pytest
 import koji_tag_packages
 from utils import exit_json
+from utils import fail_json
 from utils import set_module_args
 from utils import AnsibleExitJson
+from utils import AnsibleFailJson
 
 from mock import Mock, call
 
@@ -185,6 +187,8 @@ class TestMain(object):
     def fake_exits(self, monkeypatch):
         monkeypatch.setattr(koji_tag_packages.AnsibleModule,
                             'exit_json', exit_json)
+        monkeypatch.setattr(koji_tag_packages.AnsibleModule,
+                            'fail_json', fail_json)
 
     @pytest.fixture
     def session(self, monkeypatch, session):
@@ -192,6 +196,16 @@ class TestMain(object):
                             'get_session',
                             lambda x: session)
         return session
+
+    def test_no_tag_failure(self, session):
+        set_module_args({
+            'tag': 'ceph-5.0-rhel-8',
+            'packages': {'kdreyer': ['ceph']},
+        })
+        with pytest.raises(AnsibleFailJson) as exit:
+            koji_tag_packages.main()
+        result = exit.value.args[0]
+        assert result['msg'] == 'tag ceph-5.0-rhel-8 does not exist'
 
     def test_add_package(self, session):
         session.tags = {'ceph-5.0-rhel-8': {'id': 1, 'packages': []}}
