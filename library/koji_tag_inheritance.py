@@ -121,6 +121,11 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 
+class NoSuchTagError(Exception):
+    """ Raise when a tag is not found """
+    pass
+
+
 def get_ids_and_inheritance(session, child_tag, parent_tag):
     """
     Query Koji for the current state of these tags and inheritance.
@@ -203,13 +208,13 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
         if check_mode:
             result['stdout_lines'].append(msg)
         else:
-            raise ValueError(msg)
+            raise NoSuchTagError(msg)
     if not parent_id:
         msg = 'parent tag %s not found' % parent_tag
         if check_mode:
             result['stdout_lines'].append(msg)
         else:
-            raise ValueError(msg)
+            raise NoSuchTagError(msg)
 
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority,
                                  maxdepth, pkg_filter, intransitive, noconfig)
@@ -305,20 +310,26 @@ def run_module():
     if state == 'present':
         if 'priority' not in params:
             module.fail_json(msg='specify a "priority" integer')
-        result = add_tag_inheritance(session,
-                                     child_tag=params['child_tag'],
-                                     parent_tag=params['parent_tag'],
-                                     priority=params['priority'],
-                                     maxdepth=params['maxdepth'],
-                                     pkg_filter=params['pkg_filter'],
-                                     intransitive=params['intransitive'],
-                                     noconfig=params['noconfig'],
-                                     check_mode=check_mode)
+        try:
+            result = add_tag_inheritance(session,
+                                         child_tag=params['child_tag'],
+                                         parent_tag=params['parent_tag'],
+                                         priority=params['priority'],
+                                         maxdepth=params['maxdepth'],
+                                         pkg_filter=params['pkg_filter'],
+                                         intransitive=params['intransitive'],
+                                         noconfig=params['noconfig'],
+                                         check_mode=check_mode)
+        except NoSuchTagError as e:
+            module.fail_json(msg=str(e))
     elif state == 'absent':
-        result = remove_tag_inheritance(session,
-                                        child_tag=params['child_tag'],
-                                        parent_tag=params['parent_tag'],
-                                        check_mode=check_mode)
+        try:
+            result = remove_tag_inheritance(session,
+                                            child_tag=params['child_tag'],
+                                            parent_tag=params['parent_tag'],
+                                            check_mode=check_mode)
+        except NoSuchTagError as e:
+            module.fail_json(msg=str(e))
 
     module.exit_json(**result)
 
