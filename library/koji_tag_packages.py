@@ -223,6 +223,8 @@ def run_module():
 
     session = common_koji.get_session(profile)
     tag_info = session.getTag(tag_name)
+    if not tag_info:
+        module.fail_json(msg='tag %s does not exist' % tag_name)
 
     result = {'changed': False, 'stdout_lines': []}
     if state == 'present':
