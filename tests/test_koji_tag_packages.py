@@ -1,6 +1,55 @@
+import pytest
 import koji_tag_packages
+from utils import exit_json
+from utils import set_module_args
+from utils import AnsibleExitJson
 
 from mock import Mock, call
+
+
+class FakeKojiSession(object):
+
+    tags = {}
+
+    def getTag(self, tagInfo, **kw):
+        if isinstance(tagInfo, int):
+            for tag in self.tags.values():
+                if tag['id'] == tagInfo:
+                    return tag
+            return None
+        return self.tags.get(tagInfo)
+
+    def listPackages(self, tagID):
+        tag = self.getTag(tagID)
+        return tag['packages']
+
+    def packageListAdd(self, taginfo, pkginfo, owner):
+        tag = self.getTag(taginfo)
+        package = {'package_id': '0',
+                   'package_name': pkginfo,
+                   'owner_name': owner}
+        tag['packages'].append(package)
+
+    def packageListRemove(self, taginfo, pkginfo):
+        tag = self.getTag(taginfo)
+        found = None
+        for idx, package in enumerate(tag['packages']):
+            if package['package_name'] == pkginfo:
+                found = idx
+                break
+        if found is not None:
+            del tag['packages'][found]
+
+    def ensure_logged_in(self, session):
+        return session
+
+    def logged_in(self, session):
+        return True
+
+
+@pytest.fixture
+def session():
+    return FakeKojiSession()
 
 
 class TestKojiTagPackages(object):
@@ -128,3 +177,51 @@ class TestKojiTagPackages(object):
         assert result['changed']
         session.packageListSetOwner.assert_called_with(
             "epel8", "coreutils", "user2")
+
+
+class TestMain(object):
+
+    @pytest.fixture(autouse=True)
+    def fake_exits(self, monkeypatch):
+        monkeypatch.setattr(koji_tag_packages.AnsibleModule,
+                            'exit_json', exit_json)
+
+    @pytest.fixture
+    def session(self, monkeypatch, session):
+        monkeypatch.setattr(koji_tag_packages.common_koji,
+                            'get_session',
+                            lambda x: session)
+        return session
+
+    def test_add_package(self, session):
+        session.tags = {'ceph-5.0-rhel-8': {'id': 1, 'packages': []}}
+        set_module_args({
+            'tag': 'ceph-5.0-rhel-8',
+            'packages': {'kdreyer': ['ceph']},
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_tag_packages.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == ['added pkg ceph']
+
+    def test_remove_package(self, session):
+        packages = [{'blocked': False,
+                     'extra_arches': '',
+                     'owner_id': 1,
+                     'owner_name': 'kdreyer',
+                     'package_id': 2,
+                     'package_name': 'ceph',
+                     'tag_id': 1,
+                     'tag_name': 'ceph-5.0-rhel-8'}]
+        session.tags = {'ceph-5.0-rhel-8': {'id': 1, 'packages': packages}}
+        set_module_args({
+            'tag': 'ceph-5.0-rhel-8',
+            'packages': {'kdreyer': ['ceph']},
+            'state': 'absent',
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_tag_packages.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == ['remove pkg ceph']
