@@ -1,5 +1,10 @@
+import pytest
+import koji_tag_inheritance
 from koji_tag_inheritance import add_tag_inheritance
 from koji_tag_inheritance import remove_tag_inheritance
+from utils import exit_json
+from utils import set_module_args
+from utils import AnsibleExitJson
 
 
 class FakeKojiSession(object):
@@ -37,6 +42,11 @@ class FakeKojiSession(object):
 
     def logged_in(self, session):
         return True
+
+
+@pytest.fixture
+def session():
+    return FakeKojiSession()
 
 
 FAKE_INHERITANCE_DATA = {
@@ -123,3 +133,44 @@ class TestEnsureInheritanceUnchanged(object):
                                         'parent-tag-c',
                                         False)
         assert result['changed'] is False
+
+
+class TestMain(object):
+
+    @pytest.fixture(autouse=True)
+    def fake_exits(self, monkeypatch):
+        monkeypatch.setattr(koji_tag_inheritance.AnsibleModule,
+                            'exit_json', exit_json)
+
+    @pytest.fixture
+    def session(self, monkeypatch, session):
+        monkeypatch.setattr(koji_tag_inheritance.common_koji,
+                            'get_session',
+                            lambda x: session)
+        return session
+
+    def test_add_inheritance(self, session):
+        session._inheritance = FAKE_INHERITANCE_DATA
+        set_module_args({
+            'parent_tag': 'parent-tag-a',
+            'child_tag': 'my-child-tag',
+            'priority': 25,
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_tag_inheritance.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == ['add inheritance link:', '  25   .... parent-tag-a']
+
+    def test_remove_inheritance(self, session):
+        session._inheritance = FAKE_INHERITANCE_DATA
+        set_module_args({
+            'parent_tag': 'parent-tag-a',
+            'child_tag': 'my-child-tag',
+            'state': 'absent',
+        })
+        with pytest.raises(AnsibleExitJson) as exit:
+            koji_tag_inheritance.main()
+        result = exit.value.args[0]
+        assert result['changed'] is True
+        assert result['stdout_lines'] == ['remove inheritance link:', '  10   .... parent-tag-a']
