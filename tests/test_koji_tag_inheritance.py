@@ -3,8 +3,10 @@ import koji_tag_inheritance
 from koji_tag_inheritance import add_tag_inheritance
 from koji_tag_inheritance import remove_tag_inheritance
 from utils import exit_json
+from utils import fail_json
 from utils import set_module_args
 from utils import AnsibleExitJson
+from utils import AnsibleFailJson
 
 
 class FakeKojiSession(object):
@@ -26,8 +28,13 @@ class FakeKojiSession(object):
             tag_id = taginfo['id']
         return self._inheritance.get(tag_id, [])
 
-    def getTag(self, name, **kw):
-        return self.tags[name]
+    def getTag(self, tagInfo):
+        if isinstance(tagInfo, int):
+            for tag in self.tags.values():
+                if tag['id'] == tagInfo:
+                    return tag
+            return None
+        return self.tags.get(tagInfo)
 
     def setInheritanceData(self, tag, data, clear=False):
         assert clear is False
@@ -141,6 +148,8 @@ class TestMain(object):
     def fake_exits(self, monkeypatch):
         monkeypatch.setattr(koji_tag_inheritance.AnsibleModule,
                             'exit_json', exit_json)
+        monkeypatch.setattr(koji_tag_inheritance.AnsibleModule,
+                            'fail_json', fail_json)
 
     @pytest.fixture
     def session(self, monkeypatch, session):
@@ -148,6 +157,30 @@ class TestMain(object):
                             'get_session',
                             lambda x: session)
         return session
+
+    def test_no_parent_tag_failure(self, session):
+        session._inheritance = FAKE_INHERITANCE_DATA
+        set_module_args({
+            'parent_tag': 'bogus-tag',
+            'child_tag': 'my-child-tag',
+            'priority': 25,
+        })
+        with pytest.raises(AnsibleFailJson) as exit:
+            koji_tag_inheritance.main()
+        result = exit.value.args[0]
+        assert result['msg'] == 'parent tag bogus-tag not found'
+
+    def test_no_child_tag_failure(self, session):
+        session._inheritance = FAKE_INHERITANCE_DATA
+        set_module_args({
+            'parent_tag': 'parent-tag-a',
+            'child_tag': 'bogus-tag',
+            'priority': 25,
+        })
+        with pytest.raises(AnsibleFailJson) as exit:
+            koji_tag_inheritance.main()
+        result = exit.value.args[0]
+        assert result['msg'] == 'child tag bogus-tag not found'
 
     def test_add_inheritance(self, session):
         session._inheritance = FAKE_INHERITANCE_DATA
