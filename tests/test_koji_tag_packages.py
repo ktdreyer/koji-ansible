@@ -21,7 +21,7 @@ class FakeKojiSession(object):
             return None
         return self.tags.get(tagInfo)
 
-    def listPackages(self, tagID):
+    def listPackages(self, tagID, with_owners=True):
         tag = self.getTag(tagID)
         return tag['packages']
 
