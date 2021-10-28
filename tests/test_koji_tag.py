@@ -15,11 +15,14 @@ class FakeKojiSession(object):
         self.inheritance = {}
 
     def getTag(self, tagInfo, strict=False, event=None):
-        if tagInfo not in self.tags:
+        if isinstance(tagInfo, int):
+            for tag in self.tags.values():
+                if tag['id'] == tagInfo:
+                    return tag
             if strict:
                 raise GenericError('Invalid tagInfo: %s' % tagInfo)
             return None
-        return self.tags[tagInfo]
+        return self.tags.get(tagInfo)
 
     def getTagExternalRepos(self, tag_info=None, repo_info=None, event=None):
         if isinstance(tag_info, int):
