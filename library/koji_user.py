@@ -20,6 +20,14 @@ description:
    - 'Koji only supports adding new users, not deleting them. Once they are
      defined, you can enable or disable the users with "state: enabled" or
      "state: disabled".'
+   - The "LoginCreatesUser" setting on the Koji Hub permits users to create
+     their own accounts on first login, provided they have a valid credential
+     (SSL cert or Kerberos ticket). LoginCreatesUser defaults to "On". If you
+     disabled LoginCreatesUser on your hub, you may use this koji_user module
+     to create your Koji user accounts. Even if your hub has LoginCreatesUser
+     enabled, you may still use this module to pre-create accounts without
+     asking users to login first (eg. to configure package ownership), or to
+     manage permissions for accounts.
 
 options:
    name:
