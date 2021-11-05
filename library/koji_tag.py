@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 from ansible.module_utils import common_koji
@@ -70,6 +71,18 @@ options:
          configuring extra options on groups, or blocking packages in groups.
          If you need that level of control over comps groups, you will need
          to import a full comps XML file, outside of this Ansible module.
+   blocked_packages:
+     description:
+       - The list of packages to block in this tag. Each blocked package must
+         be present in the tag directly or inherited through this tag's
+         parent(s).
+       - If you omit this "blocked_packages" setting, Ansible will not edit the
+         existing blocked packages for this tag. For example, if you have
+         already manually blocked packages with "koji block-pkg", you may
+         want to omit this setting in Ansible until you've captured the exact
+         list of already-blocked packages in Ansible.
+       - If you explicitly set "blocked_packages" to an empty list, Ansible
+         will remove all the package blocks for this tag.
    arches:
      description:
        - space-separated string of arches this Koji tag supports.
@@ -461,8 +474,52 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     return result
 
 
+def ensure_blocked_packages(session, tag_id, check_mode, packages):
+    """
+    Ensure that these packages are blocked on this Koji tag.
+
+    :param session: Koji client session
+    :param int tag_id: Koji tag ID
+    :param bool check_mode: don't make any changes
+    :param list packages: package names to block.
+    :returns: a list of human-readable changes
+    """
+    # TODO: move this to common_koji and share with koji_tag_packages.py
+    koji_profile = sys.modules[session.__module__]
+    try:
+        current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
+    except koji_profile.ParameterError as e:
+        # Koji Hubs before v1.25 do not have with_owners performance
+        # optimization
+        if "unexpected keyword argument 'with_owners'" in str(e):
+            current_pkgs = session.listPackages(tagID=tag_id)
+        else:
+            raise
+    current_blocked = set(pkg['package_name']
+                          for pkg in current_pkgs if pkg['blocked'])
+    changes = []
+    to_block = set()
+    to_unblock = set()
+    for package in packages:
+        if package not in current_blocked:
+            changes.append('blocked pkg %s' % package)
+            to_block.add(package)
+    for package in current_blocked:
+        if package not in packages:
+            changes.append('unblocked pkg %s' % package)
+            to_unblock.add(package)
+    if changes and not check_mode:
+        common_koji.ensure_logged_in(session)
+        # TODO: use koji multicalls here
+        for package in to_block:
+            session.packageListBlock(tag_id, package)
+        for package in to_unblock:
+            session.packageListUnblock(tag_id, package)
+    return changes
+
+
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
-               packages, groups, **kwargs):
+               packages, groups, blocked_packages, **kwargs):
     """
     Ensure that this tag exists in Koji.
 
@@ -476,6 +533,7 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                      If this is an empty dict, we don't touch the package list
                      for this tag.
     :param groups: dict of comps groups to set for this tag.
+    :param blocked_packages: list of packages to block in this tag.
     :param **kwargs: Pass remaining kwargs directly into Koji's createTag and
                      editTag2 RPCs.
     """
@@ -556,6 +614,16 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
             result['changed'] = True
         result['stdout_lines'].extend(groups_result['stdout_lines'])
 
+    # Ensure blocked package list.
+    if blocked_packages not in (None, ''):
+        changes = ensure_blocked_packages(session,
+                                          taginfo['id'],
+                                          check_mode,
+                                          blocked_packages)
+        if changes:
+            result['changed'] = True
+            result['stdout_lines'].extend(changes)
+
     return result
 
 
@@ -584,6 +652,7 @@ def run_module():
         external_repos=dict(type='list'),
         packages=dict(type='raw'),
         groups=dict(type='raw'),
+        blocked_packages=dict(type='list'),
         arches=dict(),
         perm=dict(),
         locked=dict(type='bool', default=False),
@@ -614,6 +683,7 @@ def run_module():
                             external_repos=params['external_repos'],
                             packages=params['packages'],
                             groups=params['groups'],
+                            blocked_packages=params['blocked_packages'],
                             arches=params['arches'],
                             perm=params['perm'] or None,
                             locked=params['locked'],

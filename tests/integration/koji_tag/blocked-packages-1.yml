@@ -1,0 +1,49 @@
+# Ensure we can block and unblock a package from a child tag.
+---
+
+- koji_tag:
+    name: block-1-parent
+    packages:
+      admin:
+        - bash
+        - coreutils
+
+- koji_tag:
+    name: block-1-child
+    inheritance:
+      - parent: block-1-parent
+        priority: 0
+    blocked_packages:
+      - bash
+
+
+# Assert that bash is blocked in the child
+
+- koji_call:
+    name: listPackages
+    args: [block-1-child]
+  register: packages
+
+- assert:
+    that:
+      - packages.data|length == 1
+      - packages.data[0].package_name == 'bash'
+      - packages.data[0].blocked
+
+# Now unblock bash, and block coreutils:
+
+- koji_tag:
+    name: block-1-child
+    blocked_packages:
+      - coreutils
+
+- koji_call:
+    name: listPackages
+    args: [block-1-child]
+  register: packages
+
+- assert:
+    that:
+      - packages.data|length == 1
+      - packages.data[0].package_name == 'coreutils'
+      - packages.data[0].blocked
