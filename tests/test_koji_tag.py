@@ -8,6 +8,11 @@ class GenericError(Exception):
         return str(self.args[0])
 
 
+class ParameterError(Exception):
+    def __str__(self):
+        return str(self.args[0])
+
+
 class FakeKojiSession(object):
     def __init__(self):
         self.tag_repos = defaultdict(list)
@@ -87,6 +92,40 @@ class FakeKojiSession(object):
         if not clear:
             raise NotImplementedError()
         self.inheritance[tag] = data
+
+    def listPackages(self, tagID, with_owners=True):
+        tag = self.getTag(tagID)
+        return tag['packages']
+
+    def packageListAdd(self, taginfo, pkginfo, owner):
+        tag = self.getTag(taginfo)
+        package = {'package_id': '0',
+                   'package_name': pkginfo,
+                   'owner_name': owner,
+                   'blocked': False}
+        tag['packages'].append(package)
+
+    def packageListRemove(self, taginfo, pkginfo):
+        tag = self.getTag(taginfo)
+        found = None
+        for idx, package in enumerate(tag['packages']):
+            if package['package_name'] == pkginfo:
+                found = idx
+                break
+        if found is not None:
+            del tag['packages'][found]
+
+    def packageListBlock(self, taginfo, pkginfo, force=False):
+        tag = self.getTag(taginfo)
+        for package in tag['packages']:
+            if package['package_name'] == pkginfo:
+                package['blocked'] = True
+
+    def packageListUnblock(self, taginfo, pkginfo, force=False):
+        tag = self.getTag(taginfo)
+        for package in tag['packages']:
+            if package['package_name'] == pkginfo:
+                package['blocked'] = False
 
     def ensure_logged_in(self, session):
         return session
@@ -402,3 +441,49 @@ class TestEnsureInheritance(object):
                      'pkg_filter': '',
                      'priority': 10}]
         assert result == expected
+
+
+class TestEnsurePackageBlocks(object):
+    @pytest.mark.parametrize('check_mode', (False, True))
+    def test_block_package(self, session, check_mode):
+        tag_id = 1
+        session.tags = {'ceph-5.0-rhel-8': {'id': tag_id, 'packages': []}}
+        session.packageListAdd('ceph-5.0-rhel-8', 'ceph', 'kdreyer')
+        blocked_packages = ['ceph']
+        result = koji_tag.ensure_blocked_packages(session,
+                                                  tag_id,
+                                                  check_mode,
+                                                  blocked_packages)
+        assert result == ['blocked pkg ceph']
+        pkgs = session.listPackages(tagID='ceph-5.0-rhel-8')
+        assert len(pkgs) == 1
+        assert pkgs[0]['blocked'] is not check_mode
+
+    @pytest.mark.parametrize('check_mode', (False, True))
+    def test_unblock_package(self, session, check_mode):
+        tag_id = 1
+        session.tags = {'ceph-5.0-rhel-8': {'id': tag_id, 'packages': []}}
+        session.packageListAdd('ceph-5.0-rhel-8', 'ceph', 'kdreyer')
+        session.packageListBlock('ceph-5.0-rhel-8', 'ceph')
+        blocked_packages = []
+        result = koji_tag.ensure_blocked_packages(session,
+                                                  tag_id,
+                                                  check_mode,
+                                                  blocked_packages)
+        assert result == ['unblocked pkg ceph']
+        pkgs = session.listPackages(tagID='ceph-5.0-rhel-8')
+        assert len(pkgs) == 1
+        assert pkgs[0]['blocked'] is check_mode
+
+
+class TestEnsurePackageBlocksOldHub(TestEnsurePackageBlocks):
+    @pytest.fixture
+    def session(self, session, monkeypatch):
+        def oldListPackages(tagID, with_owners=None):
+            if with_owners is not None:
+                raise ParameterError(
+                    "unexpected keyword argument 'with_owners'")
+            tag = session.getTag(tagID)
+            return tag['packages']
+        monkeypatch.setattr(session, 'listPackages', oldListPackages)
+        return session
