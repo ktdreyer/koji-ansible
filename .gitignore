@@ -10,7 +10,8 @@
 .coverage
 build/*
 dist/*
-doc/build/*
+doc/_build/*
+doc/*.rst
 *.spec
 *.tar.gz
 *.rpm

@@ -1,0 +1,4 @@
+ansible-core
+antsibull
+sphinx_rtd_theme
+Sphinx >= 4
