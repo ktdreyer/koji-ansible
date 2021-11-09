@@ -27,7 +27,15 @@ options:
      required: true
    inheritance:
      description:
-       - How to set inheritance. what happens when it's unset.
+       - A list of parents for this tag. Each parent list item must have a
+         "parent" tag name and a "priority". Optionally you may specify
+         "maxdepth", "intransitive", "noconfig", "pkg_filter" settings for
+         each parent. For more information about these settings, see the
+         M(koji_tag_inheritance) module documentation.
+       - If you omit this "inheritance" setting, Ansible will not modify any
+         of inheritance for this tag.
+       - If you explicitly set "inheritance" to an empty list, Ansible will
+         remove all the parents for this tag.
    external_repos:
      description:
        - list of Koji external repos to set for this tag. Each element of the
