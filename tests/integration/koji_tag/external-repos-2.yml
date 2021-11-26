@@ -22,6 +22,17 @@
       priority: 10
     - repo: external-repos-2-epel
       priority: 20
+  register: external_repo_2
+
+- name: assert result for assigning external repo to tag
+  assert:
+    that:
+      - external_repo_2.changed
+      - "'created tag id' in external_repo_2.stdout_lines.0"
+      - external_repo_2.stdout_lines.1 == "Adding external-repos-2-os repo with prio 10 to tag external-repos-2"
+      - external_repo_2.stdout_lines.2 == "Adding external-repos-2-epel repo with prio 20 to tag external-repos-2"
+      - external_repo_2.diff.after.external_repos.0.external_repo_name == "external-repos-2-os"
+      - external_repo_2.diff.after.external_repos.1.external_repo_name == "external-repos-2-epel"
 
 - name: Change an external repo priority for our tag
   koji_tag:
@@ -31,6 +42,18 @@
       priority: 10
     - repo: external-repos-2-epel
       priority: 40
+  register: external_repo_2
+
+- name: assert result for updating priority for external repo
+  assert:
+    that:
+      - external_repo_2.changed
+      - external_repo_2.stdout_lines.0 == "Removing external-repos-2-epel repo at priority 20 from tag external-repos-2"
+      - external_repo_2.stdout_lines.1 == "Adding external-repos-2-epel repo with prio 40 to tag external-repos-2"
+      - external_repo_2.diff.after.external_repos.1.external_repo_name == "external-repos-2-epel"
+      - external_repo_2.diff.after.external_repos.1.priority == 40
+      - external_repo_2.diff.before.external_repos.1.external_repo_name == "external-repos-2-epel"
+      - external_repo_2.diff.before.external_repos.1.priority == 20
 
 # Assert that this tag looks correct.
 

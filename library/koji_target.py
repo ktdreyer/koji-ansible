@@ -65,6 +65,12 @@ def ensure_target(session, name, check_mode, build_tag, dest_tag):
     """
     targetinfo = session.getBuildTarget(name)
     result = {'changed': False, 'stdout_lines': []}
+    current_settings = targetinfo
+    new_settings = {"name": name, "build_tag_name": build_tag,
+                    "dest_tag_name": dest_tag}
+    differences = common_koji.task_diff_data(
+        current_settings, new_settings, name, 'target')
+    result['diff'] = differences
     if not targetinfo:
         result['changed'] = True
         if check_mode:
@@ -101,6 +107,9 @@ def delete_target(session, name, check_mode):
     if targetinfo:
         result['stdout'] = 'deleted target %d' % targetinfo['id']
         result['changed'] = True
+        differences = common_koji.task_diff_data(
+            targetinfo, None, name, 'target')
+        result['diff'] = differences
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.deleteBuildTarget(targetinfo['id'])

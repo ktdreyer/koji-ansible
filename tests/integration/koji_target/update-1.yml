@@ -24,6 +24,13 @@
     name: update-1
     build_tag: update-1-build
     dest_tag: update-1-destination-b
+  register: target
+
+- assert:
+    that:
+      - target.changed
+      - target.diff.after.dest_tag_name == "update-1-destination-b"
+      - target.diff.before.dest_tag_name == "update-1-destination-a"
 
 # Assert that this target uses ""destination-b".
 

@@ -8,6 +8,18 @@
       build:
       - bash
       - coreutils
+  register: groups_1
+
+- name: assert koji_tag create tag and group result
+  assert:
+    that:
+      - groups_1.changed
+      - "'created tag id' in groups_1.stdout_lines.0"
+      - groups_1.stdout_lines.1 == "added group build"
+      - groups_1.stdout_lines.2 == "added pkg bash to group build"
+      - groups_1.stdout_lines.3 == "added pkg coreutils to group build"
+      - groups_1.diff.after.groups.0.name == "build"
+      - groups_1.diff.after.groups.0.packagelist == ["bash", "coreutils"]
 
 - koji_tag:
     name: groups-1-child
@@ -15,6 +27,14 @@
     inheritance:
     - parent: groups-1-parent
       priority: 0
+  register: groups_1
+
+- name: assert koji_tag create tag and inheritance result
+  assert:
+    that:
+      - groups_1.changed
+      - "'created tag id' in groups_1.stdout_lines.0"
+      - groups_1.diff.after.inheritance == ["   0   .... groups-1-parent"]
 
 # Assert that we see the "build" group inherited on the child tag.
 

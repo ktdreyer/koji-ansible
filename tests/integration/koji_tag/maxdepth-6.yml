@@ -12,7 +12,13 @@
     - parent: maxdepth-6-parent
       priority: 0
       maxdepth: ""
+  register: maxdepth_6
 
+- assert:
+    that:
+      - maxdepth_6.changed
+      - "'created tag id' in maxdepth_6.stdout_lines.0"
+      - maxdepth_6.diff.after.inheritance.0 == "   0   .... maxdepth-6-parent"
 # Assert that the inheritance relationship has no maxdepth.
 
 - koji_call:

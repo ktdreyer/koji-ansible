@@ -34,7 +34,25 @@
     locked: false
     extra:
       mock.package_manager: dnf
+  register: anonymous_1
 
+# Assert that Ansible's check mode found changes:
+
+- assert:
+    that:
+      - anonymous_1.changed
+      - "'created tag id' in anonymous_1.stdout_lines.0"
+      - anonymous_1.stdout_lines.1 == "Adding anonymous-1 repo with prio 5 to tag anonymous-1"
+      - anonymous_1.stdout_lines.2 == "added pkg ceph"
+      - anonymous_1.stdout_lines.3 == "added group build"
+      - anonymous_1.stdout_lines.4 == "added pkg bash to group build"
+      - anonymous_1.stdout_lines.5 == "added pkg coreutils to group build"
+      - anonymous_1.diff.after.external_repos.0.external_repo_name == "anonymous-1"
+      - anonymous_1.diff.after.groups.0.name == "build"
+      - anonymous_1.diff.after.groups.0.packagelist == ["bash", "coreutils"]
+      - anonymous_1.diff.after.inheritance == ["   0   .... anonymous-1-parent"]
+      - anonymous_1.diff.after.packages.0.owner_name == "admin"
+      - anonymous_1.diff.after.packages.0.package_name == "ceph"
 # Anonymously test making changes in check mode.
 
 - name: test check mode with no authentication
@@ -59,7 +77,8 @@
 - assert:
     that:
       - anonymous_1.changed
-
+      - anonymous_1.diff.after.arches == "x86_64"
+      - anonymous_1.diff.before.arches == "x86_64 ppc64le"
 # Assert that check mode effected no real changes:
 
 - koji_call:

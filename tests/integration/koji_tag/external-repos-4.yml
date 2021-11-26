@@ -30,6 +30,19 @@
       priority: 20
     - repo: external-repos-4-private-el-7
       priority: 30
+  register: external_repo_4
+
+- name: assert result for assigning external repos to tag
+  assert:
+    that:
+      - external_repo_4.changed
+      - "'created tag id' in external_repo_4.stdout_lines.0"
+      - external_repo_4.stdout_lines.1 == "Adding external-repos-4-os repo with prio 10 to tag external-repos-4"
+      - external_repo_4.stdout_lines.2 == "Adding external-repos-4-epel repo with prio 20 to tag external-repos-4"
+      - external_repo_4.stdout_lines.3 == "Adding external-repos-4-private-el-7 repo with prio 30 to tag external-repos-4"
+      - external_repo_4.diff.after.external_repos.0.external_repo_name == "external-repos-4-os"
+      - external_repo_4.diff.after.external_repos.1.external_repo_name == "external-repos-4-epel"
+      - external_repo_4.diff.after.external_repos.2.external_repo_name == "external-repos-4-private-el-7"
 
 # Assert that each merge_mode defaults to "koji".
 
@@ -77,6 +90,16 @@
     - repo: external-repos-4-private-el-7
       priority: 30
       merge_mode: bare
+  register: external_repo_4
+
+- name: assert result for updating merge mode for external repos
+  assert:
+    that:
+      - external_repo_4.changed
+      - external_repo_4.stdout_lines.0 == "Removing external-repos-4-private-el-7 repo with merge mode \"koji\" from tag external-repos-4"
+      - external_repo_4.stdout_lines.1 == "Adding external-repos-4-private-el-7 repo with prio 30 to tag external-repos-4 with merge mode \"bare\""
+      - external_repo_4.diff.after.external_repos.2.merge_mode == "bare"
+      - external_repo_4.diff.before.external_repos.2.merge_mode == "koji"
 
 # Assert that the merge_mode has changed
 

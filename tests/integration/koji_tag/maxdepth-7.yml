@@ -12,6 +12,14 @@
     - parent: maxdepth-7-parent
       priority: 0
       maxdepth: "20"
+  register: maxdepth_7
+
+- assert:
+    that:
+      - maxdepth_7.changed
+      - "'created tag id' in maxdepth_7.stdout_lines.0"
+      - maxdepth_7.diff.after.inheritance.0 == "   0   M... maxdepth-7-parent"
+      - "'maxdepth: 20' in maxdepth_7.diff.after.inheritance.1"
 
 # Assert that the inheritance relationship has no maxdepth.
 

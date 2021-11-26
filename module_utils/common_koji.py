@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import copy
 try:
     import koji
     from koji_cli.lib import activate_session
@@ -188,3 +189,107 @@ def ensure_krb_principals(session, user, check_mode, krb_principals):
         ensure_logged_in(session)
         session.editUser(user['id'], krb_principal_mappings=mappings)
     return changes
+
+
+def task_diff_data(before, after, item_name, item_type,
+                   keys_to_copy=[], keys_to_omit=[]):
+    """
+    Prepare a dict suitable for use as the value of the 'diff' key in
+    the dict returned by an ansible task.
+
+    """
+    if before is None:
+        # Creating a new item
+        before_header = "Not present"
+        after_header = "New %s '%s'" % (item_type, item_name)
+
+        # Need to use an empty dict instead of None otherwise
+        # ansible's built-in diff callback will throw errors
+        # trying to call splitlines() on it
+        before = {}
+
+    elif after is None:
+        # Deleting an item
+        before_header = "%s '%s'" % (item_type, item_name)
+        after_header = "Not present"
+
+        # Need to use an empty dict instead of None otherwise
+        # ansible's built-in diff callback will throw errors
+        # trying to call splitlines() on it
+        after = {}
+
+    else:
+        # Modifying an existing item
+        before_header = "Original %s '%s'" % (item_type, item_name)
+        after_header = "Modified %s '%s'" % (item_type, item_name)
+
+        # Don't accidentally modify the method params
+        after = copy.copy(after)
+        before = copy.copy(before)
+
+        # Avoid misleading diffs by copying some values from the
+        # before dict to the after dict
+        for key in keys_to_copy:
+            if key in before and key not in after:
+                after[key] = before[key]
+
+        # Skip some keys if they're not useful
+        for key in keys_to_omit + ['id']:
+            if key in before and key not in after:
+                del before[key]
+
+    return {
+        'before': before,
+        'after': after,
+        'before_header': before_header,
+        'after_header': after_header,
+    }
+
+
+def clean_data(obj_list, keys_to_copy=[], keys_to_omit=[]):
+    """
+    Clean a list of objects with needed fields by defining
+    keys_to_copy or keys_to_omit.
+
+    :param list obj_list: a list of object
+    :param keys_to_copy: the field list which will be returned
+    :params keys_to_omit: the field list which will be omitted
+    :returns: a list of objects with needed fields
+    """
+    if keys_to_copy:
+        new_obj_list = []
+        for obj in obj_list:
+            new_obj = {}
+            for key in keys_to_copy:
+                if key in obj.keys():
+                    new_obj.update({key: obj[key]})
+            new_obj_list.append(new_obj)
+        return new_obj_list
+    else:
+        for obj in obj_list:
+            new_obj = {}
+            for key in keys_to_omit:
+                if key in obj.keys():
+                    del new_obj[key]
+        return obj_list
+
+
+def combine_diff_data(item_type, item_name, result1, result2):
+    """
+    Combine the diff date in result1 and result2
+
+    :param string the of the tag to combine the diff data
+    :param dict result1
+    :param dict result2
+    """
+    if not result1.get('diff'):
+        result1['diff'] = {
+            'before_header': "Original %s '%s'" % (item_type, item_name),
+            'after_header': "Modified %s '%s'" % (item_type, item_name),
+            'before': {item_type: item_name},
+            'after': {item_type: item_name},
+        }
+    result1['diff']['before'].update(result2['diff']['before'])
+    result1['diff']['after'].update(result2['diff']['after'])
+
+    return result1['diff']

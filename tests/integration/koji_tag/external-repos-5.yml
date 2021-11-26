@@ -15,6 +15,17 @@
     - repo: external-repos-5-os
       priority: 10
       merge_mode: bare
+  register: external_repo_5
+
+- name: assert result for assigning external repos to tag
+  assert:
+    that:
+      - external_repo_5.changed
+      - "'created tag id' in external_repo_5.stdout_lines.0"
+      - external_repo_5.stdout_lines.1 == "Adding external-repos-5-os repo with prio 10 to tag external-repos-5 with merge mode \"bare\""
+      - external_repo_5.diff.after.external_repos.0.external_repo_name == "external-repos-5-os"
+      - external_repo_5.diff.after.external_repos.0.merge_mode == "bare"
+      - external_repo_5.diff.after.external_repos.0.priority == 10
 
 # Assert that the merge_mode is "bare".
 
@@ -35,6 +46,13 @@
     - repo: external-repos-5-os
       priority: 10
       # Note: no merge_mode here.
+  register: external_repo_5
+
+- name: assert result for ee-declaring external repos
+  assert:
+    that:
+      - not external_repo_5.changed
+      - external_repo_5.stdout_lines == []
 
 # Assert that the merge_mode is still "bare".
 

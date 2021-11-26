@@ -20,6 +20,6 @@ playbooks=($(ls tests/integration/*/main.yml))
 final_playbook=$(echo ${playbooks[-1]})
 
 for playbook in "${playbooks[@]}"; do
-  ansible-playbook -vvv $playbook
+  ansible-playbook -vvv $playbook --diff
   [[ $playbook == $final_playbook ]] || reset_instance
 done
