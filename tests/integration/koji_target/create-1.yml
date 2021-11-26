@@ -14,7 +14,15 @@
     build_tag: create-1-build
     dest_tag: create-1-destination
     state: present
+  register: target
 
+- assert:
+    that:
+      - target.changed
+      - "'created target' in target.stdout_lines.0"
+      - target.diff.after.build_tag_name == "create-1-build"
+      - target.diff.after.dest_tag_name == "create-1-destination"
+      - target.diff.after.name == "create-1"
 # Assert that this target looks correct.
 
 - koji_call:

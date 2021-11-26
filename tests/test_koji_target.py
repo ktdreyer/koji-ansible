@@ -100,6 +100,17 @@ def test_create(session, name, build_tag, dest_tag):
     result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     assert result['stdout_lines'] == ['created target 1']
     assert result['changed'] is True
+    expected = {
+        'before': {},
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+        },
+        'before_header': 'Not present',
+        'after_header': "New target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     assert session.targets == {'epel8-candidate': epel8_target()}
 
 
@@ -109,6 +120,17 @@ def test_create_check_mode(session, name, build_tag, dest_tag):
     expected = 'would create target epel8-candidate'
     assert result['stdout_lines'] == [expected]
     assert result['changed'] is True
+    expected = {
+        'before': {},
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+        },
+        'before_header': 'Not present',
+        'after_header': "New target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     assert session.targets == {}
 
 
@@ -120,6 +142,21 @@ def test_update_build_tag(session, name, dest_tag):
     result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     assert result['changed'] is True
     assert result['stdout_lines'] == ['build_tag_name: epel8-other-build']
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'name': 'epel8-candidate',
+        },
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-other-build',
+            'dest_tag_name': 'epel8-testing-candidate'
+        },
+        'before_header': "Original target 'epel8-candidate'",
+        'after_header': "Modified target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     new_target = epel8_target()
     new_target['build_tag_name'] = 'epel8-other-build'
     assert session.targets == {'epel8-candidate': new_target}
@@ -133,6 +170,35 @@ def test_update_dest_tag(session, name, build_tag):
     result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     assert result['changed'] is True
     assert result['stdout_lines'] == ['dest_tag_name: epel8-other-dest']
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'name': 'epel8-candidate'
+        },
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-other-dest'
+        },
+        'before_header': "Not present",
+        'after_header': "New target 'epel8-candidate'",
+    }
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'name': 'epel8-candidate'
+        },
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-other-dest'
+        },
+        'before_header': "Original target 'epel8-candidate'",
+        'after_header': "Modified target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     new_target = epel8_target()
     new_target['dest_tag_name'] = 'epel8-other-dest'
     assert session.targets == {'epel8-candidate': new_target}
@@ -146,6 +212,21 @@ def test_update_check_mode(session, name, build_tag):
     result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     assert result['changed'] is True
     assert result['stdout_lines'] == ['dest_tag_name: epel8-other-dest']
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'name': 'epel8-candidate'
+        },
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-other-dest',
+        },
+        'before_header': "Original target 'epel8-candidate'",
+        'after_header': "Modified target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     assert session.targets == {'epel8-candidate': epel8_target()}
 
 
@@ -155,6 +236,21 @@ def test_ensure_unchanged(session, name, build_tag, dest_tag, check_mode):
     session.targets = {'epel8-candidate': epel8_target()}
     result = ensure_target(session, name, check_mode, build_tag, dest_tag)
     assert result['changed'] is False
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'name': 'epel8-candidate',
+        },
+        'after': {
+            'name': 'epel8-candidate',
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate'
+        },
+        'before_header': "Original target 'epel8-candidate'",
+        'after_header': "Modified target 'epel8-candidate'",
+    }
+    assert result['diff'] == expected
     assert session.targets == {'epel8-candidate': epel8_target()}
 
 
@@ -164,6 +260,17 @@ def test_delete(session, name):
     result = delete_target(session, name, check_mode)
     assert result['changed'] is True
     assert result['stdout'] == 'deleted target 1'
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'id': 1, 'name': 'epel8-candidate'
+        },
+        'after': {},
+        'before_header': "target 'epel8-candidate'",
+        'after_header': 'Not present',
+    }
+    assert result['diff'] == expected
     assert session.targets == {}
 
 
@@ -173,6 +280,18 @@ def test_delete_check_mode(session, name):
     result = delete_target(session, name, check_mode)
     assert result['changed'] is True
     assert result['stdout'] == 'deleted target 1'
+    expected = {
+        'before': {
+            'build_tag_name': 'epel8-build',
+            'dest_tag_name': 'epel8-testing-candidate',
+            'id': 1,
+            'name': 'epel8-candidate'
+        },
+        'after': {},
+        'before_header': "target 'epel8-candidate'",
+        'after_header': 'Not present',
+    }
+    assert result['diff'] == expected
     assert session.targets == {'epel8-candidate': epel8_target()}
 
 

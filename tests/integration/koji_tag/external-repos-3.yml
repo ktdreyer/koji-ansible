@@ -22,6 +22,17 @@
       priority: 10
     - repo: external-repos-3-epel
       priority: 20
+  register: external_repo_3
+
+- name: assert result for assigning external repos to tag
+  assert:
+    that:
+      - external_repo_3.changed
+      - "'created tag id' in external_repo_3.stdout_lines.0"
+      - external_repo_3.stdout_lines.1 == "Adding external-repos-3-os repo with prio 10 to tag external-repos-3"
+      - external_repo_3.stdout_lines.2 == "Adding external-repos-3-epel repo with prio 20 to tag external-repos-3"
+      - external_repo_3.diff.after.external_repos.0.external_repo_name == "external-repos-3-os"
+      - external_repo_3.diff.after.external_repos.1.external_repo_name == "external-repos-3-epel"
 
 - name: Swap the external repo priorities for the OS and EPEL
   koji_tag:
@@ -31,6 +42,20 @@
       priority: 10
     - repo: external-repos-3-os
       priority: 20
+  register: external_repo_3
+
+- name: assert result for updating priorities for external repos
+  assert:
+    that:
+      - external_repo_3.changed
+      - external_repo_3.stdout_lines.0 == "Removing external-repos-3-os repo at priority 10 from tag external-repos-3"
+      - external_repo_3.stdout_lines.1 == "Removing external-repos-3-epel repo at priority 20 from tag external-repos-3"
+      - external_repo_3.stdout_lines.2 == "Adding external-repos-3-epel repo with prio 10 to tag external-repos-3"
+      - external_repo_3.stdout_lines.3 == "Adding external-repos-3-os repo with prio 20 to tag external-repos-3"
+      - external_repo_3.diff.after.external_repos.0.external_repo_name == "external-repos-3-epel"
+      - external_repo_3.diff.after.external_repos.0.priority == 10
+      - external_repo_3.diff.after.external_repos.1.external_repo_name == "external-repos-3-os"
+      - external_repo_3.diff.after.external_repos.1.priority == 20
 
 # Assert that this tag looks correct.
 

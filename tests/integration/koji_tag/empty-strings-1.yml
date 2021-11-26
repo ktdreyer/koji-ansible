@@ -9,6 +9,14 @@
     external_repos: ""
     packages: ""
     groups: ""
+  register: empty
+
+- name: assert koji_tag create tag only result
+  assert:
+    that:
+      - empty.changed
+      - "'created tag id' in empty.stdout_lines.0"
+      - empty.diff.after.tag == "empty-strings-1"
 
 # Assert that this tag looks correct.
 

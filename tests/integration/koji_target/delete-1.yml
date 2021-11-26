@@ -18,6 +18,13 @@
 - koji_target:
     name: delete-1
     state: absent
+  register: target
+
+- assert:
+    that:
+      - target.changed
+      - target.stdout_lines== ["deleted target 1"]
+      - target.diff.after == {}
 
 # Assert that this target is absent.
 

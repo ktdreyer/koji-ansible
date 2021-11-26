@@ -32,6 +32,24 @@
     locked: false
     extra:
       mock.package_manager: dnf
+  register: basic
+
+# Assert that resutl is correct
+
+- name: assert koji_tag create tag result
+  assert:
+    that:
+      - basic.changed
+      - "'created tag id' in basic.stdout_lines.0"
+      - basic.stdout_lines.1 == "Adding basic-1 repo with prio 5 to tag basic-1"
+      - basic.stdout_lines.2 == "added pkg ceph"
+      - basic.stdout_lines.3 == "added group build"
+      - basic.stdout_lines.4 == "added pkg bash to group build"
+      - basic.stdout_lines.5 == "added pkg coreutils to group build"
+      - basic.diff.after.external_repos.0.external_repo_name == "basic-1"
+      - basic.diff.after.groups.0.name == "build"
+      - basic.diff.after.inheritance.0 == "   0   .... basic-1-parent"
+      - basic.diff.after.packages.0.owner_name == "admin"
 
 # Assert that this tag looks correct.
 

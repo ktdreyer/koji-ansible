@@ -17,6 +17,13 @@
       priority: 0
     - parent: inheritance-1-parent-b
       priority: 10
+  register: inheritance_2
+
+- name: assert koji_tag create tag and inheritance result
+  assert:
+    that:
+      - not inheritance_2.changed
+      - inheritance_2.stdout_lines == []
 
 - koji_tag:
     name: inheritance-1-child
@@ -25,6 +32,15 @@
       priority: 10
     - parent: inheritance-1-parent-b
       priority: 0
+  register: inheritance_2
+
+- name: assert updating inheritance result
+  assert:
+    that:
+      - inheritance_2.changed
+      - inheritance_2.stdout_lines == []
+      - inheritance_2.diff.after.inheritance == ["   0   .... inheritance-1-parent-b", "  10   .... inheritance-1-parent-a"]
+      - inheritance_2.diff.before.inheritance == ["   0   .... inheritance-1-parent-a", "  10   .... inheritance-1-parent-b"]
 
 # Assert that we have the new parent.
 

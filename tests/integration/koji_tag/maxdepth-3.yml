@@ -12,6 +12,16 @@
     - parent: maxdepth-3-parent
       priority: 0
       maxdepth: 10
+  register: maxdepth_3
+
+# to be confirmed
+- name: assert koji_tag create tag and inheritance result
+  assert:
+    that:
+      - maxdepth_3.changed
+      - "'created tag id' in maxdepth_3.stdout_lines.0"
+      - maxdepth_3.diff.after.inheritance.0 == "   0   M... maxdepth-3-parent"
+      - "'maxdepth' in maxdepth_3.diff.after.inheritance.1"
 
 # Assert that the inheritance relationship has a "10" maxdepth.
 

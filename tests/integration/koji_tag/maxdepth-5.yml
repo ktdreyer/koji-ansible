@@ -14,7 +14,13 @@
     - parent: maxdepth-5-parent
       priority: 0
       maxdepth: 0
+  register: maxdepth_5
 
+- assert:
+    that:
+      - maxdepth_5.changed
+      - maxdepth_5.diff.after.inheritance.0 == "   0   M... maxdepth-5-parent"
+      - "'maxdepth: 0' in maxdepth_5.diff.after.inheritance.1"
 # Re-running this task without a maxdepth parameter should result in a change
 # (removing the existing "0" maxdepth).
 
@@ -29,6 +35,9 @@
 - assert:
     that:
       - maxdepth_5.changed
+      - maxdepth_5.diff.after.inheritance.0 == "   0   .... maxdepth-5-parent"
+      - maxdepth_5.diff.before.inheritance.0 == "   0   M... maxdepth-5-parent"
+      - "'maxdepth: 0' in maxdepth_5.diff.before.inheritance.1"
 
 # Assert that the inheritance relationship has no maxdepth.
 

@@ -20,6 +20,17 @@
     groups:
       build:
       - nmap
+  register: groups_2
+
+- name: assert koji_tag create tag and groups and inheritance result
+  assert:
+    that:
+      - groups_2.changed
+      - "'created tag id' in groups_2.stdout_lines.0"
+      - groups_2.stdout_lines.1 == "added pkg nmap to group build"
+      - groups_2.diff.after.groups.0.name == "build"
+      - groups_2.diff.after.groups.0.packagelist == ["nmap"]
+      - groups_2.diff.after.inheritance == ["   0   .... groups-2-parent"]
 
 # Again, attempt to re-define the same "build" group in our child tag.
 # This should not result in "changed":

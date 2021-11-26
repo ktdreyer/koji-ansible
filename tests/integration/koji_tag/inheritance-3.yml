@@ -17,7 +17,14 @@
       priority: 0
     - parent: inheritance-1-parent-b
       priority: 10
+  register: inheritance_3
 
+- name: assert koji_tag create tag and inheritance result
+  assert:
+    that:
+      - inheritance_3.changed
+      - inheritance_3.stdout_lines == []
+      - inheritance_3.diff.after.inheritance == ["   0   .... inheritance-1-parent-a", "  10   .... inheritance-1-parent-b"]
 # Python 2.7:
 # >>> sorted(("0", 10))
 # [10, '0']
@@ -33,10 +40,10 @@
       priority: "0"
     - parent: inheritance-1-parent-b
       priority: 10
-  register: inheritance_result
+  register: inheritance_3
 
 # Assert that we don't detect any changes
 
 - assert:
     that:
-      - inheritance_result.changed == False
+      - inheritance_3.changed == False

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import copy
 import sys
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
@@ -248,6 +249,7 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
     :param int tag_id: Koji tag ID
     :param bool check_mode: don't make any changes
     :param list inheritance: ensure these rules are set, and no others
+    :returns: result
     """
     result = {'changed': False, 'stdout_lines': []}
 
@@ -269,12 +271,17 @@ def ensure_inheritance(session, tag_name, tag_id, check_mode, inheritance):
 
     current_inheritance = session.getInheritanceData(tag_name)
     if current_inheritance != rules:
-        result['stdout_lines'].extend(
-                ('current inheritance:',)
-                + common_koji.describe_inheritance(current_inheritance)
-                + ('new inheritance:',)
-                + common_koji.describe_inheritance(rules))
+        current_inheritance = (
+            common_koji.describe_inheritance(current_inheritance)
+        )
+        new_inheritance = common_koji.describe_inheritance(rules)
         result['changed'] = True
+        current_settings = {
+            'inheritance': current_inheritance} if current_inheritance else {}
+        new_settings = {'inheritance': new_inheritance}
+        differences = common_koji.task_diff_data(
+            current_settings, new_settings, tag_name, 'tag')
+        result['diff'] = differences
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.setInheritanceData(tag_name, rules, clear=True)
@@ -310,6 +317,23 @@ def add_external_repos(session, tag_name, repos):
         session.addExternalRepoToTag(tag_name, **repo)
 
 
+def format_external_repos(repo_list):
+    """
+    Format external repo list.
+
+    :param list external_repo_list: list of dicts
+    """
+    formatted_repos = []
+    for repo in repo_list:
+        formatted_repo = {
+            'external_repo_name': repo['repo'],
+            'priority': repo['priority'],
+            'merge_mode': repo.get('merge_mode'),
+        }
+        formatted_repos.append(formatted_repo)
+    return formatted_repos
+
+
 def ensure_external_repos(session, tag_name, check_mode, repos):
     """
     Ensure that these external repos are configured on this Koji tag.
@@ -318,6 +342,7 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
     :param str tag_name: Koji tag name
     :param bool check_mode: don't make any changes
     :param list repos: ensure these external repos are set, and no others.
+    :returns: result
     """
     result = {'changed': False, 'stdout_lines': []}
     validate_repos(repos)
@@ -376,6 +401,15 @@ def ensure_external_repos(session, tag_name, check_mode, repos):
         add_external_repos(session, tag_name, repos_to_add)
     if result['stdout_lines']:
         result['changed'] = True
+        current_repos = common_koji.clean_data(
+            current, ['external_repo_name', 'priority', 'merge_mode'])
+        current_settings = {
+            'external_repos': current_repos} if current_repos else {}
+        new_repos = format_external_repos(repos)
+        new_settings = {'external_repos': new_repos}
+        differences = common_koji.task_diff_data(
+            current_settings, new_settings, tag_name, 'tag')
+        result['diff'] = differences
     return result
 
 
@@ -389,6 +423,7 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     :param bool check_mode: don't make any changes
     :param dict packages: Ensure that these owners and package names are
                           configured for this tag.
+    :returns: result
     """
     result = {'changed': False, 'stdout_lines': []}
     # Note: this in particular could really benefit from koji's
@@ -397,6 +432,12 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
     current_names = set([pkg['package_name'] for pkg in current_pkgs])
     # Create a "current_owned" dict to compare with what's in Ansible.
     current_owned = defaultdict(set)
+    # Get the list of and owner package name
+    clean_current_pkgs = common_koji.clean_data(
+        copy.copy(current_pkgs), ['owner_name', 'package_name'])
+    current_settings = {
+        'packages': clean_current_pkgs} if clean_current_pkgs else {}
+    new_settings = {'packages': []}
     for pkg in current_pkgs:
         owner = pkg['owner_name']
         pkg_name = pkg['package_name']
@@ -408,6 +449,8 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
                 if not check_mode:
                     common_koji.ensure_logged_in(session)
                     session.packageListAdd(tag_name, package, owner)
+                new_settings['packages'].append(
+                    {'owner_name': owner, 'package_name': package})
                 result['stdout_lines'].append('added pkg %s' % package)
                 result['changed'] = True
             else:
@@ -429,6 +472,12 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.packageListRemove(tag_name, package)
+
+    if result['changed']:
+        differences = common_koji.task_diff_data(
+            current_settings, new_settings, tag_name, 'tag')
+        result['diff'] = differences
+
     return result
 
 
@@ -441,9 +490,13 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
     :param bool check_mode: don't make any changes
     :param dict desired_groups: Ensure that these group names and packages are
                                 configured for this tag.
+    :returns: result
     """
     result = {'changed': False, 'stdout_lines': []}
     current_groups = session.getTagGroups(tag_id)
+    current_settings = {'groups': copy.copy(
+        current_groups)} if current_groups else {}
+    new_settings = {'groups': []}
     for group in current_groups:
         if group['tag_id'] == tag_id and group['name'] not in desired_groups:
             if not check_mode:
@@ -452,6 +505,9 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
             result['stdout_lines'].append('removed group %s' % group['name'])
             result['changed'] = True
     for group_name, desired_pkgs in desired_groups.items():
+        new_group = {'tag_id': tag_id, 'name': group_name,
+                     'packagelist': desired_pkgs}
+        new_settings['groups'].append(new_group)
         for group in current_groups:
             if group['name'] == group_name:
                 current_pkgs = {entry['package']: entry['tag_id']
@@ -470,15 +526,22 @@ def ensure_groups(session, tag_id, check_mode, desired_groups):
                 if not check_mode:
                     common_koji.ensure_logged_in(session)
                     session.groupPackageListRemove(tag_id, group_name, package)
-                result['stdout_lines'].append('removed pkg %s from group %s' % (package, group_name))
+                result['stdout_lines'].append(
+                    'removed pkg %s from group %s' % (package, group_name))
                 result['changed'] = True
         for package in desired_pkgs:
             if package not in current_pkgs:
                 if not check_mode:
                     common_koji.ensure_logged_in(session)
                     session.groupPackageListAdd(tag_id, group_name, package)
-                result['stdout_lines'].append('added pkg %s to group %s' % (package, group_name))
+                result['stdout_lines'].append(
+                    'added pkg %s to group %s' % (package, group_name))
                 result['changed'] = True
+    if result['changed']:
+        differences = common_koji.task_diff_data(
+            current_settings, new_settings, tag_id, 'tag')
+        result['diff'] = differences
+
     return result
 
 
@@ -490,9 +553,10 @@ def ensure_blocked_packages(session, tag_id, check_mode, packages):
     :param int tag_id: Koji tag ID
     :param bool check_mode: don't make any changes
     :param list packages: package names to block.
-    :returns: a list of human-readable changes
+    :returns: result
     """
     # TODO: move this to common_koji and share with koji_tag_packages.py
+    result = {'changed': False, 'stdout_lines': []}
     koji_profile = sys.modules[session.__module__]
     try:
         current_pkgs = session.listPackages(tagID=tag_id, with_owners=False)
@@ -505,25 +569,33 @@ def ensure_blocked_packages(session, tag_id, check_mode, packages):
             raise
     current_blocked = set(pkg['package_name']
                           for pkg in current_pkgs if pkg['blocked'])
-    changes = []
     to_block = set()
     to_unblock = set()
+    current_settings = {'blocked_packages': list(
+        current_blocked)} if current_blocked else {}
+    new_settings = {'blocked_packages': packages}
     for package in packages:
         if package not in current_blocked:
-            changes.append('blocked pkg %s' % package)
             to_block.add(package)
+            result['stdout_lines'].append('blocked pkg %s' % package)
+            result['changed'] = True
     for package in current_blocked:
         if package not in packages:
-            changes.append('unblocked pkg %s' % package)
             to_unblock.add(package)
-    if changes and not check_mode:
-        common_koji.ensure_logged_in(session)
-        # TODO: use koji multicalls here
-        for package in to_block:
-            session.packageListBlock(tag_id, package)
-        for package in to_unblock:
-            session.packageListUnblock(tag_id, package)
-    return changes
+            result['stdout_lines'].append('unblocked pkg %s' % package)
+            result['changed'] = True
+    if result['changed']:
+        differences = common_koji.task_diff_data(
+            current_settings, new_settings, tag_id, 'tag')
+        result['diff'] = differences
+        if not check_mode:
+            common_koji.ensure_logged_in(session)
+            # TODO: use koji multicalls here
+            for package in to_block:
+                session.packageListBlock(tag_id, package)
+            for package in to_unblock:
+                session.packageListUnblock(tag_id, package)
+    return result
 
 
 def ensure_tag(session, name, check_mode, inheritance, external_repos,
@@ -544,10 +616,17 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
     :param blocked_packages: list of packages to block in this tag.
     :param **kwargs: Pass remaining kwargs directly into Koji's createTag and
                      editTag2 RPCs.
+    :returns: result
     """
     taginfo = session.getTag(name)
     result = {'changed': False, 'stdout_lines': []}
     if not taginfo:
+        current_settings = {}
+        new_settings = {'tag': name}
+        differences = common_koji.task_diff_data(
+            None, new_settings, name, "tag")
+        result['diff'] = differences
+
         if check_mode:
             result['stdout_lines'].append('would create tag %s' % name)
             result['changed'] = True
@@ -563,14 +642,22 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
         # The tag name already exists. Ensure all the parameters are set.
         edits = {}
         edit_log = []
+        current_settings = {'tag': name}
+        new_settings = {'tag': name}
         for key, value in kwargs.items():
             if taginfo[key] != value and value is not None:
+                current_settings[key] = taginfo[key]
                 edits[key] = value
+                new_settings[key] = value
                 edit_log.append('%s: changed %s from "%s" to "%s"'
                                 % (name, key, taginfo[key], value))
         # Find out which "extra" items we must explicitly remove
         # ("remove_extra" argument to editTag2).
         if 'extra' in kwargs and kwargs['extra'] is not None:
+            current_settings['extra'] = (
+                taginfo['extra'] if taginfo['extra'] else {}
+            )
+            new_settings['extra'] = kwargs.get('extra')
             for key in taginfo['extra']:
                 if key not in kwargs['extra']:
                     if 'remove_extra' not in edits:
@@ -580,6 +667,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                 edit_log.append('%s: remove extra fields "%s"'
                                 % (name, '", "'.join(edits['remove_extra'])))
         if edits:
+            differences = common_koji.task_diff_data(
+                current_settings, new_settings, name, "tag")
+            result['diff'] = differences
             result['stdout_lines'].extend(edit_log)
             result['changed'] = True
             if not check_mode:
@@ -592,6 +682,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                                                 check_mode, inheritance)
         if inheritance_result['changed']:
             result['changed'] = True
+            result['diff'] = common_koji.combine_diff_data(
+                'tag', name, result, inheritance_result
+            )
         result['stdout_lines'].extend(inheritance_result['stdout_lines'])
 
     # Ensure external repos.
@@ -600,6 +693,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                                              external_repos)
         if repos_result['changed']:
             result['changed'] = True
+            result['diff'] = common_koji.combine_diff_data(
+                'tag', name, result, repos_result
+            )
         result['stdout_lines'].extend(repos_result['stdout_lines'])
 
     # Ensure package list.
@@ -610,6 +706,9 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                                           check_mode, packages)
         if packages_result['changed']:
             result['changed'] = True
+            result['diff'] = common_koji.combine_diff_data(
+                'tag', name, result, packages_result
+            )
         result['stdout_lines'].extend(packages_result['stdout_lines'])
 
     # Ensure group list.
@@ -620,17 +719,25 @@ def ensure_tag(session, name, check_mode, inheritance, external_repos,
                                       check_mode, groups)
         if groups_result['changed']:
             result['changed'] = True
+            result['diff'] = common_koji.combine_diff_data(
+                'tag', name, result, groups_result
+            )
         result['stdout_lines'].extend(groups_result['stdout_lines'])
 
     # Ensure blocked package list.
     if blocked_packages not in (None, ''):
-        changes = ensure_blocked_packages(session,
-                                          taginfo['id'],
-                                          check_mode,
-                                          blocked_packages)
-        if changes:
+        blocked_packages_result = ensure_blocked_packages(
+            session,
+            taginfo['id'],
+            check_mode,
+            blocked_packages,
+        )
+        if blocked_packages_result['changed']:
             result['changed'] = True
-            result['stdout_lines'].extend(changes)
+            result['diff'] = common_koji.combine_diff_data(
+                'tag', name, result, blocked_packages_result
+            )
+        result['stdout_lines'].extend(blocked_packages_result['stdout_lines'])
 
     return result
 
@@ -645,6 +752,8 @@ def delete_tag(session, name, check_mode):
     if taginfo:
         result['stdout'] = 'deleted tag %d' % taginfo['id']
         result['changed'] = True
+        differences = common_koji.task_diff_data(taginfo, None, name, 'tag')
+        result['diff'] = differences
         if not check_mode:
             common_koji.ensure_logged_in(session)
             session.deleteTag(name)

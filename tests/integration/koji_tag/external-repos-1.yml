@@ -14,6 +14,15 @@
     external_repos:
     - repo: external-repos-1-os
       priority: 10
+  register: external_repo_1
+
+- name: assert result for assigning external repo to tag
+  assert:
+    that:
+      - external_repo_1.changed
+      - "'created tag id' in external_repo_1.stdout_lines.0"
+      - external_repo_1.stdout_lines.1 == "Adding external-repos-1-os repo with prio 10 to tag external-repos-1"
+      - external_repo_1.diff.after.external_repos.0.external_repo_name == "external-repos-1-os"
 
 # Assert that we've associated the repo to this tag.
 
@@ -33,6 +42,14 @@
   koji_tag:
     name: external-repos-1
     external_repos: []
+  register: external_repo_1
+
+- name: assert result for unassigning external repo from tag
+  assert:
+    that:
+      - external_repo_1.changed
+      - external_repo_1.stdout_lines == ["Removing external-repos-1-os repo from tag external-repos-1"]
+      - external_repo_1.diff.after.external_repos == []
 
 - koji_call:
     name: getTagExternalRepos
