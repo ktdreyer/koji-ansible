@@ -14,7 +14,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import os
-import shutil
+import re
 import datetime
 from glob import glob
 import subprocess
@@ -99,6 +99,34 @@ html_context = {
 }
 
 
+def replace_in_files(search, replace, fileglob):
+    filenames = glob(os.path.join(DOCS_DIRECTORY, fileglob))
+    for filename in filenames:
+        with open(filename, 'r') as file:
+            filedata = file.read()
+            filedata = re.sub(search, replace, filedata)
+        with open(filename, 'w') as file:
+            file.write(filedata)
+
+
+def delete_in_files(search, fileglob, after=0):
+    filenames = glob(os.path.join(DOCS_DIRECTORY, fileglob))
+    lines = []
+    for filename in filenames:
+        with open(filename, 'r') as file:
+            skip = 0
+            for line in file:
+                if re.search(search, line):
+                    skip = after
+                    continue
+                if skip:
+                    skip -= 1
+                    continue
+                lines.append(line)
+        with open(filename, 'w') as file:
+            file.writelines(lines)
+
+
 def install_collection(app):
     """Install collection for antsibull-doc to find
     """
@@ -127,14 +155,25 @@ def antsibull_collection(app):
         'ktdreyer.koji_ansible',
     ])
 
-    # shutil.copy2(DOCS_DIRECTORY + '/index/index.rst',
-    #              DOCS_DIRECTORY + 'index.rst')
+    # Fix some undesirable quirks from antsibull-docs.
+
+    # Simplify module page titles to be easier to read:
+    replace_in_files(r'^ktdreyer\.koji_ansible\.', '', '*.rst')
+    # Simplify index page title::
+    replace_in_files(r'^Ktdreyer\.Koji_Ansible\.',
+                     'koji-ansible modules', 'index.rst')
+    # Remove unhelpful boilerplate:
+    delete_in_files(r'Plugin Index', 'index.rst', 1)
+    delete_in_files(r'These are the plugins in the', 'index.rst')
+    # Remove docs.ansible.com bits from index page:
+    delete_in_files(r'\.\. seealso::', 'index.rst')
+    delete_in_files(r'list_of_collections', 'index.rst')
 
 
 def setup(app):
     # Note the env var for collections in a non-standard directory is
     # "COLLECTIONS_PATHS". Not sure if antsibull-doc respects that, though.
-    app.connect('builder-inited', install_collection)
+    #app.connect('builder-inited', install_collection)
     app.connect('builder-inited', antsibull_collection)
 
     # Use sphinx_substitution_extensions instead?
