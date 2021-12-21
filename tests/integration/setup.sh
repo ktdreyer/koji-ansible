@@ -6,8 +6,9 @@ set -eux
 
 sudo systemctl restart postgresql || sudo journalctl -xe
 
-git clone --depth 1 https://pagure.io/koji.git
+git clone https://pagure.io/koji.git
 pushd koji
+git checkout 11ffdf6480216be4fe9f6af24ebbc318ac98b751
 git log HEAD -1 --no-decorate
 popd
 
