@@ -218,7 +218,7 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
 
     new_rule = generate_new_rule(child_id, parent_tag, parent_id, priority,
                                  maxdepth, pkg_filter, intransitive, noconfig)
-    new_rules = [new_rule]
+    old_rules = []
     for rule in current_inheritance:
         if rule == new_rule:
             return result
@@ -231,22 +231,19 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
             result['stdout_lines'].extend(
                     map(lambda r: ' +' + r,
                         common_koji.describe_inheritance_rule(new_rule)))
-            delete_rule = rule.copy()
-            # Mark this rule for deletion
-            delete_rule['delete link'] = True
-            new_rules.insert(0, delete_rule)
+            old_rules.append(rule)
 
-    if len(new_rules) > 1:
+    if old_rules:
         result['stdout_lines'].append('remove inheritance link:')
         result['stdout_lines'].extend(
-                common_koji.describe_inheritance(new_rules[:-1]))
+                common_koji.describe_inheritance(old_rules))
     result['stdout_lines'].append('add inheritance link:')
     result['stdout_lines'].extend(
             common_koji.describe_inheritance_rule(new_rule))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
-        session.setInheritanceData(child_tag, new_rules)
+        session.setInheritanceData(child_tag, [new_rule])
     return result
 
 
