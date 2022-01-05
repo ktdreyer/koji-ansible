@@ -1,0 +1,55 @@
+# set maxdepth on an existing inheritance relationship.
+---
+
+- koji_tag:
+    name: update-2-parent
+    state: present
+
+- koji_tag:
+    name: update-2-child
+    state: present
+    inheritance:
+    - parent: update-2-parent
+      priority: 0
+
+- koji_tag_inheritance:
+    parent_tag: update-2-parent
+    child_tag: update-2-child
+    priority: 0
+    maxdepth: 0
+
+# Assert that the parent maxdepth is now 0.
+
+- koji_call:
+    name: getInheritanceData
+    args: [update-2-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 1
+      - inheritance.data[0].name == 'update-2-parent'
+      - inheritance.data[0].priority == 0
+      - inheritance.data[0].maxdepth == 0
+
+# Reset maxdepth to none
+
+- koji_tag_inheritance:
+    parent_tag: update-2-parent
+    child_tag: update-2-child
+    priority: 0
+    # No maxdepth arg means "reset it"
+
+# Assert that the parent maxdepth is now none.
+
+- koji_call:
+    name: getInheritanceData
+    args: [update-2-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data|length == 1
+      - inheritance.data[0].name == 'update-2-parent'
+      - inheritance.data[0].priority == 0
+      - inheritance.data[0].maxdepth is none
