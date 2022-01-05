@@ -226,20 +226,20 @@ def add_tag_inheritance(session, child_tag, parent_tag, priority, maxdepth,
             # prefix taginfo-style inheritance strings with diff-like +/-
             result['stdout_lines'].append('dissimilar rules:')
             result['stdout_lines'].extend(
-                    map(lambda r: ' -' + r,
-                        common_koji.describe_inheritance_rule(rule)))
+                map(lambda r: ' -' + r,
+                    common_koji.describe_inheritance_rule(rule)))
             result['stdout_lines'].extend(
-                    map(lambda r: ' +' + r,
-                        common_koji.describe_inheritance_rule(new_rule)))
+                map(lambda r: ' +' + r,
+                    common_koji.describe_inheritance_rule(new_rule)))
             old_rules.append(rule)
 
     if old_rules:
         result['stdout_lines'].append('remove inheritance link:')
         result['stdout_lines'].extend(
-                common_koji.describe_inheritance(old_rules))
+            common_koji.describe_inheritance(old_rules))
     result['stdout_lines'].append('add inheritance link:')
     result['stdout_lines'].extend(
-            common_koji.describe_inheritance_rule(new_rule))
+        common_koji.describe_inheritance_rule(new_rule))
     result['changed'] = True
     if not check_mode:
         common_koji.ensure_logged_in(session)
