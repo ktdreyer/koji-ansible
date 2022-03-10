@@ -23,7 +23,7 @@
   assert:
     that:
       - inheritance_3.changed
-      - inheritance_3.stdout_lines == []
+      - "'created tag' in inheritance_3.stdout_lines.0"
       - inheritance_3.diff.after.inheritance == ["   0   .... inheritance-3-parent-a", "  10   .... inheritance-3-parent-b"]
 # Python 2.7:
 # >>> sorted(("0", 10))
