@@ -2,20 +2,20 @@
 ---
 
 - koji_tag:
-    name: inheritance-1-parent-a
+    name: inheritance-2-parent-a
     state: present
 
 - koji_tag:
-    name: inheritance-1-parent-b
+    name: inheritance-2-parent-b
     state: present
 
 - koji_tag:
-    name: inheritance-1-child
+    name: inheritance-2-child
     state: present
     inheritance:
-    - parent: inheritance-1-parent-a
+    - parent: inheritance-2-parent-a
       priority: 0
-    - parent: inheritance-1-parent-b
+    - parent: inheritance-2-parent-b
       priority: 10
   register: inheritance_2
 
@@ -26,11 +26,11 @@
       - inheritance_2.stdout_lines == []
 
 - koji_tag:
-    name: inheritance-1-child
+    name: inheritance-2-child
     inheritance:
-    - parent: inheritance-1-parent-a
+    - parent: inheritance-2-parent-a
       priority: 10
-    - parent: inheritance-1-parent-b
+    - parent: inheritance-2-parent-b
       priority: 0
   register: inheritance_2
 
@@ -39,14 +39,14 @@
     that:
       - inheritance_2.changed
       - inheritance_2.stdout_lines == []
-      - inheritance_2.diff.after.inheritance == ["   0   .... inheritance-1-parent-b", "  10   .... inheritance-1-parent-a"]
-      - inheritance_2.diff.before.inheritance == ["   0   .... inheritance-1-parent-a", "  10   .... inheritance-1-parent-b"]
+      - inheritance_2.diff.after.inheritance == ["   0   .... inheritance-2-parent-b", "  10   .... inheritance-2-parent-a"]
+      - inheritance_2.diff.before.inheritance == ["   0   .... inheritance-2-parent-a", "  10   .... inheritance-2-parent-b"]
 
 # Assert that we have the new parent.
 
 - koji_call:
     name: getInheritanceData
-    args: [inheritance-1-child]
+    args: [inheritance-2-child]
   register: inheritance
 
 - assert:
@@ -54,7 +54,7 @@
       - inheritance.data|length == 2
       # TODO: We probably cannot rely on the "0" vs "1" ordering here.
       # Probably need more Jinja tricks here to handle any order.
-      # - inheritance.data[0].name == 'inheritance-1-parent-a'
+      # - inheritance.data[0].name == 'inheritance-2-parent-a'
       # - inheritance.data[0].priority == 10
-      # - inheritance.data[1].name == 'inheritance-1-parent-b'
+      # - inheritance.data[1].name == 'inheritance-2-parent-b'
       # - inheritance.data[1].priority == 0
