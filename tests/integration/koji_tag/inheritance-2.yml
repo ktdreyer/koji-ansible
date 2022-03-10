@@ -17,13 +17,6 @@
       priority: 0
     - parent: inheritance-2-parent-b
       priority: 10
-  register: inheritance_2
-
-- name: assert koji_tag create tag and inheritance result
-  assert:
-    that:
-      - not inheritance_2.changed
-      - inheritance_2.stdout_lines == []
 
 - koji_tag:
     name: inheritance-2-child
