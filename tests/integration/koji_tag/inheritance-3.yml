@@ -2,20 +2,20 @@
 ---
 
 - koji_tag:
-    name: inheritance-1-parent-a
+    name: inheritance-3-parent-a
     state: present
 
 - koji_tag:
-    name: inheritance-1-parent-b
+    name: inheritance-3-parent-b
     state: present
 
 - koji_tag:
-    name: inheritance-1-child
+    name: inheritance-3-child
     state: present
     inheritance:
-    - parent: inheritance-1-parent-a
+    - parent: inheritance-3-parent-a
       priority: 0
-    - parent: inheritance-1-parent-b
+    - parent: inheritance-3-parent-b
       priority: 10
   register: inheritance_3
 
@@ -24,7 +24,7 @@
     that:
       - inheritance_3.changed
       - inheritance_3.stdout_lines == []
-      - inheritance_3.diff.after.inheritance == ["   0   .... inheritance-1-parent-a", "  10   .... inheritance-1-parent-b"]
+      - inheritance_3.diff.after.inheritance == ["   0   .... inheritance-3-parent-a", "  10   .... inheritance-3-parent-b"]
 # Python 2.7:
 # >>> sorted(("0", 10))
 # [10, '0']
@@ -34,11 +34,11 @@
 #   File "<stdin>", line 1, in <module>
 # TypeError: '<' not supported between instances of 'int' and 'str'
 - koji_tag:
-    name: inheritance-1-child
+    name: inheritance-3-child
     inheritance:
-    - parent: inheritance-1-parent-a
+    - parent: inheritance-3-parent-a
       priority: "0"
-    - parent: inheritance-1-parent-b
+    - parent: inheritance-3-parent-b
       priority: 10
   register: inheritance_3
 
