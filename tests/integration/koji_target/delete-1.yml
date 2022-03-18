@@ -23,7 +23,7 @@
 - assert:
     that:
       - target.changed
-      - target.stdout_lines== ["deleted target 1"]
+      - "'deleted target' in target.stdout"
       - target.diff.after == {}
 
 # Assert that this target is absent.
