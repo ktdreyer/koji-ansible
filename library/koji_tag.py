@@ -444,13 +444,13 @@ def ensure_packages(session, tag_name, tag_id, check_mode, packages):
         current_owned[owner].add(pkg_name)
     for owner, owned in packages.items():
         for package in owned:
+            new_settings['packages'].append(
+                {'owner_name': owner, 'package_name': package})
             if package not in current_names:
                 # The package was missing from the tag entirely.
                 if not check_mode:
                     common_koji.ensure_logged_in(session)
                     session.packageListAdd(tag_name, package, owner)
-                new_settings['packages'].append(
-                    {'owner_name': owner, 'package_name': package})
                 result['stdout_lines'].append('added pkg %s' % package)
                 result['changed'] = True
             else:

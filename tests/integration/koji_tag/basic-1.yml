@@ -23,6 +23,7 @@
     packages:
       admin:
       - ceph
+      - cnv
     groups:
       build:
         - bash
@@ -43,9 +44,10 @@
       - "'created tag id' in basic.stdout_lines.0"
       - basic.stdout_lines.1 == "Adding basic-1 repo with prio 5 to tag basic-1"
       - basic.stdout_lines.2 == "added pkg ceph"
-      - basic.stdout_lines.3 == "added group build"
-      - basic.stdout_lines.4 == "added pkg bash to group build"
-      - basic.stdout_lines.5 == "added pkg coreutils to group build"
+      - basic.stdout_lines.3 == "added pkg cnv"
+      - basic.stdout_lines.4 == "added group build"
+      - basic.stdout_lines.5 == "added pkg bash to group build"
+      - basic.stdout_lines.6 == "added pkg coreutils to group build"
       - basic.diff.after.external_repos.0.external_repo_name == "basic-1"
       - basic.diff.after.groups.0.name == "build"
       - basic.diff.after.inheritance.0 == "   0   .... basic-1-parent"
@@ -65,3 +67,42 @@
       - not taginfo.data.locked
       - taginfo.data.perm == 'admin'
       - taginfo.data.extra['mock.package_manager'] == 'dnf'
+
+# Update package
+
+- koji_tag:
+    name: basic-1
+    state: present
+    inheritance:
+    - parent: basic-1-parent
+      priority: 0
+    external_repos:
+    - repo: basic-1
+      priority: 5
+    packages:
+      admin:
+      - ceph-new
+      - cnv
+    groups:
+      build:
+      - bash
+      - coreutils
+    arches: x86_64 ppc64le
+    perm: admin
+    locked: false
+    extra:
+      mock.package_manager: dnf
+  register: basic
+
+# Assert that resutl is correct for updated tag
+
+- name: assert koji_tag update tag result
+  assert:
+    that:
+      - basic.changed
+      - basic.stdout_lines.0 == "added pkg ceph-new"
+      - basic.stdout_lines.1 == "remove pkg ceph"
+      - basic.diff.after.packages.0.owner_name == "admin"
+      - basic.diff.after.packages.0.package_name == "ceph-new"
+      - basic.diff.after.packages.1.owner_name == "admin"
+      - basic.diff.after.packages.1.package_name == "cnv"
