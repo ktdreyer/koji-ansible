@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -82,7 +82,7 @@ jobs:
       run: |
         git fetch origin master:master || :
         [ -z $GITHUB_BASE_REF ] || git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
     - name: Install pandoc
       run: |
         sudo apt-get update
