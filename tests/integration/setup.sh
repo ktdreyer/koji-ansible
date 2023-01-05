@@ -62,11 +62,11 @@ sudo cp -f tests/integration/apache.conf /etc/apache2/sites-available/000-defaul
 sudo sed -e "s?%BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/000-default.conf
 
 # configuration to use our local kojihub Git clone
-sed -i -e "s,/usr/share/koji-hub,$(pwd)/koji/hub,g" koji/hub/httpd.conf
+sed -i -e "s,/usr/share/koji-hub,$(pwd)/koji/kojihub/app,g" koji/kojihub/app/httpd.conf
 
-sed -i -e "s,#DBHost = .*,DBHost = 127.0.0.1," koji/hub/hub.conf
-sed -i -e "s,#DBPass = .*,DBPass = koji," koji/hub/hub.conf
-sed -i -e "s,KojiDir = koji,KojiDir = $HOME/mnt/koji," koji/hub/hub.conf
+sed -i -e "s,#DBHost = .*,DBHost = 127.0.0.1," koji/kojihub/app/hub.conf
+sed -i -e "s,#DBPass = .*,DBPass = koji," koji/kojihub/app/hub.conf
+sed -i -e "s,KojiDir = koji,KojiDir = $HOME/mnt/koji," koji/kojihub/app/hub.conf
 
 mkdir -p $HOME/mnt/koji
 
