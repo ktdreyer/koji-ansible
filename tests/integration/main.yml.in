@@ -9,5 +9,5 @@
                  | difference([playbook_dir + '/main.yml'])
               }}"
 
-  - include: "{{ item }}"
+  - include_tasks: "{{ item }}"
     with_items: "{{ tests }}"
