@@ -1,7 +1,7 @@
 queue_rules:
   - name: default
     conditions:
-      - status-success=tox (2.7, ubuntu-20.04)
+      - status-success=tox27
       - status-success=tox (3.6, ubuntu-20.04)
       - status-success=tox (3.9, ubuntu-latest)
       - status-success=integration-tests (ga)
@@ -11,7 +11,7 @@ pull_request_rules:
   - name: automatic merge for master when CI passes
     conditions:
       - author=ktdreyer
-      - status-success=tox (2.7, ubuntu-20.04)
+      - status-success=tox27
       - status-success=tox (3.6, ubuntu-20.04)
       - status-success=tox (3.9, ubuntu-latest)
       - status-success=integration-tests (ga)
