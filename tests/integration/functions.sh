@@ -12,7 +12,7 @@ reset_database () {
     export PGPASSWORD=koji
 
     # Import Koji schema:
-    psql -q koji koji < koji/docs/schema.sql
+    psql -q koji koji < koji/schemas/schema.sql
 
     # Bootstrap the administrator account
     psql -U koji -c "INSERT INTO users (name, status, usertype) VALUES ('admin', 0, 0);"
