@@ -1,0 +1,13 @@
+# symlink this file into each test directory
+
+- name: test koji
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - set_fact:
+      tests: "{{ lookup('fileglob', '{{ playbook_dir }}/*.yml', wantlist=True)
+                 | difference([playbook_dir + '/main.yml'])
+              }}"
+
+  - include: "{{ item }}"
+    with_items: "{{ tests }}"
