@@ -8,7 +8,7 @@ jobs:
     container:
       image: registry.access.redhat.com/rhel7:latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - name: Add CentOS Yum repos
         run: |
           cat <<EOF > /etc/yum.repos.d/centos.repo
