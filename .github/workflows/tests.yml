@@ -58,6 +58,9 @@ jobs:
           - python-version: 3.9
             os: ubuntu-latest
     steps:
+    - uses: step-security/harden-runner@v2.10.2
+      with:
+        egress-policy: audit
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -86,6 +89,9 @@ jobs:
         - ga
         - pre
     steps:
+    - uses: step-security/harden-runner@v2.10.2
+      with:
+        egress-policy: audit
     - uses: actions/checkout@v3
     - name: Install test dependencies
       run: |
@@ -120,6 +126,9 @@ jobs:
   test-collection:
     runs-on: ubuntu-latest
     steps:
+    - uses: step-security/harden-runner@v2.10.2
+      with:
+        egress-policy: audit
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
